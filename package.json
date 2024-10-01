@@ -5,14 +5,14 @@
   "main": "backend/server.js",
   "scripts": {
     "dev": "nodemon backend/server.js",
-    "start": "node backend/server.js",
-    "console": "node backend/server.js"
+    "start": "node backend/server.js"
   },
   "keywords": [],
   "author": "",
   "type": "module",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.0",
     "cookie-parser": "^1.4.6",
