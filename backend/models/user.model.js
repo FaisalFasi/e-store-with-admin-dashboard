@@ -47,6 +47,8 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
+    // what is genSalt? It generates a salt for the bcrypt hashing function to use
+    // what is salt? It is a random value that is used with the password to generate a hash
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
     next();
