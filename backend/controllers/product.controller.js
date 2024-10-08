@@ -1,4 +1,5 @@
 import redis from "../db/redis.js";
+import cloudinary from "../lib/Cloudinary.js";
 import Product from "../models/product.model.js";
 
 export const getAllProducts = async (req, res) => {
@@ -45,16 +46,145 @@ export const getFeaturedProducts = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
+  const { name, price, description, imageUrl, category, isFeatured } = req.body;
+
   try {
-    const product = new Product(req.body);
+    let cloudinaryResponse = null;
 
-    await product.save();
+    if (imageUrl) {
+      cloudinaryResponse = await cloudinary.uploader.upload(imageUrl, {
+        folder: "products",
+      });
+    }
 
-    res.json({ product });
+    const product = await Product.create({
+      name,
+      price,
+      description,
+      imageUrl: cloudinaryResponse?.secure_url || "",
+      category,
+      isFeatured,
+    });
+
+    res.status(201).json({ product });
   } catch (error) {
     console.log("Error in createProduct controller:", error);
     res.status(500).json({
       message: "Internal Server Error while creating product",
+      error,
+    });
+  }
+};
+
+export const getRecommendedProducts = async (req, res) => {
+  try {
+    // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
+    const recommendedProducts = await Product.aggregate([
+      { $sample: { size: 3 } },
+      { $project: { _id: 1, name: 1, description: 1, price: 1, imageUrl: 1 } },
+    ]);
+
+    if (!recommendedProducts) {
+      return res.status(404).json({ message: "No recommended products found" });
+    }
+
+    res.json({ products: recommendedProducts });
+  } catch (error) {
+    console.log("Error in getRecommendedProducts controller:", error);
+    res.status(500).json({
+      message: "Internal Server Error while fetching recommended products",
+      error,
+    });
+  }
+};
+
+export const getProductByCategory = async (req, res) => {
+  const { category } = req.params;
+
+  try {
+    const products = await Product.find({ category: category });
+
+    if (!products) {
+      return res
+        .status(404)
+        .json({ message: "No products found in this category" });
+    }
+
+    res.json({ products });
+  } catch (error) {
+    console.log("Error in getProductByCategory controller:", error);
+    res.status(500).json({
+      message: "Internal Server Error while fetching products by category",
+      error,
+    });
+  }
+};
+
+export const toggleFeaturedProduct = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id);
+
+    if (product) {
+      product.isFeatured = !product.isFeatured;
+      const updatedProduct = await product.save();
+      await updateFeaturedProductsCache(updatedProduct);
+      res.json({ updatedProduct });
+    } else {
+      res.status(404).json({ message: "Product not found" });
+    }
+  } catch (error) {
+    console.log("Error in toggleFeaturedProduct controller:", error);
+    res.status(500).json({
+      message: "Internal Server Error while toggling featured product",
+      error,
+    });
+  }
+};
+
+const updateFeaturedProductsCache = async (updatedProduct) => {
+  try {
+    // lean method is used to convert the Mongoose document into a plain JavaScript object, good for caching and performance
+    const featuredProducts = await Product.find({ isFeatured: true }).lean();
+
+    await redis.set("featured_products", JSON.stringify(featuredProducts));
+  } catch (error) {
+    console.log("Error in updateFeaturedProductsCache:", error);
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    if (product.imageUrl) {
+      const publicId = product.imageUrl.split("/").pop().split(".")[0]; // Extracting the public ID from the image URL
+      try {
+        await cloudinary.uploader.destroy(publicId);
+        console.log("Image deleted from Cloudinary");
+      } catch (error) {
+        console.log(
+          "Error in deleteProduct controller while deleting image from Cloudinary:",
+          error
+        );
+        return res.status(500).json({
+          message: "Internal Server Error while deleting image from Cloudinary",
+          error,
+        });
+      }
+    }
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.log("Error in deleteProduct controller:", error);
+    res.status(500).json({
+      message: "Internal Server Error while deleting product",
       error,
     });
   }
