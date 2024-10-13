@@ -164,6 +164,7 @@ export const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
     if (product.imageUrl) {
+      // pop method is used to remove the last element from the array and return that element. example URL: https://res.cloudinary.com/dx3w7xvsv/image/upload/v1633661234/products/abc.jpg , here it will return abc
       const publicId = product.imageUrl.split("/").pop().split(".")[0]; // Extracting the public ID from the image URL
       try {
         await cloudinary.uploader.destroy(publicId);
