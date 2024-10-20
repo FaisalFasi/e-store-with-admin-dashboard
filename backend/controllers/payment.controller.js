@@ -2,7 +2,7 @@ import { stripe } from "../lib/stripe.js";
 import Coupon from "../models/coupen.model.js";
 import Order from "../models/order.model.js";
 
-export const checkoutSuccess = asyncHandler(async (req, res) => {
+export const checkoutSuccess = async (req, res) => {
   try {
     const { sessionId } = req.body;
 
@@ -46,9 +46,9 @@ export const checkoutSuccess = asyncHandler(async (req, res) => {
       .status(500)
       .json({ message: "Internal Server Error", err: err.message });
   }
-});
+};
 
-export const createCheckoutSession = asyncHandler(async (req, res) => {
+export const createCheckoutSession = async (req, res) => {
   try {
     const { products, couponCode } = req.body;
     // Check if products array is empty or not
@@ -136,7 +136,7 @@ export const createCheckoutSession = asyncHandler(async (req, res) => {
       .status(500)
       .json({ message: "Internal Server Error", err: err.message });
   }
-});
+};
 
 async function createStripeCoupon(discountPercentage) {
   try {
