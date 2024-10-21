@@ -61,6 +61,7 @@ userSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
 
+// i can pass a third argument as the collection name in the database like this: mongoose.model("User", userSchema, "users") so that it will not pluralize the collection name and stores data in the users collection
 const User = mongoose.model("User", userSchema);
 
 export default User;

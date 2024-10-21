@@ -48,7 +48,8 @@ const setCookies = (res, accessToken, refreshToken) => {
 };
 export const signup = async (req, res) => {
   const { email, name, password } = req.body;
-
+  console.log("signup controller called");
+  console.log("req.body:", req.body);
   try {
     if (!email || !password || !name) {
       return res
@@ -108,12 +109,13 @@ export const login = async (req, res) => {
       await storeRefreshTokenIn_redis_db(user._id, refreshToken);
       setCookies(res, accessToken, refreshToken);
 
-      res.send({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      });
+      res.json({ user });
+      // res.send({
+      //   _id: user._id,
+      //   name: user.name,
+      //   email: user.email,
+      //   role: user.role,
+      // });
     } else {
       res.status(401).json({ message: "Invalid email or password" });
     }
@@ -197,7 +199,8 @@ export const refreshToken = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    res.json(req.user);
+    console.log("req.user:", req.user);
+    res.json({ user: req.user });
   } catch (error) {
     console.log("error in getProfile controller:", error);
     res

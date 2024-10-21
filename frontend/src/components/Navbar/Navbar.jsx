@@ -5,9 +5,28 @@ import { Link } from "react-router-dom";
 
 const Navbar = () => {
   //   const { user, logout } = useUserStore();
-  const user = true;
-  const isAdmin = true;
-  const cart = [];
+  const user = false;
+  const isAdmin = false;
+  const cart = [
+    {
+      id: 1,
+      name: "Product 1",
+      price: 100,
+      quantity: 2,
+    },
+    {
+      id: 2,
+      name: "Product 2",
+      price: 200,
+      quantity: 1,
+    },
+    {
+      id: 3,
+      name: "Product 3",
+      price: 300,
+      quantity: 3,
+    },
+  ];
   const logout = () => {
     console.log("logout");
   };
@@ -58,7 +77,7 @@ const Navbar = () => {
               <Link
                 className="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded-md font-medium
 								 transition duration-300 ease-in-out flex items-center"
-                to={"/secret-dashboard"}
+                to={"/admin-dashboard"}
               >
                 <Lock className="inline-block mr-1" size={18} />
                 <span className="hidden sm:inline">Dashboard</span>
