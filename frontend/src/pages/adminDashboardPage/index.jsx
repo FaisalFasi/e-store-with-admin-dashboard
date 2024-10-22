@@ -18,14 +18,21 @@ const AdminDashboardPage = () => {
       <div className="relative z-10 container mx-auto px-4 py-16">
         <motion.h1
           className="text-4xl font-bold mb-8 text-emerald-400 text-center"
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -40 }}
           animate={{ opacity: 1, y: 0 }}
+          // initial={{ opacity: 0, y: -20 }}
+          // animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           Admin Dashboard
         </motion.h1>
 
-        <div className="flex justify-center mb-8">
+        <motion.div
+          className="flex justify-center mb-8"
+          initial={{ opacity: 0, x: 80 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+        >
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -40,7 +47,7 @@ const AdminDashboardPage = () => {
               {tab.label}
             </button>
           ))}
-        </div>
+        </motion.div>
         {activeTab === "create" && <CreateProductForm />}
         {activeTab === "products" && <ProductsList />}
         {activeTab === "analytics" && <AnalyticsTab />}
