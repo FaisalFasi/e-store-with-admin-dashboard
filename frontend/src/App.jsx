@@ -40,6 +40,16 @@ function App() {
             path="/login"
             element={!user ? <LoginPage /> : <Navigate to={"/"} />}
           />
+          <Route
+            path="/admin-dashboard"
+            element={
+              user?.role === "admin" ? (
+                <AdminDashboardPage />
+              ) : (
+                <Navigate to={"/login"} />
+              )
+            }
+          />
 
           {/* Add routes here */}
         </Routes>
