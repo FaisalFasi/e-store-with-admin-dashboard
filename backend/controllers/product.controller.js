@@ -46,13 +46,13 @@ export const getFeaturedProducts = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  const { name, price, description, imageUrl, category, isFeatured } = req.body;
+  const { name, price, description, image, category, isFeatured } = req.body;
 
   try {
     let cloudinaryResponse = null;
 
-    if (imageUrl) {
-      cloudinaryResponse = await cloudinary.uploader.upload(imageUrl, {
+    if (image) {
+      cloudinaryResponse = await cloudinary.uploader.upload(image, {
         folder: "products",
       });
     }
@@ -61,7 +61,7 @@ export const createProduct = async (req, res) => {
       name,
       price,
       description,
-      imageUrl: cloudinaryResponse?.secure_url || "",
+      image: cloudinaryResponse?.secure_url || "",
       category,
       isFeatured,
     });
@@ -81,7 +81,7 @@ export const getRecommendedProducts = async (req, res) => {
     // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
     const recommendedProducts = await Product.aggregate([
       { $sample: { size: 3 } },
-      { $project: { _id: 1, name: 1, description: 1, price: 1, imageUrl: 1 } },
+      { $project: { _id: 1, name: 1, description: 1, price: 1, image: 1 } },
     ]);
 
     if (!recommendedProducts) {

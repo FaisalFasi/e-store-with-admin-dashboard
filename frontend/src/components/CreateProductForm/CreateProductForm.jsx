@@ -167,7 +167,7 @@ const CreateProductForm = () => {
             type="file"
             id="image"
             className="sr-only"
-            accept="image/*"
+            accept="image/*,image/webp"
             onChange={handleImageChange}
           />
           <label
@@ -177,8 +177,12 @@ const CreateProductForm = () => {
             <Upload className="h-5 w-5 inline-block mr-2" />
             Upload Image
           </label>
-          {newProduct.image && (
-            <span className="ml-3 text-sm text-gray-400">Image uploaded </span>
+          {newProduct.image ? (
+            <span className="ml-3 text-sm text-green-400">Image uploaded </span>
+          ) : (
+            <span className="ml-3 text-sm text-gray-400">
+              Please upload an image
+            </span>
           )}
         </div>
 
