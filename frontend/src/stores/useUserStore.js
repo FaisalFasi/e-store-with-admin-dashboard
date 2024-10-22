@@ -69,4 +69,17 @@ export const useUserStore = create((set, get) => ({
       //   );
     }
   },
+  logout: async () => {
+    set({ loading: true });
+    try {
+      await axiosBaseURL.get("/auth/logout");
+      set({ user: null, loading: false });
+    } catch (error) {
+      set({ loading: false });
+      toast.error(
+        error.response?.data.message ||
+          "An error occurred in logout function in user store"
+      );
+    }
+  },
 }));
