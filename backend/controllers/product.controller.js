@@ -130,6 +130,7 @@ export const toggleFeaturedProduct = async (req, res) => {
       product.isFeatured = !product.isFeatured;
       const updatedProduct = await product.save();
       await updateFeaturedProductsCache(updatedProduct);
+      console.log("updatedProduct:", updatedProduct);
       res.json({ updatedProduct });
     } else {
       res.status(404).json({ message: "Product not found" });
@@ -180,6 +181,11 @@ export const deleteProduct = async (req, res) => {
         });
       }
     }
+    // Now directly delete the product from the database
+    // await Product.findByIdAndDelete(id);
+
+    // Directly delete the fetched product from the database
+    await product.deleteOne();
 
     res.json({ message: "Product deleted successfully" });
   } catch (error) {

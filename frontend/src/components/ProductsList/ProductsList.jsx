@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 
 const ProductsList = () => {
   const { deleteProduct, products, toggleFeaturedProduct } = useProductStore();
-  console.log(products);
 
   return (
     <motion.div

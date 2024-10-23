@@ -60,12 +60,14 @@ export const useProductStore = create((set) => ({
   toggleFeaturedProduct: async (productId) => {
     set({ loading: true });
     try {
-      const response = await axiosBaseURL.patch(
-        `/products/${productId}/toggle`
-      );
-      set((prevState) => ({
-        products: prevState.products.map((product) =>
-          product._id === productId ? response.data : product
+      const response = await axiosBaseURL.patch(`/products/${productId}`);
+      const updatedProduct = response?.data?.updatedProduct;
+
+      set((prevProducts) => ({
+        products: prevProducts.products.map((product) =>
+          product._id === productId
+            ? { ...product, isFeatured: updatedProduct.isFeatured }
+            : product
         ),
         loading: false,
       }));

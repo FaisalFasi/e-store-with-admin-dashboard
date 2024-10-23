@@ -13,7 +13,7 @@ function App() {
   const { user, checkAuth, checkingAuth } = useUserStore();
 
   useEffect(() => {
-    if (user) checkAuth();
+    checkAuth();
   }, [checkAuth]);
 
   if (checkingAuth) return <LoadingSpinner />;
