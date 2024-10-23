@@ -11,13 +11,11 @@ export const useProductStore = create((set) => ({
   createProduct: async (productData) => {
     try {
       set({ loading: true });
-      console.log("productData:", productData);
       if (!productData.image) {
         set({ loading: false });
         return toast.error("Please select an image");
       }
       const response = await axiosBaseURL.post("/products", productData);
-      console.log("response:", response);
 
       // here we are using the prevState to update the products array and add the new product to it without mutating the state directly using the spread operator to copy the previous state and then add the new product to it using the response.data which is the new product that was created in the backend and returned to us as a response from the server after creating the product in the database and then we set the loading to false
       set((prevState) => ({
@@ -41,6 +39,19 @@ export const useProductStore = create((set) => ({
       toast.error(error?.response?.data.error || "Failed to fetch product");
     }
   },
+  fetchProductsByCategory: async (category) => {
+    set({ loading: true });
+    try {
+      const response = await axiosBaseURL.get(`/products/category/${category}`);
+      set({ products: response?.data?.products, loading: false });
+    } catch (error) {
+      set({ loading: false });
+      toast.error(
+        error?.response?.data.error || "Failed to fetch products by category"
+      );
+    }
+  },
+
   deleteProduct: async (productId) => {
     set({ loading: true });
     try {

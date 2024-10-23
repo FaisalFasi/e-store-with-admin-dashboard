@@ -51,8 +51,8 @@ const ProductsList = () => {
         </thead>
 
         <tbody className="bg-gray-800 divide-y divide-gray-700">
-          {products?.map((product) => (
-            <tr key={product._id} className="hover:bg-gray-700">
+          {products?.map((product, index) => (
+            <tr key={index} className="hover:bg-gray-700">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div className="flex-shrink-0 h-10 w-10">
@@ -71,7 +71,7 @@ const ProductsList = () => {
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm text-gray-300">
-                  ${product.price.toFixed(2)}
+                  {product.price ? `$${product.price.toFixed(2)}` : "N/A"}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">

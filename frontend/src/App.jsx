@@ -8,6 +8,7 @@ import { Toaster } from "react-hot-toast";
 import { useUserStore } from "./stores/useUserStore";
 import { useEffect } from "react";
 import LoadingSpinner from "./components/LoadingSpinner/LoadingSpinner";
+import CategoryPage from "./pages/CategoryPage";
 
 function App() {
   const { user, checkAuth, checkingAuth } = useUserStore();
@@ -50,6 +51,7 @@ function App() {
               )
             }
           />
+          <Route path="/category/:category" element={<CategoryPage />} />
 
           {/* Add routes here */}
         </Routes>

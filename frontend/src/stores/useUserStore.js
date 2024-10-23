@@ -33,14 +33,12 @@ export const useUserStore = create((set, get) => ({
   },
   login: async (email, password) => {
     set({ loading: true });
-    console.log("--------- login ---------");
-    console.log(email + " " + password);
+
     try {
       const response = await axiosBaseURL.post("/auth/login", {
         email,
         password,
       });
-      console.log(response.data.user);
       // here set the user to the response data. so set will return the user data like {user: response data, loading : false}
       // and we can access the user data in the component where we are using this store
       set({ user: response.data.user, loading: false });
@@ -56,17 +54,15 @@ export const useUserStore = create((set, get) => ({
     set({ checkingAuth: true });
 
     try {
-      console.log("--------- checkAuth ---------");
       const response = await axiosBaseURL.get("/auth/profile");
-      console.log("response :", response);
       set({ user: response.data, checkingAuth: false });
     } catch (error) {
       set({ checkingAuth: false, user: null });
-      //   console.log("error :", error);
-      //   toast.error(
-      //     error.response.data.message ||
-      //       "An error occurred in checkAuth function in user store"
-      //   );
+      console.log("error :", error);
+      toast.error(
+        error.response.data.message ||
+          "An error occurred in checkAuth function in user store"
+      );
     }
   },
   logout: async () => {
