@@ -1,30 +1,12 @@
 import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../../stores/useUserStore";
+import { useCartStore } from "../../stores/useCartStore";
 
 const Navbar = () => {
   const { user, logout } = useUserStore();
   const isAdmin = user?.role === "admin";
-  const cart = [
-    {
-      id: 1,
-      name: "Product 1",
-      price: 100,
-      quantity: 2,
-    },
-    {
-      id: 2,
-      name: "Product 2",
-      price: 200,
-      quantity: 1,
-    },
-    {
-      id: 3,
-      name: "Product 3",
-      price: 300,
-      quantity: 3,
-    },
-  ];
+  const { cart } = useCartStore();
 
   return (
     <header className="fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800">

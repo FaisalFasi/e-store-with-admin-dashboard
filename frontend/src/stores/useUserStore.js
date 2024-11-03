@@ -21,6 +21,11 @@ export const useUserStore = create((set, get) => ({
         name,
         password,
       });
+      if (!response) {
+        return toast.error("Account creation failed");
+      } else {
+        toast.success("Account created successfully");
+      }
 
       set({ user: response.data.user, loading: false });
     } catch (error) {
