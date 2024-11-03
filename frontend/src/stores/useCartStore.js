@@ -15,9 +15,10 @@ export const useCartStore = create((set, get) => ({
     try {
       const response = await axiosBaseURL.get("/cart");
       set({
-        cart: response.cart,
+        cart: response?.data.cartItems,
         loading: false,
       });
+
       get().calculate_Total_AmountInCart();
     } catch (error) {
       set({ cart: [], total: 0, subTotal: 0, loading: false });

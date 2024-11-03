@@ -48,8 +48,7 @@ const setCookies = (res, accessToken, refreshToken) => {
 };
 export const signup = async (req, res) => {
   const { email, name, password } = req.body;
-  console.log("signup controller called");
-  console.log("req.body:", req.body);
+
   try {
     if (!email || !password || !name) {
       return res
@@ -157,8 +156,6 @@ export const logout = async (req, res) => {
 export const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   try {
-    console.log("refreshToken:", refreshToken);
-
     if (!refreshToken) {
       return res
         .status(401)
@@ -199,7 +196,6 @@ export const refreshToken = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    console.log("req.user:", req.user);
     res.json({ user: req.user });
   } catch (error) {
     console.log("error in getProfile controller:", error);
