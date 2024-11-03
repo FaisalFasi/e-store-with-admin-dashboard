@@ -50,6 +50,13 @@ export const useCartStore = create((set, get) => ({
       toast.error(error.response || "An error occurred");
     }
   },
+  removeFromCart: async (productId) => {
+    await axiosBaseURL.delete(`/cart`, { data: { productId } });
+    set((prevState) => ({
+      cart: prevState.cart.filter((item) => item._id !== productId),
+    }));
+    get().calculate_Total_AmountInCart();
+  },
 
   calculate_Total_AmountInCart: () => {
     const { cart, coupon } = get();

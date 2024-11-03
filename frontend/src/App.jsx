@@ -69,7 +69,7 @@ function App() {
           {/* Add routes here */}
         </Routes>
       </div>
-      <Toaster />
+      <Toaster position="bottom-right" />
     </div>
   );
 }
