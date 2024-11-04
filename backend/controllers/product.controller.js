@@ -80,7 +80,7 @@ export const getRecommendedProducts = async (req, res) => {
   try {
     // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
     const recommendedProducts = await Product.aggregate([
-      { $sample: { size: 3 } },
+      { $sample: { size: 4 } },
       { $project: { _id: 1, name: 1, description: 1, price: 1, image: 1 } },
     ]);
 
@@ -88,7 +88,7 @@ export const getRecommendedProducts = async (req, res) => {
       return res.status(404).json({ message: "No recommended products found" });
     }
 
-    res.json({ products: recommendedProducts });
+    res.status(200).json({ products: recommendedProducts });
   } catch (error) {
     console.log("Error in getRecommendedProducts controller:", error);
     res.status(500).json({

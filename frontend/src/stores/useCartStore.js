@@ -8,6 +8,7 @@ export const useCartStore = create((set, get) => ({
   total: 0,
   subTotal: 0,
   loading: false,
+  isCouponApplied: false,
 
   getCartItems: async () => {
     set({ loading: true });
@@ -54,6 +55,21 @@ export const useCartStore = create((set, get) => ({
     await axiosBaseURL.delete(`/cart`, { data: { productId } });
     set((prevState) => ({
       cart: prevState.cart.filter((item) => item._id !== productId),
+    }));
+    get().calculate_Total_AmountInCart();
+  },
+
+  updateQuantity: async (productId, quantity) => {
+    if (quantity === 0) {
+      get().removeFromCart(productId);
+      return;
+    }
+
+    await axiosBaseURL.put(`/cart/${productId}`, { quantity });
+    set((prevState) => ({
+      cart: prevState.cart.map((item) =>
+        item._id === productId ? { ...item, quantity } : item
+      ),
     }));
     get().calculate_Total_AmountInCart();
   },
