@@ -1,12 +1,12 @@
 import React from "react";
 import { useCartStore } from "../../stores/useCartStore";
-// import PeopleAlsoBought from "../../components/PeopleAlsoBought";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CartItem from "../../components/CartItem/CartItem";
 import PeopleAlsoBought from "../../components/PeopleAlsoBought/PeopleAlsoBought";
 import OrderSummary from "../../components/OrderSummary/OrderSummary";
+import GiftCouponCard from "../../components/GiftCouponCard/GiftCouponCard";
 
 const CartPage = () => {
   const { cart } = useCartStore();
@@ -42,7 +42,7 @@ const CartPage = () => {
             >
               <div></div>
               <OrderSummary />
-              {/* <GiftCouponCard />   */}
+              <GiftCouponCard />
             </motion.div>
           )}
         </div>
