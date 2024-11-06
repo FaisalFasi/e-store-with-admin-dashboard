@@ -2,11 +2,11 @@ import Coupon from "../models/coupen.model.js";
 
 export const getCoupon = async (req, res) => {
   try {
-    const coupen = await Coupon.findOne({
+    const coupon = await Coupon.findOne({
       userId: req.user._id,
       isActive: true,
     });
-    res.status(200).json(coupen || {});
+    res.status(200).json(coupon || {});
   } catch (err) {
     console.log("Error in getCoupen controller : ", err.message);
     res

@@ -13,6 +13,8 @@ import LoginPage from "./pages/loginPage";
 import CategoryPage from "./pages/CategoryPage";
 import CartPage from "./pages/cartPage";
 import { useCartStore } from "./stores/useCartStore";
+import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
+import PurchaseCancelPage from "./pages/PurchaseCancelPage";
 
 function App() {
   const { user, checkAuth, checkingAuth } = useUserStore();
@@ -39,10 +41,10 @@ function App() {
       </div>
       <div className="relative z-50 pt-24 sm:pt-20">
         <Navbar />
+
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
-
+          {/* user signup and login pages */}
           <Route
             path="/signup"
             element={!user ? <SignUpPage /> : <Navigate to={"/"} />}
@@ -51,23 +53,32 @@ function App() {
             path="/login"
             element={!user ? <LoginPage /> : <Navigate to={"/"} />}
           />
+          {/* admin dashboard page */}
           <Route
             path="/admin-dashboard"
             element={
               user?.role === "admin" ? (
                 <AdminDashboardPage />
               ) : (
-                <Navigate to={"/login"} />
+                <Navigate to={user ? "/" : "/login"} />
               )
             }
           />
           <Route path="/category/:category" element={<CategoryPage />} />
+
           <Route
             path="/cart"
             element={user ? <CartPage /> : <Navigate to="/login" />}
           />
-
-          {/* Add routes here */}
+          <Route
+            path="/purchase-success"
+            // element={user ? <PurchaseSuccessPage /> : <Navigate to="/login" />}
+            element={user && <PurchaseSuccessPage />}
+          />
+          <Route
+            path="/purchase-cancel"
+            element={user && <PurchaseCancelPage />}
+          />
         </Routes>
       </div>
       <Toaster position="bottom-right" />

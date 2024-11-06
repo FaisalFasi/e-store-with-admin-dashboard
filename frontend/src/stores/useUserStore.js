@@ -27,7 +27,7 @@ export const useUserStore = create((set, get) => ({
         toast.success("Account created successfully");
       }
 
-      set({ user: response.data.user, loading: false });
+      set({ user: response?.data?.user, loading: false });
     } catch (error) {
       set({ loading: false });
       toast.error(
@@ -46,7 +46,7 @@ export const useUserStore = create((set, get) => ({
       });
       // here set the user to the response data. so set will return the user data like {user: response data, loading : false}
       // and we can access the user data in the component where we are using this store
-      set({ user: response.data.user, loading: false });
+      set({ user: response?.data?.user, loading: false });
     } catch (error) {
       set({ loading: false });
       toast.error(
@@ -56,13 +56,13 @@ export const useUserStore = create((set, get) => ({
     }
   },
   checkAuth: async () => {
-    set({ checkingAuth: true });
+    set({ checkingAuth: true, loading: true });
 
     try {
       const response = await axiosBaseURL.get("/auth/profile");
-      set({ user: response?.data, checkingAuth: false });
+      set({ user: response?.data?.user, checkingAuth: false, loading: false });
     } catch (error) {
-      set({ checkingAuth: false, user: null });
+      set({ checkingAuth: false, user: null, loading: false });
       console.log("error :", error.message);
       toast.error(
         error.message || "An error occurred in checkAuth function in user store"

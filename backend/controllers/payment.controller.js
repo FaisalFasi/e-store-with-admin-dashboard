@@ -55,7 +55,7 @@ export const createCheckoutSession = async (req, res) => {
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "Please add products to cart" });
     }
-
+    console.log("couponCode", couponCode);
     let totalAmount = 0;
     // Create line items for stripe checkout session from products array and calculate totalAmount
     const lineItems = products.map((product) => {
@@ -105,7 +105,10 @@ export const createCheckoutSession = async (req, res) => {
       discounts: coupon
         ? [
             {
-              coupon: await createStripeCoupon(coupon.discountPercentage),
+              coupon: await createStripeCoupon(
+                coupon.discountPercentage,
+                req.user._id
+              ),
             },
           ]
         : [],
@@ -138,12 +141,26 @@ export const createCheckoutSession = async (req, res) => {
   }
 };
 
-async function createStripeCoupon(discountPercentage) {
+async function createStripeCoupon(discountPercentage = 10, userId) {
   try {
+    const existingCoupon = await Coupon.findOne({ userId });
+
+    if (existingCoupon) {
+      console.log("User already has a coupon, skipping creation.");
+      console.log("Existing coupon : ", existingCoupon);
+      return existingCoupon.couponId; // Or handle updating the coupon if required
+    }
+
     const coupon = await stripe.coupons.create({
       percent_off: discountPercentage,
       duration: "once",
     });
+    // Save the new coupon to the database
+    const newCoupon = new Coupon({
+      userId,
+      couponId: coupon.id,
+    });
+    await newCoupon.save();
 
     return coupon.id;
   } catch (err) {

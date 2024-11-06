@@ -10,13 +10,39 @@ export const useCartStore = create((set, get) => ({
   loading: false,
   isCouponApplied: false,
 
+  getMyCoupon: async () => {
+    try {
+      const response = await axiosBaseURL.get("/coupons");
+      set({ coupon: response?.data });
+    } catch (error) {
+      console.error("Error fetching coupon:", error);
+    }
+  },
+  applyCoupon: async (code) => {
+    try {
+      const response = await axiosBaseURL.post("/coupons/validate", { code });
+      console.log("response in applyCoupon:", response);
+      set({ coupon: response?.data, isCouponApplied: true });
+
+      get().calculate_Total_AmountInCart();
+      toast.success("Coupon applied successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to apply coupon");
+    }
+  },
+  removeCoupon: () => {
+    set({ coupon: null, isCouponApplied: false });
+    get().calculate_Total_AmountInCart();
+    toast.success("Coupon removed");
+  },
   getCartItems: async () => {
     set({ loading: true });
 
     try {
       const response = await axiosBaseURL.get("/cart");
+      console.log("response in getCartItems:", response.data.cartItems);
       set({
-        cart: response?.data.cartItems,
+        cart: response?.data?.cartItems,
         loading: false,
       });
 
@@ -74,10 +100,25 @@ export const useCartStore = create((set, get) => ({
     get().calculate_Total_AmountInCart();
   },
 
+  clearCart: async () => {
+    set({ loading: true });
+    try {
+      await axiosBaseURL.delete("/cart");
+      set({ cart: [], coupon: null, total: 0, subtotal: 0 });
+    } catch (error) {
+      console.log("Error in clearCart:", error);
+      toast.error("An error occurred in clearing cart");
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   calculate_Total_AmountInCart: () => {
     const { cart, coupon } = get();
     // reduce the cart items to get the total amount
     // reduce initial value as arguments and returns a single value like sum of all the items in the array
+    console.log("cart in calculate_Total_AmountInCart:", cart);
+    console.log("coupon in calculate_Total_AmountInCart:", coupon);
     const subTotal = cart.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0
