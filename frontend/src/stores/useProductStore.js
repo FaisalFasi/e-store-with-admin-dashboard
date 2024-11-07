@@ -88,4 +88,15 @@ export const useProductStore = create((set) => ({
       toast.error(error?.response?.data.error || "Failed to update product");
     }
   },
+  fetchFeaturedProducts: async () => {
+    set({ loading: true });
+    try {
+      const response = await axiosBaseURL.get("/products/featured");
+      console.log("Featured products response:", response);
+      set({ products: response?.data?.products, loading: false });
+    } catch (error) {
+      set({ error: "Failed to fetch products", loading: false });
+      console.log("Error fetching featured products:", error);
+    }
+  },
 }));

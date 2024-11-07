@@ -82,4 +82,50 @@ export const useUserStore = create((set, get) => ({
       );
     }
   },
+  refreshToken: async () => {
+    if (get().checkingAuth) return;
+
+    set({ checkingAuth: true, loading: true });
+    try {
+      const response = await axiosBaseURL.post("/auth/refresh-token");
+      set({ checkingAuth: false, loading: false });
+    } catch (error) {
+      set({ loading: false });
+      toast.error(
+        error.response?.data.message ||
+          "An error occurred in refreshToken function in user store"
+      );
+    }
+  },
 }));
+
+// implement interceptor to check if the user is authenticated
+// axios interceptor for token refresh
+let refreshingPromise = null;
+
+axiosBaseURL.interceptors.response.use(
+  (response) => response,
+
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        if (refreshingPromise) {
+          await refreshingPromise;
+          return axiosBaseURL(originalRequest);
+        }
+
+        refreshingPromise = useUserStore.getState().refreshToken();
+        await refreshingPromise;
+        refreshingPromise = null;
+
+        return axiosBaseURL(originalRequest);
+      } catch (refreshError) {
+        useUserStore.getState().logout();
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
