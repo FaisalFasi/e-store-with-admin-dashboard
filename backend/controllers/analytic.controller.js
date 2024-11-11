@@ -33,7 +33,6 @@ export const getAnalyticsData = async () => {
       },
     },
   ]);
-  console.log("Sales Data: ", salesData);
 
   const { totalSales, totalRevenue } = salesData[0] || {
     totalSales: 0,

@@ -5,8 +5,6 @@ export const protectRoute = async (req, res, next) => {
   try {
     const accessToken = req.cookies.accessToken;
 
-    console.log("accessToken:", accessToken);
-
     // Check if user is logged in
     if (!accessToken) {
       return res
@@ -18,7 +16,6 @@ export const protectRoute = async (req, res, next) => {
         accessToken,
         process.env.JWT_ACCESS_TOKEN_SECRET
       );
-      console.log("decoded:", decoded);
 
       const user = await User.findById(decoded.userId).select("-password");
 
