@@ -184,7 +184,7 @@ export const refreshToken = async (req, res) => {
       sameSite: "strict",
       maxAge: 15 * 60 * 1000,
     });
-
+    // as cookies are set in the browser,so its not necessary to send any response to the client because the client will automatically send the access token in the headers and the server will authenticate the user
     res.json({ message: "Refreshed token successfully" });
   } catch (error) {
     console.log("error in refresh token controller:", error);

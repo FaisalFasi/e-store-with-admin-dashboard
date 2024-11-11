@@ -89,6 +89,8 @@ export const useUserStore = create((set, get) => ({
     try {
       const response = await axiosBaseURL.post("/auth/refresh-token");
       set({ checkingAuth: false, loading: false });
+      // here response doesn't matter because we are just refreshing the token and not setting the user data
+      return response?.data;
     } catch (error) {
       set({ loading: false });
       toast.error(
