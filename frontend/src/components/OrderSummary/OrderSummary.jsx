@@ -7,7 +7,13 @@ import axiosBaseURL from "../../lib/axios";
 import { loadStripe } from "@stripe/stripe-js";
 
 export const OrderSummary = () => {
-  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+  console.log(
+    "import.meta.env.VITE_STRIPE_PUBLIC_KEY:",
+    import.meta.env.VITE_STRIPE_PUBLIC_KEY
+  );
+  const stripePromise = loadStripe(
+    String(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+  );
 
   const { total, subTotal, coupon, isCouponApplied, cart } = useCartStore();
 
