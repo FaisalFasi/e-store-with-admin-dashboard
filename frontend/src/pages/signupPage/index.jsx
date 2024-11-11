@@ -14,9 +14,15 @@ const SignUpPage = () => {
 
   const { signUp, loading } = useUserStore();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    signUp(formData);
+    await signUp(formData);
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    });
     console.log(formData);
   };
 
