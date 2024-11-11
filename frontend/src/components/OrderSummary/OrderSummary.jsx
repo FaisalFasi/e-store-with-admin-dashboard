@@ -7,10 +7,6 @@ import axiosBaseURL from "../../lib/axios";
 import { loadStripe } from "@stripe/stripe-js";
 
 export const OrderSummary = () => {
-  console.log(
-    "import.meta.env.VITE_STRIPE_PUBLIC_KEY:",
-    import.meta.env.VITE_STRIPE_PUBLIC_KEY
-  );
   const stripePromise = loadStripe(
     String(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
   );
