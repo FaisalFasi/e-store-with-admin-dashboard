@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const axiosBaseURL = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL:
+    import.meta.env.VITE_MODE === "development"
+      ? import.meta.env.VITE_API_BASE_URL
+      : "/api",
   withCredentials: true, // send cookies when cross-domain requests
   // on deployment how it will get the domain?
   //like import.meta.url? or import.meta.env?
