@@ -11,46 +11,41 @@ export const getSalesData = async (req, res) => {
 
     const dailySalesData = await getDailySalesData(startDate, endDate);
 
-    res.status(200).json({
+    res.json({
       analyticsData,
       dailySalesData,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server Error",
-    });
+    console.log("Error in analytics route", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 export const getAnalyticsData = async () => {
   const totalUsers = await User.countDocuments();
   const totalProducts = await Product.countDocuments();
 
-  // aggregate is a method in mongoose that allows us to perform operations on the data like sum, average, etc
   const salesData = await Order.aggregate([
     {
-      // $group will group the data based on the field we provide
-      // and we can get data from $group by using the $ sign before the field name like $totalAmount
       $group: {
-        _id: null, // this is the default value to group all the data together
-        totalSales: { $sum: 1 }, // this will count the total number of sales
-        totalRavenue: { $sum: "$totalAmount" }, // this will sum the total amount of all the sales
+        _id: null, // it groups all documents together,
+        totalSales: { $sum: 1 },
+        totalRevenue: { $sum: "$totalAmount" },
       },
     },
   ]);
-  // we can destructure the data from the salesData array
-  const { totalSales, totalRavenue } = salesData[0] || {
+
+  const { totalSales, totalRevenue } = salesData[0] || {
     totalSales: 0,
-    totalRavenue: 0,
+    totalRevenue: 0,
   };
 
   return {
     users: totalUsers,
     products: totalProducts,
     totalSales,
-    totalRavenue,
+    totalRevenue,
   };
 };
-
 export const getDailySalesData = async (startDate, endDate) => {
   try {
     const dailySalesData = await Order.aggregate([

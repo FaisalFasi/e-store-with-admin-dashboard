@@ -5,7 +5,6 @@ import Product from "../models/product.model.js";
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find({}); // Fetch all products from the database
-    console.log("products:", products);
 
     res.json({ products });
   } catch (error) {
@@ -130,7 +129,6 @@ export const toggleFeaturedProduct = async (req, res) => {
       product.isFeatured = !product.isFeatured;
       const updatedProduct = await product.save();
       await updateFeaturedProductsCache(updatedProduct);
-      console.log("updatedProduct:", updatedProduct);
       res.json({ updatedProduct });
     } else {
       res.status(404).json({ message: "Product not found" });

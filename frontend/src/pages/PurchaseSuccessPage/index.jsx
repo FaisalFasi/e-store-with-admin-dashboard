@@ -18,8 +18,7 @@ const PurchaseSuccessPage = () => {
         const response = await axiosBaseURL.post("/payments/checkout-success", {
           sessionId,
         });
-        console.log("response in handleCheckoutSuccess:", response);
-
+        console.log("Checkout success response: ", response);
         clearCart();
       } catch (error) {
         console.error("Error clearing cart: ", error);
@@ -31,7 +30,6 @@ const PurchaseSuccessPage = () => {
     const session_id = new URLSearchParams(window.location.search).get(
       "session_id"
     );
-    console.log("Session ID:", session_id);
 
     if (session_id) {
       handleCheckoutSuccess(session_id);

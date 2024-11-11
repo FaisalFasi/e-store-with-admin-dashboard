@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import axiosBaseURL from "../../lib/axios";
 import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
+
 import {
   LineChart,
   Line,
@@ -12,6 +13,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+
 import { motion } from "framer-motion";
 
 const AnalyticsTab = () => {
@@ -28,9 +30,9 @@ const AnalyticsTab = () => {
     const fetchAnalyticsData = async () => {
       try {
         const response = await axiosBaseURL.get("/analytics");
-        console.log("Analytics response: ", response);
+
         setAnalyticsData(response?.data?.analyticsData);
-        setDailySalesData(response.data.dailySalesData);
+        setDailySalesData(response?.data?.dailySalesData);
       } catch (error) {
         console.error("Error fetching analytics data:", error);
       } finally {

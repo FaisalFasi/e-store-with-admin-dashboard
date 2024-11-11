@@ -77,8 +77,6 @@ export const signup = async (req, res) => {
 
     setCookies(res, accessToken, refreshToken);
 
-    console.log("Cookies set:", res.getHeaders()["set-cookie"]);
-
     // remove the password from the user data
     // send response to the client with the user data without the password
     res.send({
