@@ -25,6 +25,20 @@ const AnalyticsTab = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [dailySalesData, setDailySalesData] = useState([]);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const isSmallScreen = windowWidth < 640; // Define threshold for small screen
 
   useEffect(() => {
     const fetchAnalyticsData = async () => {
@@ -48,7 +62,7 @@ const AnalyticsTab = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto  md:px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <AnalyticsCard
           title="Total Users"
@@ -76,12 +90,15 @@ const AnalyticsTab = () => {
         />
       </div>
       <motion.div
-        className="bg-gray-800/60 rounded-lg p-6 shadow-lg"
+        className="bg-gray-800/60 rounded-lg p-6 shadow-lg "
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.25 }}
       >
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer
+          width={isSmallScreen ? 300 : "100%"}
+          height={isSmallScreen ? 250 : 400}
+        >
           <LineChart data={dailySalesData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" stroke="#D1D5DB" />

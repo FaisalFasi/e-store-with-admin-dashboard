@@ -21,7 +21,7 @@ const AdminDashboardPage = () => {
 
   return (
     <section className="min-h-screen relative overflow-hidden">
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="relative z-10 container mx-auto px-4 py-16 ">
         <motion.h1
           className="text-4xl font-bold mb-8 text-emerald-400 text-center"
           initial={{ opacity: 0, y: -40 }}
@@ -43,14 +43,16 @@ const AdminDashboardPage = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-4 py-2 mx-2 rounded-md transition-colors duration-200 ${
+              className={`flex items-center px-2 md:px-4 md:py-2 mx-2 rounded-md transition-colors duration-200 ${
                 activeTab === tab.id
                   ? "bg-emerald-600 text-white"
                   : "bg-gray-700 text-gray-300 hover:bg-gray-600"
               }`}
             >
               <tab.icon className="mr-2 h-5 w-5" />
-              {tab.label}
+              <span className=" text-xs font-bold sm:text-lg md:text-xl lg:text-xl whitespace-nowrap md:whitespace-normal py-2 md:py-0 ">
+                {tab.label}
+              </span>
             </button>
           ))}
         </motion.div>

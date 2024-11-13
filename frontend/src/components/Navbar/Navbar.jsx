@@ -22,7 +22,7 @@ const Navbar = () => {
           <nav className="flex flex-wrap items-center gap-4">
             <Link
               to={"/"}
-              className="text-gray-300 hover:text-emerald-400 transition duration-300
+              className="hidden sm:block text-gray-300 hover:text-emerald-400 transition duration-300
 					 ease-in-out"
             >
               Home
