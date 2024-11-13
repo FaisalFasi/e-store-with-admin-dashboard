@@ -40,7 +40,6 @@ const CartItem = ({ item }) => {
             </p>
           </div>
         </div>
-
         <div className="w-full min-w-0 flex-1 space-y-4 md:order-2 md:max-w-md">
           <p className="text-base font-medium text-white hover:text-emerald-400 hover:underline">
             {item.name}
