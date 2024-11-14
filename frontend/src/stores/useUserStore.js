@@ -3,7 +3,7 @@ import axiosBaseURL from "../lib/axios";
 import { toast } from "react-hot-toast";
 
 export const useUserStore = create((set, get) => ({
-  user: null,
+  user: JSON.parse(localStorage.getItem("user")) || null,
   loading: false,
   checkingAuth: false,
   // functions to be used in components
@@ -47,12 +47,14 @@ export const useUserStore = create((set, get) => ({
       // here set the user to the response data. so set will return the user data like {user: response data, loading : false}
       // and we can access the user data in the component where we are using this store
       set({ user: response?.data?.user, loading: false });
+      localStorage.setItem("user", JSON.stringify(get().user)); // Store user after setting it
     } catch (error) {
       set({ loading: false });
       toast.error(
-        error.response.data.message ||
+        error.response?.data?.message ||
           "An error occurred in login function in user store"
       );
+      console.log("error :", error.message);
     }
   },
   checkAuth: async () => {
@@ -61,12 +63,14 @@ export const useUserStore = create((set, get) => ({
     try {
       const response = await axiosBaseURL.get("/auth/profile");
       set({ user: response?.data?.user, checkingAuth: false, loading: false });
+      console.log("User from checkAuth function in user store", user);
+      localStorage.setItem("user", JSON.stringify(get().user)); // Store user after setting it
     } catch (error) {
       set({ checkingAuth: false, user: null, loading: false });
+      localStorage.removeItem("user"); // Remove user from localStorage on failure
+
       console.log("error :", error.message);
-      toast.error(
-        error.message || "An error occurred in checkAuth function in user store"
-      );
+      toast.error("An error occurred in checkAuth function in user store");
     }
   },
   logout: async () => {
@@ -74,6 +78,7 @@ export const useUserStore = create((set, get) => ({
     try {
       await axiosBaseURL.get("/auth/logout");
       set({ user: null, loading: false });
+      localStorage.removeItem("user"); // Clear user data from localStorage
     } catch (error) {
       set({ loading: false });
       toast.error(
