@@ -2,7 +2,7 @@ import React from "react";
 import { useProductStore } from "../../stores/useProductStore";
 import { Trash, Star } from "lucide-react";
 import { motion } from "framer-motion";
-import Tooltip from "../ToolTip/ToolTip";
+import CustomTooltip from "../CustomTooltip/CustomTooltip";
 
 const ProductsList = () => {
   const { deleteProduct, products, toggleFeaturedProduct } = useProductStore();
@@ -69,7 +69,7 @@ const ProductsList = () => {
                         {product.name}
                       </div>
                       {/* Tooltip */}
-                      <Tooltip text={product.name} />
+                      <CustomTooltip text={product.name} />
                     </div>
                   </div>
                 </td>

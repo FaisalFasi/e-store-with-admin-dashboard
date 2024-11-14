@@ -1,7 +1,7 @@
 // Tooltip.jsx
 import React from "react";
 
-const Tooltip = ({ children, text }) => {
+const CustomTooltip = ({ children, text }) => {
   return (
     <div className="relative group">
       {/* Text that gets truncated */}
@@ -9,7 +9,7 @@ const Tooltip = ({ children, text }) => {
         {children}
       </div>
 
-      {/* Tooltip */}
+      {/* CustomTooltip */}
       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-6 w-max p-2 text-sm text-white bg-black rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         {text}
       </div>
@@ -17,4 +17,4 @@ const Tooltip = ({ children, text }) => {
   );
 };
 
-export default Tooltip;
+export default CustomTooltip;
