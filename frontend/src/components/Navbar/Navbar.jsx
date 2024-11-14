@@ -14,7 +14,7 @@ const Navbar = () => {
         <div className="flex flex-wrap justify-between items-center">
           <Link
             to="/"
-            className="text-2xl font-bold text-emerald-400 items-center space-x-2 flex"
+            className="text-xl md:text-2xl font-bold text-emerald-400 items-center space-x-2 flex"
           >
             E-Commerce
           </Link>
@@ -22,7 +22,7 @@ const Navbar = () => {
           <nav className="flex flex-wrap items-center gap-4">
             <Link
               to={"/"}
-              className="hidden sm:block text-gray-300 hover:text-emerald-400 transition duration-300
+              className="font-semibold text-xl hidden sm:block text-gray-300 hover:text-emerald-400 transition duration-300
 					 ease-in-out"
             >
               Home
@@ -72,7 +72,7 @@ const Navbar = () => {
               <>
                 <Link
                   to={"/signup"}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white py-1 md:py-2 px-2 md:px-4 text-sm md:text-xl
 									rounded-md flex items-center transition duration-300 ease-in-out"
                 >
                   <UserPlus className="mr-2" size={18} />
@@ -80,7 +80,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to={"/login"}
-                  className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 
+                  className="bg-gray-700 hover:bg-gray-600 text-white py-1 md:py-2  px-2 md:px-4 text-sm md:text-xl 
 									rounded-md flex items-center transition duration-300 ease-in-out"
                 >
                   <LogIn className="mr-2" size={18} />
