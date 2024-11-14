@@ -8,12 +8,12 @@ import CategoryPage from "../../pages/CategoryPage";
 import CartPage from "../../pages/cartPage";
 import PurchaseSuccessPage from "../../pages/PurchaseSuccessPage";
 import PurchaseCancelPage from "../../pages/PurchaseCancelPage";
-import { getUser } from "../../utils/getUser.js";
+import { getUserData } from "../../utils/getUserData.js";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.jsx";
 import { useCartStore } from "../../stores/useCartStore.js";
 
 const AppRoutes = () => {
-  const { user, checkAuth, checkingAuth } = getUser();
+  const { user, checkAuth, checkingAuth } = getUserData();
   const { getCartItems } = useCartStore();
 
   useEffect(() => {
@@ -27,7 +27,9 @@ const AppRoutes = () => {
 
   if (checkingAuth) return <LoadingSpinner />;
   return (
-    <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+    <div className="py-24 min-h-screen bg-gray-900 text-white relative overflow-hidden">
+      {/* Background gradient */}
+      <BackgroundGradient />
       <Routes>
         <Route path="/" element={<HomePage />} />
         {/* user signup and login pages */}
@@ -70,3 +72,13 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
+
+const BackgroundGradient = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.3)_0%,rgba(10,80,60,0.2)_45%,rgba(0,0,0,0.1)_100%)]" />
+      </div>
+    </div>
+  );
+};

@@ -21,7 +21,6 @@ export const useCartStore = create((set, get) => ({
   applyCoupon: async (code) => {
     try {
       const response = await axiosBaseURL.post("/coupons/validate", { code });
-      console.log("response in applyCoupon:", response);
       set({ coupon: response?.data, isCouponApplied: true });
 
       get().calculate_Total_AmountInCart();
@@ -40,7 +39,6 @@ export const useCartStore = create((set, get) => ({
 
     try {
       const response = await axiosBaseURL.get("/cart");
-      console.log("response in getCartItems:", response.data.cartItems);
       set({
         cart: response?.data?.cartItems,
         loading: false,
@@ -117,8 +115,6 @@ export const useCartStore = create((set, get) => ({
     const { cart, coupon } = get();
     // reduce the cart items to get the total amount
     // reduce initial value as arguments and returns a single value like sum of all the items in the array
-    console.log("cart in calculate_Total_AmountInCart:", cart);
-    console.log("coupon in calculate_Total_AmountInCart:", coupon);
     const subTotal = cart.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0

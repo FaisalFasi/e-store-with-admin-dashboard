@@ -14,8 +14,6 @@ const LoginPage = () => {
     e.preventDefault();
 
     login(email, password);
-    console.log(email, password);
-    console.log(email + " " + password);
   };
 
   return (

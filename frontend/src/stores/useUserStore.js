@@ -63,7 +63,6 @@ export const useUserStore = create((set, get) => ({
     try {
       const response = await axiosBaseURL.get("/auth/profile");
       set({ user: response?.data?.user, checkingAuth: false, loading: false });
-      console.log("User from checkAuth function in user store", user);
       localStorage.setItem("user", JSON.stringify(get().user)); // Store user after setting it
     } catch (error) {
       set({ checkingAuth: false, user: null, loading: false });

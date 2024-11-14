@@ -21,7 +21,7 @@ const AdminDashboardPage = () => {
 
   return (
     <section className="min-h-screen relative overflow-hidden">
-      <div className="relative z-10 container mx-auto px-4 py-16 ">
+      <div className="relative z-10 container mx-auto px-4 py-8">
         <motion.h1
           className="text-4xl font-bold mb-8 text-emerald-400 text-center"
           initial={{ opacity: 0, y: -40 }}

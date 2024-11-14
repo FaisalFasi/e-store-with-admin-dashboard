@@ -2,6 +2,7 @@ import React from "react";
 import { useProductStore } from "../../stores/useProductStore";
 import { Trash, Star } from "lucide-react";
 import { motion } from "framer-motion";
+import Tooltip from "../ToolTip/ToolTip";
 
 const ProductsList = () => {
   const { deleteProduct, products, toggleFeaturedProduct } = useProductStore();
@@ -63,10 +64,12 @@ const ProductsList = () => {
                         alt={product.name}
                       />
                     </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-white">
+                    <div className="ml-4 relative group">
+                      <div className="text-sm font-medium text-white overflow-ellipsis overflow-hidden whitespace-nowrap max-w-[10ch] md:max-w-[15ch] lg:max-w-[20ch]">
                         {product.name}
                       </div>
+                      {/* Tooltip */}
+                      <Tooltip text={product.name} />
                     </div>
                   </div>
                 </td>
