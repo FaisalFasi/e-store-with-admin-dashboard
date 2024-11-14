@@ -8,7 +8,7 @@ import { loadStripe } from "@stripe/stripe-js";
 
 export const OrderSummary = () => {
   const stripePromise = loadStripe(
-    String(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
+    "pk_test_51QHTGCGL2ttkOT4rL7vt5eQHDnaeimKzWDxjcQ89KJjjZ6JMt1GlHOXkrQDZODVxI30k2331AfVvRyjQAUM2sK5L00WGfGGhzq"
   );
 
   const { total, subTotal, coupon, isCouponApplied, cart } = useCartStore();
