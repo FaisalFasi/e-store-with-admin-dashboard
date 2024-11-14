@@ -21,7 +21,6 @@ export const getFeaturedProducts = async (req, res) => {
     const featuredProducts = await redis.get("featured_products");
 
     if (featuredProducts) {
-      console.log("featured products from cache:", featuredProducts);
       return res.json({ products: JSON.parse(featuredProducts) });
     }
 
