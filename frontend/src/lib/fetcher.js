@@ -1,5 +1,5 @@
 // src/hooks/fetcher.js
-import axiosBaseURL from "../axios";
+import axiosBaseURL from "./axios";
 
 const fetcher = (url, method = "GET", data = null) => {
   // Handle the dynamic method based on the HTTP verb (GET, POST, PUT, DELETE)
