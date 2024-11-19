@@ -30,10 +30,14 @@ export const useUserStore = create((set, get) => ({
       set({ user: response?.data?.user, loading: false });
     } catch (error) {
       set({ loading: false });
-      toast.error(
-        error.response.data.message ||
-          "An error occurred in sign up function in user store"
-      );
+      if (error?.response && error?.response?.status === 429) {
+        toast.error("Too many attempts. Please try again later.");
+      } else {
+        toast.error(
+          error.response.data.message ||
+            "An error occurred in sign up function in user store"
+        );
+      }
     }
   },
   login: async (email, password) => {
@@ -50,11 +54,15 @@ export const useUserStore = create((set, get) => ({
       localStorage.setItem("user", JSON.stringify(get().user)); // Store user after setting it
     } catch (error) {
       set({ loading: false });
-      toast.error(
-        error.response?.data?.message ||
-          "An error occurred in login function in user store"
-      );
-      console.log("error :", error.message);
+      if (error.response && error.response.status === 429) {
+        toast.error("Too many attempts. Please try again later.");
+      } else {
+        toast.error(
+          error.response?.data?.message ||
+            "An error occurred in login function in user store"
+        );
+        console.log("error :", error.message);
+      }
     }
   },
   checkAuth: async () => {

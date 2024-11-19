@@ -1,12 +1,14 @@
 import { create } from "zustand";
-
 import toast from "react-hot-toast";
 import axiosBaseURL from "../lib/axios";
+import { cacheChecking } from "../helpers/cacheHelper";
 
 export const useProductStore = create((set) => ({
   products: [],
-  setProducts: (products) => set({ products }),
   loading: false,
+  cacheTimestamp: null,
+
+  setProducts: (products) => set({ products }),
 
   createProduct: async (productData) => {
     try {
@@ -29,12 +31,18 @@ export const useProductStore = create((set) => ({
     }
   },
 
-  fetchAllProducts: async () => {
+  fetchAllProducts: async (forceRefetch = false) => {
+    if (cacheChecking(get, forceRefetch)) return;
+
     set({ loading: true });
 
     try {
       const response = await axiosBaseURL.get("/products");
-      set({ products: response?.data?.products, loading: false });
+      set({
+        products: response?.data?.products,
+        cacheTimestamp: Date.now(),
+        loading: false,
+      });
     } catch (error) {
       set({ loading: false });
       toast.error(error?.response?.data.error || "Failed to fetch product");
