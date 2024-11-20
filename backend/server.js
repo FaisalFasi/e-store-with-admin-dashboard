@@ -12,7 +12,6 @@ import cartRoutes from "./routes/cart.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
-import limiter from "./middleware/limiter.js";
 
 dotenv.config();
 
@@ -21,7 +20,6 @@ const PORT = process.env.PORT || 8800;
 
 const __dirname = path.resolve();
 
-app.use(limiter);
 // here limit is set to 5mb, so the user can upload files upto 5mb
 app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());

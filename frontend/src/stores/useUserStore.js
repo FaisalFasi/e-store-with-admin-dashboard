@@ -31,7 +31,10 @@ export const useUserStore = create((set, get) => ({
     } catch (error) {
       set({ loading: false });
       if (error?.response && error?.response?.status === 429) {
-        toast.error("Too many attempts. Please try again later.");
+        toast.error(
+          error?.response?.message ||
+            "Too many attempts. Please try again later."
+        );
       } else {
         toast.error(
           error.response.data.message ||
@@ -55,7 +58,10 @@ export const useUserStore = create((set, get) => ({
     } catch (error) {
       set({ loading: false });
       if (error.response && error.response.status === 429) {
-        toast.error("Too many attempts. Please try again later.");
+        toast.error(
+          error?.response?.message ||
+            "Too many attempts. Please try again later."
+        );
       } else {
         toast.error(
           error.response?.data?.message ||

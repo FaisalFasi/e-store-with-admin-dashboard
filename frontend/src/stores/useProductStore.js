@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import axiosBaseURL from "../lib/axios";
 import { cacheChecking } from "../helpers/cacheHelper";
 
-export const useProductStore = create((set) => ({
+export const useProductStore = create((set, get) => ({
   products: [],
   loading: false,
   cacheTimestamp: null,
@@ -32,7 +32,7 @@ export const useProductStore = create((set) => ({
   },
 
   fetchAllProducts: async (forceRefetch = false) => {
-    if (cacheChecking(get, forceRefetch)) return;
+    // if (cacheChecking(get, forceRefetch)) return;
 
     set({ loading: true });
 
