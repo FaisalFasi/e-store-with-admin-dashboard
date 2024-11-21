@@ -12,8 +12,8 @@ import { verifyCaptcha } from "../middleware/recaptchaMiddleware.js";
 
 const router = express.Router();
 
-router.post("/signup", limiter, verifyCaptcha, signup);
-router.post("/login", limiter, verifyCaptcha, login);
+router.post("/signup", verifyCaptcha, limiter, signup);
+router.post("/login", verifyCaptcha, limiter, login);
 router.get("/logout", logout);
 router.post("/refresh-token", refreshToken);
 router.get("/profile", protectRoute, getProfile);
