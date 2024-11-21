@@ -3,17 +3,38 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
 import { useUserStore } from "../../stores/useUserStore";
+import Captcha from "../../components/Captcha/Captcha";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // const [email, setEmail] = useState("");
+  // const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    captcha: "",
+  });
+
+  const { email, password, captcha } = formData;
 
   const { login, loading } = useUserStore();
 
+  const onChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const onCaptchaChange = (value) => {
+    setFormData({ ...formData, captcha: value });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!captcha) {
+      toast.error("Please complete the CAPTCHA");
+      return;
+    }
 
-    login(email, password);
+    login(email, password, captcha);
   };
 
   return (
@@ -51,9 +72,11 @@ const LoginPage = () => {
                 <input
                   id="email"
                   type="email"
+                  name="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  // value={email}
+                  value={formData.email}
+                  onChange={(e) => onChange(e)}
                   className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
 									rounded-md shadow-sm
 									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500 
@@ -77,9 +100,10 @@ const LoginPage = () => {
                 <input
                   id="password"
                   type="password"
+                  name="password"
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={onChange}
                   className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
 									rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
@@ -110,6 +134,8 @@ const LoginPage = () => {
                 </>
               )}
             </button>
+
+            <Captcha onVerify={onCaptchaChange} />
           </form>
 
           <p className="mt-8 text-center text-sm text-gray-400">

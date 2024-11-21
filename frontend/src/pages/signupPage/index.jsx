@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserStore } from "../../stores/useUserStore";
+import Captcha from "../../components/Captcha/Captcha";
+import toast from "react-hot-toast";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -10,20 +12,32 @@ const SignUpPage = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    captcha: "",
   });
+
+  const { captcha } = formData;
 
   const { signUp, loading } = useUserStore();
 
+  const onCaptchaChange = (value) => {
+    setFormData({ ...formData, captcha: value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!captcha) {
+      toast.error("Please complete the CAPTCHA");
+      return;
+    }
     await signUp(formData);
+
     setFormData({
       name: "",
       email: "",
       password: "",
       confirmPassword: "",
+      captcha: "",
     });
-    console.log(formData);
   };
 
   return (
@@ -179,6 +193,7 @@ const SignUpPage = () => {
                 </>
               )}
             </button>
+            <Captcha onVerify={onCaptchaChange} />
           </form>
 
           <p className="mt-8 text-center text-sm text-gray-400">

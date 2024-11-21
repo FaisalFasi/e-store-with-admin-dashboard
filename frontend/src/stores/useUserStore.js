@@ -7,7 +7,7 @@ export const useUserStore = create((set, get) => ({
   loading: false,
   checkingAuth: false,
   // functions to be used in components
-  signUp: async ({ name, email, password, confirmPassword }) => {
+  signUp: async ({ name, email, password, confirmPassword, captcha }) => {
     set({ loading: true });
 
     if (password !== confirmPassword) {
@@ -20,6 +20,7 @@ export const useUserStore = create((set, get) => ({
         email,
         name,
         password,
+        captcha,
       });
       if (!response) {
         return toast.error("Account creation failed");
@@ -43,13 +44,14 @@ export const useUserStore = create((set, get) => ({
       }
     }
   },
-  login: async (email, password) => {
+  login: async (email, password, captcha) => {
     set({ loading: true });
 
     try {
       const response = await axiosBaseURL.post("/auth/login", {
         email,
         password,
+        captcha,
       });
       // here set the user to the response data. so set will return the user data like {user: response data, loading : false}
       // and we can access the user data in the component where we are using this store
