@@ -29,7 +29,7 @@ const AppRoutes = () => {
   return (
     <div className="py-24 min-h-screen bg-gray-900 text-white relative overflow-hidden">
       {/* Background gradient */}
-      <BackgroundGradient />
+      {/* <BackgroundGradient /> */}
       <Routes>
         <Route path="/" element={<HomePage />} />
         {/* user signup and login pages */}

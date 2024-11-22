@@ -11,8 +11,8 @@ const Captcha = ({ onVerify }) => {
   };
 
   return (
-    <div>
-      <ReCAPTCHA sitekey={siteKey} onChange={handleChange} />
+    <div className="w-full">
+      <ReCAPTCHA sitekey={siteKey} onChange={handleChange} theme="dark" />
     </div>
   );
 };

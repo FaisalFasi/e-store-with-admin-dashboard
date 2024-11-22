@@ -29,6 +29,7 @@ app.use(
     credentials: true,
   })
 );
+// trust proxy is set to 1, so that the app will trust the first proxy that it encounters and it will calculate the correct IP address of the user
 app.set("trust proxy", 1);
 
 app.use("/api/auth", authRoutes);
@@ -49,7 +50,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-// Connect to the database
+// Connect to the database and 0.0.0.0 means it will listen on all the network interfaces available on the server
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server is running on http://:" + PORT);
   connectDB();

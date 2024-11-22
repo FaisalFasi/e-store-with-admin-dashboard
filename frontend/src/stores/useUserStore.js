@@ -46,13 +46,15 @@ export const useUserStore = create((set, get) => ({
   },
   login: async (email, password, captcha) => {
     set({ loading: true });
-
     try {
+      console.log("captcha before", captcha);
       const response = await axiosBaseURL.post("/auth/login", {
         email,
         password,
         captcha,
       });
+      console.log("captcha after", captcha);
+
       // here set the user to the response data. so set will return the user data like {user: response data, loading : false}
       // and we can access the user data in the component where we are using this store
       set({ user: response?.data?.user, loading: false });
