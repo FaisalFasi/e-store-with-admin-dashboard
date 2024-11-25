@@ -12,7 +12,7 @@ import cartRoutes from "./routes/cart.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
-import chatbotRoutes from "./routes/chatbot.route.js";
+// import chatbotRoutes from "./routes/chatbot.route.js";
 
 dotenv.config();
 
@@ -39,7 +39,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
-app.use("/api/chatbot", chatbotRoutes);
+// app.use("/api/chatbot", chatbotRoutes);
 
 // Serve static assets if in production mode, like the frontend build folder in this case
 // it will optimize the build folder and serve it as static assets

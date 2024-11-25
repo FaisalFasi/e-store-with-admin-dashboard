@@ -3,3 +3,4 @@
 node_modules
 /build
 todo.md
+/config/dialogflow-key.json
