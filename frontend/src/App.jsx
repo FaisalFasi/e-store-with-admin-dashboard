@@ -1,5 +1,5 @@
-import BotPress from "./chatbot/botPress";
 import _app from "./components/_app/_app";
+import BotPress from "./components/chatbot/BotPress";
 
 function App() {
   return (
