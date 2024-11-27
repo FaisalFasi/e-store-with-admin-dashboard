@@ -33,8 +33,7 @@ export const useUserStore = create((set, get) => ({
       set({ loading: false });
       if (error?.response && error?.response?.status === 429) {
         toast.error(
-          error?.response?.message ||
-            "Too many attempts. Please try again later."
+          error?.response?.data || "Too many attempts. Please try again later."
         );
       } else {
         toast.error(
@@ -61,10 +60,11 @@ export const useUserStore = create((set, get) => ({
       localStorage.setItem("user", JSON.stringify(get().user)); // Store user after setting it
     } catch (error) {
       set({ loading: false });
+      console.log("error :", error.message);
+      console.log("error.response :", error.response);
       if (error.response && error.response.status === 429) {
         toast.error(
-          error?.response?.message ||
-            "Too many attempts. Please try again later."
+          error?.response?.data || "Too many attempts. Please try again later."
         );
       } else {
         toast.error(

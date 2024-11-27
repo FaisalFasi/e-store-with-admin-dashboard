@@ -7,8 +7,6 @@ import Captcha from "../../components/Captcha/Captcha";
 import toast from "react-hot-toast";
 
 const LoginPage = () => {
-  // const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -74,7 +72,6 @@ const LoginPage = () => {
                   type="email"
                   name="email"
                   required
-                  // value={email}
                   value={formData.email}
                   onChange={(e) => onChange(e)}
                   className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
@@ -134,15 +131,18 @@ const LoginPage = () => {
                 </>
               )}
             </button>
-
-            <Captcha onVerify={onCaptchaChange} />
           </form>
-
+          <div className="flex flex-col gap-6 pt-2">
+            <button className=" w-fit text-left text-sm font-medium text-gray-400">
+              Forgot password?
+            </button>
+            <Captcha onVerify={onCaptchaChange} />
+          </div>
           <p className="mt-8 text-center text-sm text-gray-400">
             Don't have an account?
             <Link
               to="/signup"
-              className="font-medium text-emerald-400 hover:text-emerald-300"
+              className="font-medium text-emerald-400 hover:text-emerald-300 pl-2"
             >
               Sign up now <ArrowRight className="inline h-4 w-4" />
             </Link>

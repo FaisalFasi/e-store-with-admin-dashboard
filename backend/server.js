@@ -12,7 +12,6 @@ import cartRoutes from "./routes/cart.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
-// import chatbotRoutes from "./routes/chatbot.route.js";
 
 dotenv.config();
 
@@ -32,6 +31,8 @@ app.use(
 );
 // trust proxy is set to 1, so that the app will trust the first proxy that it encounters and it will calculate the correct IP address of the user
 app.set("trust proxy", 1);
+// custom middleware to log the IP address of the user
+// app.use(logIpMiddleware); // This will log the IP address for every request
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
