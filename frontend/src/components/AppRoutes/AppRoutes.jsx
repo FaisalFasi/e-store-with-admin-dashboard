@@ -11,6 +11,7 @@ import PurchaseCancelPage from "../../pages/PurchaseCancelPage";
 import { getUserData } from "../../utils/getUserData.js";
 import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.jsx";
 import { useCartStore } from "../../stores/useCartStore.js";
+import ResetPasswordPage from "../../pages/resetPasswordPage/index.jsx";
 
 const AppRoutes = () => {
   const { user, checkAuth, checkingAuth } = getUserData();
@@ -31,6 +32,8 @@ const AppRoutes = () => {
       {/* Background gradient */}
       {/* <BackgroundGradient /> */}
       <Routes>
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
         <Route path="/" element={<HomePage />} />
         {/* user signup and login pages */}
         <Route

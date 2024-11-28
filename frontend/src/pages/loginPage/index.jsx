@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
@@ -6,31 +5,30 @@ import { useUserStore } from "../../stores/useUserStore";
 import Captcha from "../../components/Captcha/Captcha";
 import toast from "react-hot-toast";
 import ForgotPasswordForm from "../../components/ForgetPassowrdForm/ForgotPasswordForm";
+import { useState } from "react";
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    captcha: "",
-  });
+  const [captcha, setCaptcha] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { email, password, captcha } = formData;
   const { login, loading } = useUserStore();
 
-  const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
   const onCaptchaChange = (value) => {
-    setFormData({ ...formData, captcha: value });
+    setCaptcha(value);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!captcha) {
       toast.error("Please complete the CAPTCHA");
       return;
     }
+
+    const formData = new FormData(e.target);
+    const { email, password } = Object.fromEntries(formData);
+    // other way to get form data one by one
+    // const email = formData.get("email");
+    // const password = formData.get("password");
 
     login(email, password, captcha);
   };
@@ -76,12 +74,9 @@ const LoginPage = () => {
                     type="email"
                     name="email"
                     required
-                    value={formData.email}
-                    onChange={(e) => onChange(e)}
-                    className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
-									rounded-md shadow-sm
-									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500 
-									 focus:border-emerald-500 sm:text-sm"
+                    className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
+                      rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 
+                      focus:border-emerald-500 sm:text-sm"
                     placeholder="you@example.com"
                   />
                 </div>
@@ -106,10 +101,9 @@ const LoginPage = () => {
                     type="password"
                     name="password"
                     required
-                    value={password}
-                    onChange={onChange}
-                    className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
-									rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                    className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
+                      rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 
+                      focus:border-emerald-500 sm:text-sm"
                     placeholder="••••••••"
                   />
                 </div>
@@ -118,9 +112,9 @@ const LoginPage = () => {
               <button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent 
-							rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600
-							 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2
-							  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50"
+                  rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 
+                  hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 
+                  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50"
                 disabled={loading}
               >
                 {loading ? (
@@ -141,7 +135,7 @@ const LoginPage = () => {
             </form>
             <div className="flex flex-col gap-6 pt-2">
               <button
-                className=" w-fit text-left text-sm font-medium text-gray-400"
+                className="w-fit text-left text-sm font-medium text-gray-400"
                 onClick={() => setShowForgotPassword(!showForgotPassword)}
               >
                 Forgot password?
@@ -166,4 +160,5 @@ const LoginPage = () => {
     </>
   );
 };
+
 export default LoginPage;

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
@@ -7,36 +6,34 @@ import Captcha from "../../components/Captcha/Captcha";
 import toast from "react-hot-toast";
 
 const SignUpPage = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    captcha: "",
-  });
-
-  const { captcha } = formData;
-
   const { signUp, loading } = useUserStore();
+  let captchaValue = "";
 
   const onCaptchaChange = (value) => {
-    setFormData({ ...formData, captcha: value });
+    captchaValue = value; // Capturing captcha value
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!captcha) {
+
+    // Converting form data to an object
+    const formData = new FormData(e.target);
+    const { name, email, password, confirmPassword } =
+      Object.fromEntries(formData); // Converts FormData to plain object
+
+    // Adding captcha value to the object
+    if (!captchaValue) {
       toast.error("Please complete the CAPTCHA");
       return;
     }
-    await signUp(formData);
 
-    setFormData({
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      captcha: "",
+    // Pass form data to signUp
+    await signUp({
+      name,
+      email,
+      password,
+      confirmPassword,
+      captcha: captchaValue,
     });
   };
 
@@ -74,14 +71,10 @@ const SignUpPage = () => {
                 </div>
                 <input
                   id="name"
+                  name="name" // Set input `name` for FormData
                   type="text"
                   required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm
-									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="John Doe"
                 />
               </div>
@@ -100,16 +93,10 @@ const SignUpPage = () => {
                 </div>
                 <input
                   id="email"
+                  name="email" // Set input `name` for FormData
                   type="email"
                   required
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
-									rounded-md shadow-sm
-									 placeholder-gray-400 focus:outline-none focus:ring-emerald-500 
-									 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -128,14 +115,10 @@ const SignUpPage = () => {
                 </div>
                 <input
                   id="password"
+                  name="password" // Set input `name` for FormData
                   type="password"
                   required
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  className=" block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 
-									rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>
@@ -154,17 +137,10 @@ const SignUpPage = () => {
                 </div>
                 <input
                   id="confirmPassword"
+                  name="confirmPassword" // Set input `name` for FormData
                   type="password"
                   required
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  className=" block w-full px-3 py-2 pl-10 bg-gray-700 border
-									 border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>
@@ -172,10 +148,7 @@ const SignUpPage = () => {
 
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent 
-							rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600
-							 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2
-							  focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150 ease-in-out disabled:opacity-50"
               disabled={loading}
             >
               {loading ? (
@@ -210,4 +183,5 @@ const SignUpPage = () => {
     </div>
   );
 };
+
 export default SignUpPage;

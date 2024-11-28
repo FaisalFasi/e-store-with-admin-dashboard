@@ -2,7 +2,9 @@ import redis from "../db/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { generateResetToken } from "../utils/resetPasswordEmail.js";
+import sendResetPasswordEmail, {
+  generateResetToken,
+} from "../utils/resetPasswordEmail.js";
 
 const generateToken = (userId) => {
   const accessToken = jwt.sign(
@@ -207,8 +209,11 @@ export const getProfile = async (req, res) => {
 };
 
 export const requestPasswordReset = async (req, res) => {
+  console.log("req.body:", req.body);
+
   try {
     const { email } = req.body;
+
     console.log("user email:", email);
     const user = await User.findOne({ email });
     console.log("found user:", user);
@@ -221,6 +226,7 @@ export const requestPasswordReset = async (req, res) => {
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
     await user.save();
+
     try {
       await sendResetPasswordEmail(email, resetToken);
     } catch (error) {
@@ -241,6 +247,8 @@ export const requestPasswordReset = async (req, res) => {
 export const resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
 
+  console.log("token:", token);
+  console.log("newPassword:", newPassword);
   try {
     // Find user by token and ensure it hasn't expired
     const user = await User.findOne({

@@ -6,6 +6,8 @@ dotenv.config();
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendResetPasswordEmail = async (email, resetToken) => {
+  console.log("resetToken:", resetToken);
+  console.log("email:", email);
   const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`; // Replace localhost with your frontend domain in production
 
   const dynamicMsg = {
