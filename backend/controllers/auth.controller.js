@@ -95,7 +95,7 @@ export const signup = async (req, res) => {
 };
 export const login = async (req, res) => {
   const { email, password } = req.body;
-  console.log("email:", email);
+  console.log("email:", email, "password:", password);
   try {
     if (!email || !password) {
       return res
@@ -257,7 +257,7 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
+      return res.status(400).json({ message: "Invalid user or expired token" });
     }
 
     // Hash and update the new password

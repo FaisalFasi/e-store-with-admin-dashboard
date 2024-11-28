@@ -1,47 +1,40 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Loader, LogIn } from "lucide-react"; // Icons for email, loader, and others
-import axios from "axios";
+
 import toast from "react-hot-toast";
 import axiosBaseURL from "../../lib/axios";
 
 const ForgotPasswordForm = ({ setForgotPassword }) => {
-  const [formData, setFormData] = useState({ email: "" });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Handle input change
-  const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const formData = new FormData(e.target);
+    const { email } = Object.fromEntries(formData);
+
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (!emailRegex.test(email)) {
       toast.error("Please enter a valid email address.");
       setMessage("Please enter a valid email address.");
       return;
     }
 
     setLoading(true);
-
-    console.log("formData.email:", formData.email);
+    console.log("formData.email:", email);
     try {
-      // const url = "http://localhost:8800/api/auth/request-forgot-password";
-
       const res = await axiosBaseURL.post("/auth/request-forgot-password", {
-        email: formData.email,
+        email: email,
       });
       console.log("res:", res);
       toast.success(res?.data?.message);
       setMessage(res?.data?.message);
 
-      // Clear form after successful submission
-      setFormData({ email: "" });
+      e.target.reset();
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || "Error sending password reset link.";
@@ -86,8 +79,8 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
                   type="email"
                   name="email"
                   required
-                  value={formData.email}
-                  onChange={onChange}
+                  // value={formData.email}
+                  // onChange={onChange}
                   className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="you@example.com"
                 />

@@ -5,11 +5,7 @@ import toast from "react-hot-toast";
 import axiosBaseURL from "../../lib/axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const ResetPasswordPage = ({ resetToken, setResetPassword }) => {
-  const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
-  });
+const ResetPasswordPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -25,31 +21,39 @@ const ResetPasswordPage = ({ resetToken, setResetPassword }) => {
     navigate("/error"); // Redirect to an error page
     return null;
   }
-  // Handle input change
-  const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
 
+  const navigetToLogin = () => {
+    navigate("/login");
+  };
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
+
+    const formData = new FormData(e.target);
+    const { password, confirmPassword } = Object.fromEntries(formData);
+
+    if (password !== confirmPassword) {
       setMessage("Passwords do not match.");
       return;
     }
     setLoading(true);
     try {
-      const res = await axiosBaseURL.post(
-        `/auth/reset-password/${resetToken}`,
-        {
-          token: resetToken, // Include the token in the body
-          newPassword: formData.password,
-        }
-      );
+      console.log("resetToken:", token);
+      const res = await axiosBaseURL.post(`/auth/reset-password`, {
+        token: token, // Include the token in the body
+        newPassword: password,
+      });
+      console.log("res:", res);
       toast.success(res?.data?.message || "Password reset successfully!");
+
       setMessage(res?.data?.message || "Password has been reset successfully.");
-      setTimeout(() => setResetPassword(false), 2000); // Optionally close the modal after success
+
+      setTimeout(() => navigetToLogin(), 2000); // Optionally close the modal after success
     } catch (error) {
+      console.log("error:", error?.response?.data?.message || error);
+      toast.error(
+        error?.response?.data?.message || "Error resetting password."
+      );
       setMessage("Error resetting password.");
     }
     setLoading(false);
@@ -91,8 +95,8 @@ const ResetPasswordPage = ({ resetToken, setResetPassword }) => {
                   type="password"
                   name="password"
                   required
-                  value={formData.password}
-                  onChange={onChange}
+                  //   value={formData.password}
+                  //   onChange={onChange}
                   className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="Enter new password"
                 />
@@ -116,8 +120,8 @@ const ResetPasswordPage = ({ resetToken, setResetPassword }) => {
                   type="password"
                   name="confirmPassword"
                   required
-                  value={formData.confirmPassword}
-                  onChange={onChange}
+                  //   value={formData.confirmPassword}
+                  //   onChange={onChange}
                   className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="Confirm new password"
                 />
@@ -155,7 +159,7 @@ const ResetPasswordPage = ({ resetToken, setResetPassword }) => {
             <button
               className="text-sm font-medium text-gray-400 hover:text-gray-300"
               onClick={() => {
-                setResetPassword(false);
+                navigetToLogin();
                 setMessage("");
               }}
             >

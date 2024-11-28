@@ -21,6 +21,8 @@ router.post("/refresh-token", refreshToken);
 router.get("/profile", protectRoute, getProfile);
 // for resetting password
 router.post("/request-forgot-password", requestPasswordReset);
-router.post("/reset-password/:resetToken", resetPassword);
+router.post("/reset-password", resetPassword);
+
+// router.post("/reset-password/:resetToken", resetPassword);
 
 export default router;
