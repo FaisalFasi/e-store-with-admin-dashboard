@@ -5,6 +5,8 @@ import {
   signup,
   refreshToken,
   getProfile,
+  requestPasswordReset,
+  resetPassword,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import limiter from "../middleware/limiter.js";
@@ -17,5 +19,8 @@ router.post("/login", verifyCaptcha, limiter, login);
 router.get("/logout", logout);
 router.post("/refresh-token", refreshToken);
 router.get("/profile", protectRoute, getProfile);
+// for resetting password
+router.get("/request-forgot-password", requestPasswordReset);
+router.get("/reset-password", resetPassword);
 
 export default router;

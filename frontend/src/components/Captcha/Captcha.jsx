@@ -12,7 +12,7 @@ const Captcha = ({ onVerify }) => {
 
   return (
     <div className="w-full">
-      <ReCAPTCHA sitekey={siteKey} onChange={handleChange} theme="dark" />
+      <ReCAPTCHA sitekey={siteKey} onChange={handleChange} />
     </div>
   );
 };
