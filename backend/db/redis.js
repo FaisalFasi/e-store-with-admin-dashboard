@@ -6,4 +6,8 @@ dotenv.config();
 const redis = new Redis(process.env.UPSTASH_REDIS_URL);
 // await redis.set("foo", "bar");
 
+// on the connect event, log a message to the console
+redis.on("connect", () => console.log("Connected to Redis successfully."));
+redis.on("error", (err) => console.error("Redis connection error:", err));
+
 export default redis;

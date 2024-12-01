@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Loader, LogIn } from "lucide-react"; // Icons for email, loader, and others
-
 import toast from "react-hot-toast";
-import axiosBaseURL from "../../lib/axios";
+import { useUserStore } from "../../stores/useUserStore";
 
 const ForgotPasswordForm = ({ setForgotPassword }) => {
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { requestResetPassword, loading } = useUserStore();
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -20,28 +18,13 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast.error("Please enter a valid email address.");
-      setMessage("Please enter a valid email address.");
       return;
     }
 
-    setLoading(true);
     console.log("formData.email:", email);
-    try {
-      const res = await axiosBaseURL.post("/auth/request-forgot-password", {
-        email: email,
-      });
-      console.log("res:", res);
-      toast.success(res?.data?.message);
-      setMessage(res?.data?.message);
 
-      e.target.reset();
-    } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Error sending password reset link.";
-      toast.error(errorMessage);
-      setMessage(errorMessage);
-    }
-    setLoading(false);
+    requestResetPassword(email);
+    e.target.reset();
   };
 
   return (
@@ -109,16 +92,11 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
             </button>
           </form>
 
-          {message && (
-            <p className="mt-4 text-center text-sm text-gray-400">{message}</p>
-          )}
-
           <div className="flex justify-center mt-4">
             <button
               className="text-sm font-medium text-gray-400 hover:text-gray-300"
               onClick={() => {
                 setForgotPassword(false);
-                setMessage("");
               }}
             >
               Close

@@ -1,7 +1,6 @@
 import redis from "../db/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import sendResetPasswordEmail, {
   generateResetToken,
 } from "../utils/resetPasswordEmail.js";
@@ -209,23 +208,40 @@ export const getProfile = async (req, res) => {
 };
 
 export const requestPasswordReset = async (req, res) => {
-  console.log("req.body:", req.body);
-
   try {
     const { email } = req.body;
-
-    console.log("user email:", email);
     const user = await User.findOne({ email });
-    console.log("found user:", user);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check Redis for last reset request timestamp
+    const lastRequestTime = await redis.get(`passwordReset:${user.email}`);
+    const resetRequestLimit = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+    if (
+      lastRequestTime &&
+      Date.now() - parseInt(lastRequestTime) < resetRequestLimit
+    ) {
+      return res.status(429).json({
+        message:
+          "You can request a password reset only once every 10 minutes. Please check your email for the reset link.",
+      });
     }
 
     const resetToken = generateResetToken();
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 3600000; // Token expires in 1 hour
     await user.save();
+
+    // Store current timestamp in Redis with a TTL(time to live) of 10 minutes
+    await redis.set(
+      `passwordReset:${user.email}`,
+      Date.now().toString(),
+      "EX", // Set key expiration
+      10 * 60 // TTL in seconds
+    );
 
     try {
       await sendResetPasswordEmail(email, resetToken);
