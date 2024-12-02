@@ -44,22 +44,47 @@ export const getFeaturedProducts = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  const { name, price, description, image, category, isFeatured } = req.body;
+  const {
+    name,
+    price,
+    description,
+    image: images,
+    category,
+    isFeatured,
+  } = req.body;
+  if (!images || images.length === 0) {
+    return res.status(400).json({ error: "At least one image is required" });
+  }
+  // Validate file types
+  const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+
+  for (let i = 0; i < images.length; i++) {
+    const fileType = images[i].type;
+    if (!allowedMimeTypes.includes(fileType)) {
+      return res.status(400).json({
+        error: `Invalid file type for image ${
+          i + 1
+        }. Please upload PNG, JPEG, or WEBP files.`,
+      });
+    }
+  }
 
   try {
-    let cloudinaryResponse = null;
+    let uploadedImages = null;
 
-    if (image) {
-      cloudinaryResponse = await cloudinary.uploader.upload(image, {
+    for (let i = 0; i < images.length; i++) {
+      const image_ = images[i];
+      const cloudinaryResponse = await cloudinary.uploader.upload(image_, {
         folder: "products",
       });
+      uploadedImages.push(cloudinaryResponse.secure_url); // Push the image URL to the array
     }
 
     const product = await Product.create({
       name,
       price,
       description,
-      image: cloudinaryResponse?.secure_url || "",
+      images: uploadedImages?.secure_url || "",
       category,
       isFeatured,
     });

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../../stores/useProductStore";
+import toast from "react-hot-toast";
 
 const categories = [
   "jeans",
@@ -21,6 +22,7 @@ const CreateProductForm = () => {
     category: "",
     images: [], // Update to handle multiple images
   });
+  const fileInputRef = useRef(null); // Create a ref to the file input
 
   const { createProduct, loading } = useProductStore();
 
@@ -39,39 +41,70 @@ const CreateProductForm = () => {
       console.log("Error creating a product");
     }
   };
-
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    const validImages = [];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    const maxSize = 1 * 1024 * 1024; // 5 MB max file size (adjust as needed)
+
+    const imagePromises = [];
 
     files.forEach((file) => {
-      // Check if file type is an image
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          validImages.push(reader.result);
-          // Update state after all images are processed
-          if (validImages.length === files.length) {
-            setNewProduct((prev) => ({
-              ...prev,
-              images: [...prev.images, ...validImages],
-            }));
-          }
-        };
-        reader.readAsDataURL(file);
-      } else {
-        alert(`${file.name} is not a valid image file`);
+      // Validate file type
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(
+          `Invalid file type: ${file.name}. Please upload PNG, JPEG, or JPG files.`
+        );
+        e.target.value = ""; // Clear the input
+        return; // Skip this file
       }
+
+      // Validate file size
+      if (file.size > maxSize) {
+        toast.error(`${file.name} is too large. Max size is 5MB.`);
+        e.target.value = ""; // Clear the input
+        return; // Skip this file
+      }
+
+      // If valid, process the file
+      imagePromises.push(
+        new Promise((resolve, reject) => {
+          // file reader to read the file as base64 and base64 is a string representation of the image
+          const reader = new FileReader();
+          // onloadend is called when the file is read
+          reader.onloadend = () => resolve(reader.result); // Resolve with base64 data
+          // onerror is called when there is an error reading the file
+          reader.onerror = reject;
+          // read the file as base64
+          reader.readAsDataURL(file);
+        })
+      );
     });
+
+    // Once all files are processed, update the state
+    Promise.all(imagePromises)
+      .then((base64Images) => {
+        // Append new base64 images to the current images array in state
+        setNewProduct((prevProduct) => ({
+          ...prevProduct,
+          images: [...prevProduct.images, ...base64Images],
+        }));
+        // fileInputRef.current.value = "";
+      })
+      .catch((err) => {
+        console.error("Error uploading images", err);
+        toast.error("There was an error while processing images.");
+      });
   };
 
-  const removeImage = (index) => {
+  const removeImage = (index, e) => {
     setNewProduct((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
     }));
+    if (newProduct.images.length === 1) {
+      fileInputRef.current.value = "";
+    }
   };
-
   return (
     <motion.div
       className="bg-gray-800 shadow-lg rounded-lg p-4 md:p-8 mb-8 max-w-xl mx-auto"
@@ -189,6 +222,7 @@ const CreateProductForm = () => {
             Upload Images
           </label>
           <input
+            ref={fileInputRef} // Attach ref to file input
             type="file"
             id="images"
             multiple
@@ -206,7 +240,7 @@ const CreateProductForm = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => removeImage(index)}
+                  onClick={(e) => removeImage(index)}
                   className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
                 >
                   X
