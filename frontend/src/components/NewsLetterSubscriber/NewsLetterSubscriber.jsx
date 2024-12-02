@@ -4,7 +4,7 @@ import { Mail, Loader, Check } from "lucide-react"; // Icons for email, loader, 
 import toast from "react-hot-toast";
 import { useNewsLetterStore } from "../../stores/useNewsLetterStore";
 
-const NewsLetterSubscriber = ({ setShowSubscribePopup }) => {
+const NewsLetterSubscriber = ({ setSubscribePopup }) => {
   const { subscribeToNewsletter, loading } = useNewsLetterStore();
 
   // Handle form submission
@@ -25,10 +25,11 @@ const NewsLetterSubscriber = ({ setShowSubscribePopup }) => {
     console.log("Subscribing email:", email);
 
     const result = await subscribeToNewsletter(email);
-    console.log("result:", result);
+    console.log("result in news letter form:", result);
+
     if (result.success) {
       e.target.reset();
-      setShowSubscribePopup(); // Optionally close popup after success
+      setSubscribePopup(); // Optionally close popup after success
     }
   };
 
@@ -99,7 +100,7 @@ const NewsLetterSubscriber = ({ setShowSubscribePopup }) => {
             <button
               className="text-sm font-medium text-gray-400 hover:text-gray-300"
               onClick={() => {
-                setShowSubscribePopup();
+                setSubscribePopup();
               }}
             >
               Close

@@ -29,16 +29,10 @@ const Navbar = () => {
           </Link>
 
           {openSubscribePopup && (
-            <NewsLetterSubscriber
-              setShowSubscribePopup={handleSubscribePopup}
-            />
+            <NewsLetterSubscriber setSubscribePopup={handleSubscribePopup} />
           )}
 
-          <nav className="flex flex-wrap items-center gap-4">
-            <Button onClick={handleSubscribePopup}>
-              <Mails className="text-white" />
-            </Button>
-
+          <nav className="flex flex-wrap items-center gap-2 md:gap-4">
             <Button to={"/"} className="hidden sm:block">
               Home
             </Button>
@@ -64,6 +58,9 @@ const Navbar = () => {
                 )}
               </Link>
             )}
+            <Button onClick={handleSubscribePopup}>
+              <Mails />
+            </Button>
             {isAdmin && (
               <Link
                 className="bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-1 rounded-md font-medium

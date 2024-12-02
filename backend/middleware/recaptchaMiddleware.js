@@ -16,7 +16,6 @@ const clearStoredToken = () => {
 const verifyCaptcha = asyncHandler(async (req, res, next) => {
   const { captcha } = req.body;
 
-  console.log("captcha on BE :", captcha);
   if (!captcha) {
     return res.status(400).json({ message: "Captcha is required" });
   }
@@ -30,7 +29,6 @@ const verifyCaptcha = asyncHandler(async (req, res, next) => {
     if (!storedCaptchaToken) {
     }
     if (response.data.success && !storedCaptchaToken) {
-      console.log("Captcha verified");
       storedCaptchaToken = captcha;
       return next();
     } else if (storedCaptchaToken) {

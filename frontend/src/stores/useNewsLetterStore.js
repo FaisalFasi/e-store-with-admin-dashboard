@@ -29,6 +29,7 @@ export const useNewsLetterStore = create((set, get) => ({
         toast.error(
           error.response.data.message || "Error in subscribing to newsletter"
         );
+        return { success: false, message: error.response.data.message };
       }
     }
   },
