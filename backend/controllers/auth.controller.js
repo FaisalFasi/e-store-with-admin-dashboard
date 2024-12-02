@@ -1,9 +1,10 @@
 import redis from "../db/redis.js";
 import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import sendResetPasswordEmail, {
+import {
+  sendResetPasswordEmail,
   generateResetToken,
-} from "../utils/resetPasswordEmail.js";
+} from "../utils/sendEmail.js";
 
 const generateToken = (userId) => {
   const accessToken = jwt.sign(

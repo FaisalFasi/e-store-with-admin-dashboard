@@ -2,11 +2,20 @@ import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../stores/useCartStore";
 import { getUserData } from "../../utils/getUserData";
+import NewsLetterSubscriber from "../../components/NewsLetterSubscriber/NewsLetterSubscriber";
+import { useState } from "react";
+import { Mails } from "lucide-react";
+import Button from "../Button/Button";
 
 const Navbar = () => {
   const { user, logout } = getUserData();
   let isAdmin = user?.role === "admin";
   const { cart } = useCartStore();
+  const [openSubscribePopup, setOpenSubscribePopup] = useState(false);
+
+  const handleSubscribePopup = () => {
+    setOpenSubscribePopup(!openSubscribePopup);
+  };
 
   return (
     <header className="fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800">
@@ -19,14 +28,21 @@ const Navbar = () => {
             E-Commerce
           </Link>
 
+          {openSubscribePopup && (
+            <NewsLetterSubscriber
+              setShowSubscribePopup={handleSubscribePopup}
+            />
+          )}
+
           <nav className="flex flex-wrap items-center gap-4">
-            <Link
-              to={"/"}
-              className="font-semibold text-xl hidden sm:block text-gray-300 hover:text-emerald-400 transition duration-300
-					 ease-in-out"
-            >
+            <Button onClick={handleSubscribePopup}>
+              <Mails className="text-white" />
+            </Button>
+
+            <Button to={"/"} className="hidden sm:block">
               Home
-            </Link>
+            </Button>
+
             {user && (
               <Link
                 to={"/cart"}

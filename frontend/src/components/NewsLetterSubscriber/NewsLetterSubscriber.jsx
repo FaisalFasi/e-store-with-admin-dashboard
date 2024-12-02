@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import { Mail, Loader, LogIn } from "lucide-react"; // Icons for email, loader, and others
+import { Mail, Loader, Check } from "lucide-react"; // Icons for email, loader, and success
 import toast from "react-hot-toast";
-import { useUserStore } from "../../stores/useUserStore";
+import { useNewsLetterStore } from "../../stores/useNewsLetterStore";
 
-const ForgotPasswordForm = ({ setForgotPassword }) => {
-  const { requestResetPassword } = useUserStore();
+const NewsLetterSubscriber = ({ setShowSubscribePopup }) => {
+  const { subscribeToNewsletter, loading } = useNewsLetterStore();
 
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -14,6 +14,7 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
     const formData = new FormData(e.target);
     const { email } = Object.fromEntries(formData);
 
+    console.log("formData.email:", email);
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -21,22 +22,26 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
       return;
     }
 
-    console.log("formData.email:", email);
+    console.log("Subscribing email:", email);
 
-    requestResetPassword(email);
-    e.target.reset();
+    const result = await subscribeToNewsletter(email);
+    console.log("result:", result);
+    if (result.success) {
+      e.target.reset();
+      setShowSubscribePopup(); // Optionally close popup after success
+    }
   };
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+    <div className="fixed w-screen h-screen top-0 left-0 flex justify-center bg-black bg-opacity-50 z-50 ">
       <motion.div
-        className="bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 w-full sm:max-w-md"
+        className="h-fit bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 w-full sm:max-w-md"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
         <h2 className="text-center text-3xl font-extrabold text-emerald-400 mb-6">
-          Forgot Password
+          Subscribe to Our Newsletter
         </h2>
 
         <motion.div
@@ -62,8 +67,6 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
                   type="email"
                   name="email"
                   required
-                  // value={formData.email}
-                  // onChange={onChange}
                   className="block w-full px-3 py-2 pl-10 bg-gray-700 border border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="you@example.com"
                 />
@@ -81,12 +84,12 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
                     className="mr-2 h-5 w-5 animate-spin"
                     aria-hidden="true"
                   />
-                  Loading...
+                  Subscribing...
                 </>
               ) : (
                 <>
-                  <LogIn className="mr-2 h-5 w-5" aria-hidden="true" />
-                  Send Reset Link
+                  <Check className="mr-2 h-5 w-5" aria-hidden="true" />
+                  Subscribe
                 </>
               )}
             </button>
@@ -96,7 +99,7 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
             <button
               className="text-sm font-medium text-gray-400 hover:text-gray-300"
               onClick={() => {
-                setForgotPassword(false);
+                setShowSubscribePopup();
               }}
             >
               Close
@@ -108,4 +111,4 @@ const ForgotPasswordForm = ({ setForgotPassword }) => {
   );
 };
 
-export default ForgotPasswordForm;
+export default NewsLetterSubscriber;
