@@ -106,17 +106,30 @@ export const useUserStore = create((set, get) => ({
     if (get().checkingAuth) return;
 
     set({ checkingAuth: true, loading: true });
+
     try {
       const response = await axiosBaseURL.post("/auth/refresh-token");
+      console.log("response:", response);
+      const { accessToken } = response?.data || {};
+
+      console.log("accessToken:", accessToken);
+      if (accessToken) {
+        // Update token in Axios headers
+        axiosBaseURL.defaults.headers.Authorization = `Bearer ${accessToken}`;
+      }
+
       set({ checkingAuth: false, loading: false });
       // here response doesn't matter because we are just refreshing the token and not setting the user data
       return response?.data;
     } catch (error) {
-      set({ loading: false });
+      console.error("Error refreshing token:", error);
+      set({ checkingAuth: false, loading: false });
+
       toast.error(
-        error.response?.data.message ||
-          "An error occurred in refreshToken function in user store"
+        error.response?.data?.message ||
+          "An error occurred while refreshing the token."
       );
+      throw error; // Allow the interceptor to handle logout
     }
   },
 
@@ -149,25 +162,40 @@ export const useUserStore = create((set, get) => ({
 // axios interceptor for token refresh
 let refreshingPromise = null;
 
+// incercept the response and check if the token is expired and refresh the token
+// if the token is expired and the refresh token is also expired then logout the user
 axiosBaseURL.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+
+    console.log("originalRequest", originalRequest);
+
+    if (
+      error.response.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh-token")
+    ) {
       originalRequest._retry = true;
+
       try {
-        if (refreshingPromise) {
+        if (!refreshingPromise) {
+          refreshingPromise = useUserStore.getState().refreshToken();
           await refreshingPromise;
-          return axiosBaseURL(originalRequest);
+          refreshingPromise = null;
+        } else {
+          await refreshingPromise; // Wait for existing refresh
         }
 
-        refreshingPromise = useUserStore.getState().refreshToken();
-        await refreshingPromise;
-        refreshingPromise = null;
+        // Retry the original request with updated headers
+        originalRequest.headers.Authorization =
+          axiosBaseURL.defaults.headers.Authorization;
 
         return axiosBaseURL(originalRequest);
       } catch (refreshError) {
+        console.error("Error refreshing token:", refreshError);
+        refreshingPromise = null;
         useUserStore.getState().logout();
         return Promise.reject(refreshError);
       }
