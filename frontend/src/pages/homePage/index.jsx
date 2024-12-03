@@ -1,10 +1,10 @@
 import React from "react";
 import { useEffect } from "react";
-import CategoryItem from "../../components/CategoryItem/CategoryItem";
 import { useProductStore } from "../../stores/useProductStore";
-import FeaturedProducts from "../../components/FeaturedProducts/FeaturedProducts";
+import FeaturedProducts from "../../components/products/FeaturedProducts/FeaturedProducts";
 import { motion } from "framer-motion";
 import { categories } from "../../utils/homeCategories/categories.js";
+import CategoryItem from "../../components/products/CategoryItem/CategoryItem";
 
 const HomePage = () => {
   const { fetchFeaturedProducts, products, isLoading } = useProductStore();

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import axiosBaseURL from "../../lib/axios";
+import axiosBaseURL from "../../../lib/axios";
 import { Users, Package, ShoppingCart, DollarSign } from "lucide-react";
 
 import {

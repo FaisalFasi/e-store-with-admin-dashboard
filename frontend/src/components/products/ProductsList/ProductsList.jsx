@@ -1,8 +1,8 @@
 import React from "react";
-import { useProductStore } from "../../stores/useProductStore";
+import { useProductStore } from "../../../stores/useProductStore";
 import { Trash, Star } from "lucide-react";
 import { motion } from "framer-motion";
-import CustomTooltip from "../CustomTooltip/CustomTooltip";
+import CustomTooltip from "../../shared/CustomTooltip/CustomTooltip";
 
 const ProductsList = () => {
   const { deleteProduct, products, toggleFeaturedProduct } = useProductStore();

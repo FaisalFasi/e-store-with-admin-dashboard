@@ -1,9 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useCartStore } from "../../stores/useCartStore";
+import { useCartStore } from "../../../stores/useCartStore";
 import { MoveRight } from "lucide-react";
-import axiosBaseURL from "../../lib/axios";
+import axiosBaseURL from "../../../lib/axios";
 import { loadStripe } from "@stripe/stripe-js";
 
 export const OrderSummary = () => {

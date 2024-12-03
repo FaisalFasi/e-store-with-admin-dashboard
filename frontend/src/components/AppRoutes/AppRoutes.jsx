@@ -9,7 +9,7 @@ import CartPage from "../../pages/cartPage";
 import PurchaseSuccessPage from "../../pages/PurchaseSuccessPage";
 import PurchaseCancelPage from "../../pages/PurchaseCancelPage";
 import { getUserData } from "../../utils/getUserData.js";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner.jsx";
+import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
 import { useCartStore } from "../../stores/useCartStore.js";
 import ResetPasswordPage from "../../pages/resetPasswordPage/index.jsx";
 

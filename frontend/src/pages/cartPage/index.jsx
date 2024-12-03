@@ -2,10 +2,10 @@ import React from "react";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import CartItem from "../../components/CartItem/CartItem";
-import PeopleAlsoBought from "../../components/PeopleAlsoBought/PeopleAlsoBought";
-import OrderSummary from "../../components/OrderSummary/OrderSummary";
-import GiftCouponCard from "../../components/GiftCouponCard/GiftCouponCard";
+import CartItem from "../../components/cart/CartItem/CartItem";
+import PeopleAlsoBought from "../../components/products/PeopleAlsoBought/PeopleAlsoBought";
+import OrderSummary from "../../components/checkout/OrderSummary/OrderSummary";
+import GiftCouponCard from "../../components/cart/GiftCouponCard/GiftCouponCard";
 import { useCartStore } from "../../stores/useCartStore";
 
 const CartPage = () => {

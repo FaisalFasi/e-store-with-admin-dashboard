@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Loader, LogIn } from "lucide-react"; // Icons for email, loader, and others
 import toast from "react-hot-toast";
-import { useUserStore } from "../../stores/useUserStore";
+import { useUserStore } from "../../../stores/useUserStore";
 
 const ForgotPasswordForm = ({ setForgotPassword }) => {
   const { requestResetPassword } = useUserStore();

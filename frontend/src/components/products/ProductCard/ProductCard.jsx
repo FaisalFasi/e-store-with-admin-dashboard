@@ -1,8 +1,8 @@
 import React from "react";
 import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
-import { useUserStore } from "../../stores/useUserStore";
-import { useCartStore } from "../../stores/useCartStore";
+import { useUserStore } from "../../../stores/useUserStore";
+import { useCartStore } from "../../../stores/useCartStore";
 
 const ProductCard = ({ product }) => {
   const { user } = useUserStore();

@@ -1,8 +1,8 @@
 import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useCartStore } from "../../stores/useCartStore";
-import { getUserData } from "../../utils/getUserData";
-import NewsLetterSubscriber from "../../components/NewsLetterSubscriber/NewsLetterSubscriber";
+import { useCartStore } from "../../../stores/useCartStore";
+import { getUserData } from "../../../utils/getUserData";
+import NewsLetterSubscriber from "../NewsLetterSubscriber/NewsLetterSubscriber";
 import { useState } from "react";
 import { Mails } from "lucide-react";
 import Button from "../Button/Button";

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { BarChart, PlusCircle, ShoppingBasket } from "lucide-react";
-import AnalyticsTab from "../../components/AnalyticsTab/AnalyticsTab";
-import ProductsList from "../../components/ProductsList/ProductsList";
-import CreateProductForm from "../../components/CreateProductForm/CreateProductForm";
+import AnalyticsTab from "../../components/dashboard/AnalyticsTab/AnalyticsTab";
+import ProductsList from "../../components/products/ProductsList/ProductsList";
+import CreateProductForm from "../../components/products/CreateProductForm/CreateProductForm";
+
 import { motion } from "framer-motion";
 import { useProductStore } from "../../stores/useProductStore";
 

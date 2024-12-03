@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserStore } from "../../stores/useUserStore";
-import Captcha from "../../components/Captcha/Captcha";
+import Captcha from "../../components/shared/Captcha/Captcha";
 import toast from "react-hot-toast";
 
 const SignUpPage = () => {

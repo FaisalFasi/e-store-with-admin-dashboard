@@ -2,8 +2,7 @@ import React, { useEffect } from "react";
 import { useProductStore } from "../../stores/useProductStore";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import ProductCard from "../../components/ProductCard/ProductCard";
-
+import ProductCard from "../../components/products/ProductCard/ProductCard";
 const CategoryPage = () => {
   const { fetchProductsByCategory, products } = useProductStore();
   const { category } = useParams();

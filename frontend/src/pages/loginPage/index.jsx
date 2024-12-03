@@ -2,9 +2,9 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
 import { useUserStore } from "../../stores/useUserStore";
-import Captcha from "../../components/Captcha/Captcha";
+import Captcha from "../../components/shared/Captcha/Captcha";
 import toast from "react-hot-toast";
-import ForgotPasswordForm from "../../components/ForgetPassowrdForm/ForgotPasswordForm";
+import ForgotPasswordForm from "../../components/auth/ForgetPassowrdForm/ForgotPasswordForm";
 import { useState } from "react";
 
 const LoginPage = () => {

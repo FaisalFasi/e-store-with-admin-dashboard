@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axiosBaseURL from "../../lib/axios";
+import axiosBaseURL from "../../../lib/axios";
 import toast from "react-hot-toast";
 import ProductCard from "../ProductCard/ProductCard";
-import LoadingSpinner from "../LoadingSpinner/LoadingSpinner";
+import LoadingSpinner from "../../shared/LoadingSpinner/LoadingSpinner";
 
 const PeopleAlsoBought = () => {
   const [recommendations, setRecommendations] = useState([]);

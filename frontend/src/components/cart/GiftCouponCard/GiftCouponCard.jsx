@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useCartStore } from "../../stores/useCartStore";
+import { useCartStore } from "../../../stores/useCartStore";
 import { motion } from "framer-motion";
 
 const GiftCouponCard = () => {

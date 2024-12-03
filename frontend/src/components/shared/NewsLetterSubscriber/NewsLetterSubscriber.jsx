@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Mail, Loader, Check } from "lucide-react"; // Icons for email, loader, and success
 import toast from "react-hot-toast";
-import { useNewsLetterStore } from "../../stores/useNewsLetterStore";
+import { useNewsLetterStore } from "../../../stores/useNewsLetterStore.js";
 
 const NewsLetterSubscriber = ({ setSubscribePopup }) => {
   const { subscribeToNewsletter, loading } = useNewsLetterStore();
