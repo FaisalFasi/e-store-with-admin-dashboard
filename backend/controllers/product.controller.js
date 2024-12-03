@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import redis from "../db/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
@@ -11,6 +12,29 @@ export const getAllProducts = async (req, res) => {
     console.log("Error in getAllProducts controller:", error);
     res.status(500).json({
       message: "Internal Server Error while fetching products",
+      error,
+    });
+  }
+};
+export const getProductById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Validate the ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(201).json({ product });
+  } catch (error) {
+    console.log("Error in getProductById controller:", error);
+    res.status(500).json({
+      message: "Internal Server Error while fetching product by ID",
       error,
     });
   }

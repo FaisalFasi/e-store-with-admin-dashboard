@@ -3,10 +3,13 @@ import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
 import { useCartStore } from "../../../stores/useCartStore";
+import { useNavigate } from "react-router-dom";
 
 const ProductCard = ({ product }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
+
+  const navigate = useNavigate();
 
   const handleAddToCart = () => {
     if (!user) {
@@ -16,10 +19,17 @@ const ProductCard = ({ product }) => {
       addToCart(product);
     }
   };
+  const handleOpenProduct = () => {
+    navigate(`/products/${product._id}`);
+    console.log("Open product");
+  };
 
   return (
     <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
-      <div className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl">
+      <div
+        className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl"
+        onClick={handleOpenProduct}
+      >
         <img
           className="object-cover w-full"
           src={product.image}

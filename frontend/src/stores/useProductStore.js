@@ -5,6 +5,7 @@ import { cacheChecking } from "../helpers/cacheHelper";
 
 export const useProductStore = create((set, get) => ({
   products: [],
+  product: null,
   loading: false,
   cacheTimestamp: null,
 
@@ -45,6 +46,20 @@ export const useProductStore = create((set, get) => ({
       });
     } catch (error) {
       set({ loading: false });
+      toast.error(error?.response?.data.error || "Failed to fetch product");
+    }
+  },
+  fetchProductById: async (productId) => {
+    set({ loading: true });
+    console.log("Product ID in store:", productId);
+    try {
+      const response = await axiosBaseURL.get(`/products/${productId}`);
+      console.log("Product response:", response);
+
+      set({ product: response?.data?.product, loading: false });
+    } catch (error) {
+      set({ loading: false });
+      console.log("Error fetching product:", error);
       toast.error(error?.response?.data.error || "Failed to fetch product");
     }
   },

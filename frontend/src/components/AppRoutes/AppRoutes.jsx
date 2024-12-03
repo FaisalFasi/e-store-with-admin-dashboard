@@ -12,6 +12,7 @@ import { getUserData } from "../../utils/getUserData.js";
 import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
 import { useCartStore } from "../../stores/useCartStore.js";
 import ResetPasswordPage from "../../pages/resetPasswordPage/index.jsx";
+import SingleProductPage from "../../pages/singleProductPage/index.jsx";
 
 const AppRoutes = () => {
   const { user, checkAuth, checkingAuth } = getUserData();
@@ -33,6 +34,8 @@ const AppRoutes = () => {
       {/* <BackgroundGradient /> */}
       <Routes>
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        <Route path="/products/:productId" element={<SingleProductPage />} />
 
         <Route path="/" element={<HomePage />} />
         {/* user signup and login pages */}
