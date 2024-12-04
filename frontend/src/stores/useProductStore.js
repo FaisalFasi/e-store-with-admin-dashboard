@@ -11,23 +11,28 @@ export const useProductStore = create((set, get) => ({
 
   setProducts: (products) => set({ products }),
 
-  createProduct: async (productData) => {
+  createProduct: async (formData) => {
+    console.log("Product data in store:", formData);
+
     try {
       set({ loading: true });
-      if (!productData.image) {
-        set({ loading: false });
-        return toast.error("Please select an image");
-      }
-      const response = await axiosBaseURL.post("/products", productData);
 
+      const response = await axiosBaseURL.post("/products", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log("Product created response:", response);
       // here we are using the prevState to update the products array and add the new product to it without mutating the state directly using the spread operator to copy the previous state and then add the new product to it using the response.data which is the new product that was created in the backend and returned to us as a response from the server after creating the product in the database and then we set the loading to false
       set((prevState) => ({
-        products: [...prevState.products, response.data],
+        products: [...prevState.products, response.data.product],
         loading: false,
       }));
       toast.success("Product created successfully");
     } catch (error) {
       set({ loading: false });
+      console.log("Error creating product:", error);
       toast.error(error?.response?.data.error || "Failed to create product");
     }
   },
@@ -116,9 +121,26 @@ export const useProductStore = create((set, get) => ({
   fetchFeaturedProducts: async () => {
     set({ loading: true });
     try {
-      const response = await axiosBaseURL.get("/products/featured");
-      console.log("Featured products response:", response);
+      const response = await axiosBaseURL.get("/products/test");
+
+      console.log("Featured products response:", response?.data);
+      if (response?.data?.products?.length === 0) {
+        set({ error: "No featured products found", loading: false });
+        console.log("No featured products found");
+        return;
+      }
+      console.log("Featured products response:", response?.data);
       set({ products: response?.data?.products, loading: false });
+
+      // const response = await axiosBaseURL.get("/products/featured");
+
+      // if (response?.data?.products?.length === 0) {
+      //   set({ error: "No featured products found", loading: false });
+      //   console.log("No featured products found");
+      //   return;
+      // }
+      // console.log("Featured products response:", response?.data);
+      // set({ products: response?.data?.products, loading: false });
     } catch (error) {
       set({ error: "Failed to fetch products", loading: false });
       console.log("Error fetching featured products:", error);

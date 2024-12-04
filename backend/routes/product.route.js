@@ -10,15 +10,27 @@ import {
   getProductById,
 } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
+import multer from "multer";
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" }); // Save files temporarily in 'uploads' folder
 
+router.post(
+  "/",
+  protectRoute,
+  adminRoute,
+  upload.array("images"),
+  createProduct
+);
+router.get("test", (req, res) => {
+  console.log("test");
+  res.status(200).json({ message: "test" });
+});
 router.get("/", protectRoute, adminRoute, getAllProducts);
 router.get("/:id", getProductById);
 router.get("/featured", getFeaturedProducts);
 router.get("/category/:category", getProductByCategory);
 router.get("/recommendations", getRecommendedProducts);
-router.post("/", protectRoute, adminRoute, createProduct);
 router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
 router.delete("/:id", protectRoute, adminRoute, deleteProduct);
 

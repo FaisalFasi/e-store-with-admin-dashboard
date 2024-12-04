@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import redis from "../db/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
+import fs from "fs/promises";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -41,6 +42,7 @@ export const getProductById = async (req, res) => {
 };
 
 export const getFeaturedProducts = async (req, res) => {
+  console.log(req.body, "Fetching featured products from cache");
   try {
     const featuredProducts = await redis.get("featured_products");
 
@@ -51,7 +53,8 @@ export const getFeaturedProducts = async (req, res) => {
     // .lean method is used to convert the Mongoose document into a plain JavaScript object, good for caching and performance
     featuredProducts = await Product.find({ isFeatured: true }).lean(); // Fetch all featured products from the database
 
-    if (!featuredProducts) {
+    // If no products are found in the database, return a 404 status
+    if (!featuredProducts || featuredProducts.length === 0) {
       return res.status(404).json({ message: "No featured products found" });
     }
 
@@ -68,47 +71,43 @@ export const getFeaturedProducts = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  const {
-    name,
-    price,
-    description,
-    image: images,
-    category,
-    isFeatured,
-  } = req.body;
-  if (!images || images.length === 0) {
-    return res.status(400).json({ error: "At least one image is required" });
-  }
-  // Validate file types
-  const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+  const { name, price, description, category, isFeatured } = req.body;
 
-  for (let i = 0; i < images.length; i++) {
-    const fileType = images[i].type;
-    if (!allowedMimeTypes.includes(fileType)) {
-      return res.status(400).json({
-        error: `Invalid file type for image ${
-          i + 1
-        }. Please upload PNG, JPEG, or WEBP files.`,
-      });
-    }
+  console.log("req.body:", req.body);
+  console.log("req.files:", req.files);
+
+  // Validate files
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ message: "No images uploaded." });
   }
 
   try {
-    let uploadedImages = null;
+    // Upload images to Cloudinary
+    const uploadedImages = await Promise.all(
+      req.files.map(async (file) => {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "products",
+          });
 
-    for (let i = 0; i < images.length; i++) {
-      const image_ = images[i];
-      const cloudinaryResponse = await cloudinary.uploader.upload(image_, {
-        folder: "products",
-      });
-      uploadedImages.push(cloudinaryResponse.secure_url); // Push the image URL to the array
-    }
+          // Clean up temporary file
+          await fs.unlink(file.path);
+
+          return result.secure_url; // Return the URL of the uploaded image
+        } catch (error) {
+          console.error(`Error uploading ${file.filename}:`, error);
+          throw new Error("Failed to upload image to Cloudinary.");
+        }
+      })
+    );
+
+    console.log("uploadedImages:", uploadedImages);
 
     const product = await Product.create({
       name,
       price,
       description,
-      images: uploadedImages?.secure_url || "",
+      images: uploadedImages,
       category,
       isFeatured,
     });
@@ -122,14 +121,23 @@ export const createProduct = async (req, res) => {
     });
   }
 };
-
 export const getRecommendedProducts = async (req, res) => {
+  // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
   try {
-    // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
     const recommendedProducts = await Product.aggregate([
       { $sample: { size: 4 } },
-      { $project: { _id: 1, name: 1, description: 1, price: 1, image: 1 } },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          price: 1,
+          images: 1, // Include all images
+          // image: { $arrayElemAt: ["$images", 0] }, // Select the first image
+        },
+      },
     ]);
+    console.log("recommendedProducts:", recommendedProducts);
 
     if (!recommendedProducts) {
       return res.status(404).json({ message: "No recommended products found" });
