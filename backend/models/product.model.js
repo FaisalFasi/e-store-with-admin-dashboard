@@ -34,6 +34,7 @@ const productSchema = new mongoose.Schema(
     },
     updatedAt: {
       type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }

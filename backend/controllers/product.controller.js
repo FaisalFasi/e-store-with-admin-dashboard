@@ -78,23 +78,29 @@ export const getFeaturedProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
   const { name, price, description, category, isFeatured } = req.body;
 
+  const requstedFiles = req.files;
+
   console.log("req.body:", req.body);
-  console.log("req.files:", req.files);
+  console.log("requstedFiles:", requstedFiles);
 
   // Validate files
-  if (!req.files || req.files.length === 0) {
+  if (!requstedFiles || requstedFiles.length === 0) {
     return res.status(400).json({ message: "No images uploaded." });
+  }
+  // validate if image type is not image
+  if (requstedFiles.some((file) => !file.mimetype.startsWith("image"))) {
+    return res.status(400).json({ message: "Please upload only images." });
   }
 
   try {
     // Upload images to Cloudinary
     const uploadedImages = await Promise.all(
-      req.files.map(async (file) => {
+      requstedFiles.map(async (file) => {
         try {
           const result = await cloudinary.uploader.upload(file.path, {
             folder: "products",
           });
-
+          console.log("result:", result);
           // Clean up temporary file
           await fs.unlink(file.path);
 

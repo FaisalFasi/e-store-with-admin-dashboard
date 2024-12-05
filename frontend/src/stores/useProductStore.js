@@ -5,7 +5,6 @@ import { cacheChecking } from "../helpers/cacheHelper";
 
 export const useProductStore = create((set, get) => ({
   products: [],
-  product: null,
   loading: false,
   cacheTimestamp: null,
 
@@ -61,7 +60,7 @@ export const useProductStore = create((set, get) => ({
       const response = await axiosBaseURL.get(`/products/${productId}`);
       console.log("Product response:", response);
 
-      set({ product: response?.data?.product, loading: false });
+      set({ products: response.data.product, loading: false });
     } catch (error) {
       set({ loading: false });
       console.log("Error fetching product:", error);

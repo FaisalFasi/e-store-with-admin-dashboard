@@ -27,12 +27,12 @@ const ProductCard = ({ product }) => {
   return (
     <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
       <div
-        className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl"
+        className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl hover:scale-105 hover:cursor-pointer transition-transform duration-300"
         onClick={handleOpenProduct}
       >
         <img
-          className="object-cover w-full"
-          src={product.image}
+          className="object-cover w-full "
+          src={product.images[0]}
           alt="product image"
         />
         <div className="absolute inset-0 bg-black bg-opacity-20" />
