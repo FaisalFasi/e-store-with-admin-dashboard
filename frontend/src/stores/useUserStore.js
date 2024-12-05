@@ -29,6 +29,7 @@ export const useUserStore = create((set, get) => ({
       }
 
       set({ user: response?.data?.user, loading: false });
+      return response?.data;
     } catch (error) {
       set({ loading: false });
       if (error?.response && error?.response?.status === 429) {

@@ -35,9 +35,10 @@ const CategoryPage = () => {
             </h2>
           )}
 
-          {products?.map((product) => (
-            <ProductCard key={product._id} product={product} />
-          ))}
+          {products.length > 0 &&
+            products?.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
         </motion.div>
       </div>
     </div>

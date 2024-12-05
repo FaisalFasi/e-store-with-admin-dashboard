@@ -121,9 +121,7 @@ export const useProductStore = create((set, get) => ({
   fetchFeaturedProducts: async () => {
     set({ loading: true });
     try {
-      const response = await axiosBaseURL.get("/products/test");
-
-      console.log("Featured products response:", response?.data);
+      const response = await axiosBaseURL.get("/products/featured");
       if (response?.data?.products?.length === 0) {
         set({ error: "No featured products found", loading: false });
         console.log("No featured products found");
@@ -131,16 +129,6 @@ export const useProductStore = create((set, get) => ({
       }
       console.log("Featured products response:", response?.data);
       set({ products: response?.data?.products, loading: false });
-
-      // const response = await axiosBaseURL.get("/products/featured");
-
-      // if (response?.data?.products?.length === 0) {
-      //   set({ error: "No featured products found", loading: false });
-      //   console.log("No featured products found");
-      //   return;
-      // }
-      // console.log("Featured products response:", response?.data);
-      // set({ products: response?.data?.products, loading: false });
     } catch (error) {
       set({ error: "Failed to fetch products", loading: false });
       console.log("Error fetching featured products:", error);

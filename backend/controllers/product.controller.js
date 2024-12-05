@@ -43,8 +43,9 @@ export const getProductById = async (req, res) => {
 
 export const getFeaturedProducts = async (req, res) => {
   console.log(req.body, "Fetching featured products from cache");
+
   try {
-    const featuredProducts = await redis.get("featured_products");
+    let featuredProducts = await redis.get("featured_products");
 
     if (featuredProducts) {
       return res.json({ products: JSON.parse(featuredProducts) });
@@ -55,7 +56,11 @@ export const getFeaturedProducts = async (req, res) => {
 
     // If no products are found in the database, return a 404 status
     if (!featuredProducts || featuredProducts.length === 0) {
-      return res.status(404).json({ message: "No featured products found" });
+      return (
+        res
+          // .status(404)
+          .json({ products: {}, message: "No featured products found" })
+      );
     }
 
     await redis.set("featured_products", JSON.stringify(featuredProducts));
@@ -96,7 +101,11 @@ export const createProduct = async (req, res) => {
           return result.secure_url; // Return the URL of the uploaded image
         } catch (error) {
           console.error(`Error uploading ${file.filename}:`, error);
-          throw new Error("Failed to upload image to Cloudinary.");
+          // Return an error res message if the image upload fails with status code
+          return res.status(500).json({
+            message: "Internal Server Error while uploading images",
+            error,
+          });
         }
       })
     );

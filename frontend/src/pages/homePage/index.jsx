@@ -5,6 +5,7 @@ import FeaturedProducts from "../../components/products/FeaturedProducts/Feature
 import { motion } from "framer-motion";
 import { categories } from "../../utils/homeCategories/categories.js";
 import CategoryItem from "../../components/products/CategoryItem/CategoryItem";
+import axiosBaseURL from "../../lib/axios.js";
 
 const HomePage = () => {
   const { fetchFeaturedProducts, products, isLoading } = useProductStore();

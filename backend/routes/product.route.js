@@ -22,15 +22,11 @@ router.post(
   upload.array("images"),
   createProduct
 );
-router.get("test", (req, res) => {
-  console.log("test");
-  res.status(200).json({ message: "test" });
-});
 router.get("/", protectRoute, adminRoute, getAllProducts);
-router.get("/:id", getProductById);
 router.get("/featured", getFeaturedProducts);
-router.get("/category/:category", getProductByCategory);
 router.get("/recommendations", getRecommendedProducts);
+router.get("/category/:category", getProductByCategory);
+router.get("/:id", getProductById);
 router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
 router.delete("/:id", protectRoute, adminRoute, deleteProduct);
 

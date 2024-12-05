@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
 import { useUserStore } from "../../stores/useUserStore";
@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 const SignUpPage = () => {
   const { signUp, loading } = useUserStore();
+  const navigate = useNavigate();
   let captchaValue = "";
 
   const onCaptchaChange = (value) => {
@@ -28,13 +29,17 @@ const SignUpPage = () => {
     }
 
     // Pass form data to signUp
-    await signUp({
+    const response = await signUp({
       name,
       email,
       password,
       confirmPassword,
       captcha: captchaValue,
     });
+    if (response) {
+      e.target.reset(); // Reset form on success
+      navigate("/login"); // Redirect to login page
+    }
   };
 
   return (
