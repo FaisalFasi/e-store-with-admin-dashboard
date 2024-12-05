@@ -11,8 +11,6 @@ export const useProductStore = create((set, get) => ({
   setProducts: (products) => set({ products }),
 
   createProduct: async (formData) => {
-    console.log("Product data in store:", formData);
-
     try {
       set({ loading: true });
 
@@ -22,7 +20,6 @@ export const useProductStore = create((set, get) => ({
         },
       });
 
-      console.log("Product created response:", response);
       // here we are using the prevState to update the products array and add the new product to it without mutating the state directly using the spread operator to copy the previous state and then add the new product to it using the response.data which is the new product that was created in the backend and returned to us as a response from the server after creating the product in the database and then we set the loading to false
       set((prevState) => ({
         products: [...prevState.products, response.data.product],
@@ -55,10 +52,9 @@ export const useProductStore = create((set, get) => ({
   },
   fetchProductById: async (productId) => {
     set({ loading: true });
-    console.log("Product ID in store:", productId);
+
     try {
       const response = await axiosBaseURL.get(`/products/${productId}`);
-      console.log("Product response:", response);
 
       set({ products: response.data.product, loading: false });
     } catch (error) {
@@ -123,10 +119,8 @@ export const useProductStore = create((set, get) => ({
       const response = await axiosBaseURL.get("/products/featured");
       if (response?.data?.products?.length === 0) {
         set({ error: "No featured products found", loading: false });
-        console.log("No featured products found");
         return;
       }
-      console.log("Featured products response:", response?.data);
       set({ products: response?.data?.products, loading: false });
     } catch (error) {
       set({ error: "Failed to fetch products", loading: false });

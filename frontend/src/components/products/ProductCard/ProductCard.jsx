@@ -3,15 +3,14 @@ import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
 import { useCartStore } from "../../../stores/useCartStore";
-import { useNavigate } from "react-router-dom";
+import Navigation from "../../shared/Navigation/Navigation";
 
 const ProductCard = ({ product }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
 
-  const navigate = useNavigate();
-
   const handleAddToCart = () => {
+    console.log("Add to cart");
     if (!user) {
       toast.error("Please login to add products to cart", { id: "login" });
       return;
@@ -19,16 +18,12 @@ const ProductCard = ({ product }) => {
       addToCart(product);
     }
   };
-  const handleOpenProduct = () => {
-    navigate(`/products/${product._id}`);
-    console.log("Open product");
-  };
 
   return (
     <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
-      <div
-        className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl hover:scale-105 hover:cursor-pointer transition-transform duration-300"
-        onClick={handleOpenProduct}
+      <Navigation
+        to={`/products/${product._id}`}
+        className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl hover:scale-105 transition-transform duration-300"
       >
         <img
           className="object-cover w-full "
@@ -36,7 +31,7 @@ const ProductCard = ({ product }) => {
           alt="product image"
         />
         <div className="absolute inset-0 bg-black bg-opacity-20" />
-      </div>
+      </Navigation>
 
       <div className="mt-4 px-5 pb-5">
         <h5 className="text-xl font-semibold tracking-tight text-white">

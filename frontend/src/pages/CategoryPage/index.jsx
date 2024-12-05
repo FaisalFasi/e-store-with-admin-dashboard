@@ -6,7 +6,7 @@ import ProductCard from "../../components/products/ProductCard/ProductCard";
 const CategoryPage = () => {
   const { fetchProductsByCategory, products } = useProductStore();
   const { category } = useParams();
-  console.log("products:", products);
+
   useEffect(() => {
     fetchProductsByCategory(category);
   }, [fetchProductsByCategory, category]);

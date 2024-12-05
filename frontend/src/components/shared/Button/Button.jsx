@@ -10,7 +10,7 @@ const Button = ({
   icon,
 }) => {
   const baseClasses =
-    "text-sm md:text-base lg:text-lg py-1 px-2 md:py-1  rounded-md flex items-center justify-center gap-2 transition duration-300 ease-in-out";
+    "text-sm md:text-base lg:text-lg px-2 py-1 md:py-2 md:px-4 font-bold  rounded-md flex items-center justify-center gap-2 transition duration-300 ease-in-out";
 
   const bgClasses = isBG
     ? "bg-emerald-700 hover:bg-emerald-600 text-white"

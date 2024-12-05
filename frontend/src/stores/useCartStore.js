@@ -43,6 +43,7 @@ export const useCartStore = create((set, get) => ({
         cart: response?.data?.cartItems,
         loading: false,
       });
+      console.log("Cart items:", response?.data?.cartItems);
 
       get().calculate_Total_AmountInCart();
     } catch (error) {

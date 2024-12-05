@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useParams } from "react-router-dom";
 import { useProductStore } from "../../stores/useProductStore";
+import Button from "../../components/shared/Button/Button";
+import ZoomImage from "../../components/shared/ZoomImage/ZoomImage";
 
 const SingleProductPage = () => {
   const { productId } = useParams();
@@ -32,7 +34,7 @@ const SingleProductPage = () => {
 
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -41,14 +43,24 @@ const SingleProductPage = () => {
         >
           {/* Left Section - Images */}
           <div className="flex flex-col items-center">
-            <motion.img
+            <ZoomImage
               src={selectedImage}
-              alt="Selected Product"
-              className="w-full max-w-xl rounded-lg shadow-lg object-contain h-96 lg:h-[30rem]"
+              // className="w-full h-full object-cover"
+            />
+            {/* <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8 }}
-            />
+              className="relative w-full h-[350px]  sm:h-[450px] md:w-[450px] lg:w-full lg:h-[500px] rounded-lg overflow-hidden shadow-lg"
+            >
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 opacity-50 z-10" />
+
+              <img
+                src={selectedImage}
+                alt="Selected Product"
+                className="w-full h-full object-cover"
+              />
+            </motion.div> */}
             <div className="flex gap-4 mt-4 overflow-x-auto">
               {product?.images?.map((image, index) => (
                 <button
@@ -91,9 +103,10 @@ const SingleProductPage = () => {
             >
               ${product.price}
             </motion.div>
-            <button className="px-6 py-3 bg-emerald-400 text-white font-bold rounded-lg shadow-lg hover:bg-emerald-500 transition self-start">
+            <Button isBG={true} className="self-start">
               Add to Cart
-            </button>
+            </Button>
+            {/* <button className="px-6 py-3 font-bold rounded-lg shadow-lg transition self-start"></button> */}
           </div>
         </motion.div>
       </div>

@@ -23,7 +23,6 @@ const CreateProductForm = () => {
     images: [], // Update to handle multiple images
   });
   const fileInputRef = useRef(null); // Create a ref to the file input
-
   const { createProduct, loading } = useProductStore();
 
   const handleSubmit = async (e) => {
@@ -39,7 +38,6 @@ const CreateProductForm = () => {
       formData.append("images", image); // 'images' must match your backend field
     });
 
-    console.log("formData formData:", formData);
     try {
       await createProduct(formData);
 
@@ -221,10 +219,10 @@ const CreateProductForm = () => {
             className="block w-full text-sm text-gray-300 border border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
           <div className="mt-3 flex flex-wrap gap-4">
-            {newProduct.images.map((image, index) => (
+            {newProduct?.images?.map((image, index) => (
               <div key={index} className="relative">
                 <img
-                  src={image}
+                  src={URL.createObjectURL(image)}
                   alt={`Uploaded ${index}`}
                   className="h-20 w-20 object-cover rounded-md"
                 />

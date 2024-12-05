@@ -88,11 +88,3 @@ export const updateQuantity = async (req, res) => {
     res.status(500).json(err);
   }
 };
-export const checkout = async (req, res) => {};
-export const getOrders = async (req, res) => {};
-export const getOrderById = async (req, res) => {};
-export const updateOrderToPaid = async (req, res) => {};
-export const updateOrderToDelivered = async (req, res) => {};
-// Compare this snippet from backend/models/Product.js:
-// import mongoose from "mongoose";
-//
