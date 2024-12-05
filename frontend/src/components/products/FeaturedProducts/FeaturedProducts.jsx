@@ -12,10 +12,16 @@ const FeaturedProducts = ({ featuredProducts }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 640) setItemsPerPage(1);
-      else if (window.innerWidth < 1024) setItemsPerPage(2);
-      else if (window.innerWidth < 1280) setItemsPerPage(3);
-      else setItemsPerPage(4);
+      let newItemsPerPage = 4;
+      if (window.innerWidth < 640) newItemsPerPage = 1;
+      else if (window.innerWidth < 1024) newItemsPerPage = 2;
+      else if (window.innerWidth < 1280) newItemsPerPage = 3;
+
+      setItemsPerPage(newItemsPerPage);
+
+      // Adjust the currentIndex to avoid going out of bounds
+      const maxIndex = Math.max(0, featuredProducts.length - newItemsPerPage);
+      setCurrentIndex((prevIndex) => Math.min(prevIndex, maxIndex));
     };
 
     handleResize();
@@ -24,15 +30,19 @@ const FeaturedProducts = ({ featuredProducts }) => {
   }, []);
 
   const nextSlide = () => {
-    setCurrentIndex((prevIndex) => prevIndex + itemsPerPage);
+    setCurrentIndex((prevIndex) => {
+      const nextIndex = prevIndex + itemsPerPage;
+      return Math.min(nextIndex, featuredProducts.length - itemsPerPage); // Prevent going out of bounds
+    });
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prevIndex) => prevIndex - itemsPerPage);
+    setCurrentIndex((prevIndex) => Math.max(prevIndex - itemsPerPage, 0)); // Prevent going below 0
   };
 
   const isStartDisabled = currentIndex === 0;
   const isEndDisabled = currentIndex >= featuredProducts.length - itemsPerPage;
+  const showNavigationButtons = featuredProducts.length > itemsPerPage;
 
   return (
     <div className="py-12">
@@ -56,7 +66,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
                     key={product._id}
                     className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-2"
                   >
-                    <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-emerald-500/30">
+                    <div className="flex flex-col justify-between bg-white bg-opacity-10 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-emerald-500/30">
                       <div className="overflow-hidden">
                         <Navigation to={`/products/${product._id}`}>
                           <img
@@ -66,13 +76,15 @@ const FeaturedProducts = ({ featuredProducts }) => {
                           />
                         </Navigation>
                       </div>
-                      <div className="p-4">
-                        <h3 className="text-lg font-semibold mb-2 text-white">
-                          {product.name}
-                        </h3>
-                        <p className="text-emerald-300 font-medium mb-4">
-                          ${Number(product.price || 0).toFixed(2)}
-                        </p>
+                      <div className="flex flex-col justify-between h-[200px] p-4">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2 text-white">
+                            {product.name}
+                          </h3>
+                          <p className="text-emerald-300 font-medium mb-4">
+                            ${Number(product.price || 0).toFixed(2)}
+                          </p>
+                        </div>
                         <button
                           onClick={() => addToCart(product)}
                           className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 
@@ -87,29 +99,33 @@ const FeaturedProducts = ({ featuredProducts }) => {
                 ))}
             </div>
           </div>
-          <button
-            onClick={prevSlide}
-            disabled={isStartDisabled}
-            className={`absolute top-1/2 -left-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
-              isStartDisabled
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500"
-            }`}
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+          {showNavigationButtons && (
+            <>
+              <button
+                onClick={prevSlide}
+                disabled={isStartDisabled}
+                className={`absolute top-1/2 -left-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
+                  isStartDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-500"
+                }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
 
-          <button
-            onClick={nextSlide}
-            disabled={isEndDisabled}
-            className={`absolute top-1/2 -right-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
-              isEndDisabled
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500"
-            }`}
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+              <button
+                onClick={nextSlide}
+                disabled={isEndDisabled}
+                className={`absolute top-1/2 -right-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
+                  isEndDisabled
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-emerald-600 hover:bg-emerald-500"
+                }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

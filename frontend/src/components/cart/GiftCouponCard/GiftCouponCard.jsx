@@ -47,7 +47,7 @@ const GiftCouponCard = () => {
             p-2.5 text-sm text-white placeholder-gray-400 focus:border-emerald-500 
             focus:ring-emerald-500"
             placeholder="Enter code here"
-            value={userInputCode}
+            value={userInputCode || ""}
             onChange={(e) => setUserInputCode(e.target.value)}
             required
           />

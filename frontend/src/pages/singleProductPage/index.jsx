@@ -4,6 +4,9 @@ import { useParams } from "react-router-dom";
 import { useProductStore } from "../../stores/useProductStore";
 import Button from "../../components/shared/Button/Button";
 import ZoomImage from "../../components/shared/ZoomImage/ZoomImage";
+import { useCartStore } from "../../stores/useCartStore";
+import { toast } from "react-hot-toast";
+import { getUserData } from "../../utils/getUserData.js";
 
 const SingleProductPage = () => {
   const { productId } = useParams();
@@ -12,7 +15,21 @@ const SingleProductPage = () => {
     products: product,
     loading: isLoading,
   } = useProductStore();
+
+  const { addToCart } = useCartStore();
+
+  const { user } = getUserData();
   const [selectedImage, setSelectedImage] = useState("");
+
+  const handleAddToCart = () => {
+    console.log("Add to cart");
+    if (!user) {
+      toast.error("Please login to add products to cart", { id: "login" });
+      return;
+    } else {
+      addToCart(product);
+    }
+  };
 
   useEffect(() => {
     fetchProductById(productId);
@@ -47,28 +64,29 @@ const SingleProductPage = () => {
               {/* Fixed size for image */}
               <ZoomImage
                 src={selectedImage}
-                className=" w-[300px] h-[400px] md:w-[400px] md:h-[500px] lg:w-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-lg"
+                className=" object-cover w-[300px] h-[400px] md:w-[400px] md:h-[500px] lg:w-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-lg"
               />
             </div>
-
-            <div className="flex gap-4 mt-4 overflow-x-auto">
-              {product?.images?.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(image)}
-                  className={`border-2 rounded-md transition ${
-                    selectedImage === image
-                      ? "border-emerald-400"
-                      : "border-gray-600"
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="w-16 h-16 object-cover rounded-md"
-                  />
-                </button>
-              ))}
+            <div className="max-w-full h-full flex items-center justify-start py-6 overflow-x-scroll">
+              <div className="min-w-max flex gap-4">
+                {product?.images?.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(image)}
+                    className={`w-full h-full border-4 transition rounded-sm ${
+                      selectedImage === image
+                        ? "border-emerald-400"
+                        : "border-gray-600"
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded-sm"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -93,7 +111,11 @@ const SingleProductPage = () => {
             >
               ${product.price}
             </motion.div>
-            <Button isBG={true} className="self-start">
+            <Button
+              isBG={true}
+              className="self-start"
+              onClick={handleAddToCart}
+            >
               Add to Cart
             </Button>
           </div>
