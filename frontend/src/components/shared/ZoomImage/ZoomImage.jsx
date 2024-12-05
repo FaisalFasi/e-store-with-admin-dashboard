@@ -1,7 +1,9 @@
 import React from "react";
+import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
-const ZoomImage = ({ src, alt }) => {
+const ZoomImage = ({ src, alt, className }) => {
   return (
     <TransformWrapper
       initialScale={1}
@@ -10,35 +12,36 @@ const ZoomImage = ({ src, alt }) => {
       wheel={{
         step: 0.1, // Zoom step on mouse wheel scroll
       }}
+      className="relative"
     >
       {({ zoomIn, zoomOut, resetTransform }) => (
         <div className="relative">
+          {/* Fixed size wrapper */}
+          {/* Image Section */}
+          <TransformComponent>
+            <img src={src} alt={alt} className={className} />
+          </TransformComponent>
           {/* Zoom Control Buttons */}
-          <div className="absolute top-4 right-4 space-x-2">
+          <div className="absolute flex items-center top-4 right-4 space-x-2 opacity-80">
             <button
+              className="px-2 py-1 bg-emerald-400 text-white rounded-md"
               onClick={() => zoomIn()}
-              className="px-4 py-2 bg-emerald-400 text-white rounded-md"
             >
-              Zoom In
+              <ZoomIn />
             </button>
             <button
               onClick={() => zoomOut()}
-              className="px-4 py-2 bg-emerald-400 text-white rounded-md"
+              className="px-2 py-1 bg-emerald-400 text-white rounded-md"
             >
-              Zoom Out
+              <ZoomOut />
             </button>
             <button
               onClick={() => resetTransform()}
-              className="px-4 py-2 bg-emerald-400 text-white rounded-md"
+              className="px-2 py-1 bg-emerald-400 text-white rounded-md"
             >
-              Reset
+              <RotateCcw />
             </button>
           </div>
-
-          {/* Image Section */}
-          <TransformComponent>
-            <img src={src} alt={alt} className="w-full h-full object-cover" />
-          </TransformComponent>
         </div>
       )}
     </TransformWrapper>

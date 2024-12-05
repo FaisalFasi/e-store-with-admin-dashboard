@@ -43,24 +43,14 @@ const SingleProductPage = () => {
         >
           {/* Left Section - Images */}
           <div className="flex flex-col items-center">
-            <ZoomImage
-              src={selectedImage}
-              // className="w-full h-full object-cover"
-            />
-            {/* <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              className="relative w-full h-[350px]  sm:h-[450px] md:w-[450px] lg:w-full lg:h-[500px] rounded-lg overflow-hidden shadow-lg"
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900 opacity-50 z-10" />
-
-              <img
+            <div className="w-full h-full flex items-center justify-center">
+              {/* Fixed size for image */}
+              <ZoomImage
                 src={selectedImage}
-                alt="Selected Product"
-                className="w-full h-full object-cover"
+                className=" w-[300px] h-[400px] md:w-[400px] md:h-[500px] lg:w-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-lg"
               />
-            </motion.div> */}
+            </div>
+
             <div className="flex gap-4 mt-4 overflow-x-auto">
               {product?.images?.map((image, index) => (
                 <button
@@ -106,7 +96,6 @@ const SingleProductPage = () => {
             <Button isBG={true} className="self-start">
               Add to Cart
             </Button>
-            {/* <button className="px-6 py-3 font-bold rounded-lg shadow-lg transition self-start"></button> */}
           </div>
         </motion.div>
       </div>
