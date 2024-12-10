@@ -13,6 +13,7 @@ import couponRoutes from "./routes/coupon.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import newsLetterRoutes from "./routes/newsLetter.route.js";
+import ordersRoutes from "./routes/orders.route.js";
 
 dotenv.config();
 
@@ -37,6 +38,8 @@ app.set("trust proxy", 1);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/orders", ordersRoutes);
+
 app.use("/api/cart", cartRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);

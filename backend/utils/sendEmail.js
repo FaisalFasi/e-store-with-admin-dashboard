@@ -2,19 +2,22 @@ import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import NewsLetter from "../models/newsletter.model.js";
+
 dotenv.config();
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+const storeName = "FR_Store";
 
 export const sendResetPasswordEmail = async (email, resetToken) => {
   const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`; // Replace localhost with your frontend domain in production
 
   const dynamicMsg = {
     to: email,
-    from: { name: "FR_Store", email: process.env.FROM_EMAIL },
+    from: { name: storeName, email: process.env.FROM_EMAIL },
     templateId: process.env.SENDGRID_RESET_PASSWORD_TEMPLATE_ID, // Use your dynamic template ID here
     dynamicTemplateData: {
-      name: "FR_Store",
+      name: storeName,
       resetLink: resetLink, // Add the reset link to your email template
     },
   };
@@ -41,7 +44,7 @@ export const sendWelcomeEmail = async (toEmail) => {
     from: process.env.FROM_EMAIL, // Sender email
     templateId: process.env.SENDGRID_SUBSCRIBER_TEMPLATE_ID, // Use your dynamic template ID here
     // dynamicTemplateData: {
-    //   name: "FR_Store",
+    //   name:storeName,
     //   resetLink: resetLink, // Add the reset link to your email template
     // },
   };
@@ -69,4 +72,27 @@ export const sendNewsletter = async () => {
   };
 
   await sgMail.sendMultiple(msg);
+};
+
+// order update email
+export const sendOrderUpdateEmail = async (email, order) => {
+  const msg = {
+    to: email,
+    from: process.env.FROM_EMAIL,
+    templateId: process.env.SENDGRID_SUBSCRIBER_TEMPLATE_ID,
+    dynamicTemplateData: {
+      name: storeName,
+      orderId: order._id,
+      status: order.status,
+      totalAmount: order.totalAmount,
+    },
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log("Welcome email sent to:", email);
+  } catch (error) {
+    console.error("Error sending welcome email:", error.response.body);
+    throw new Error("Failed to send welcome email");
+  }
 };

@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import { stripe } from "../lib/stripe.js";
 import Coupon from "../models/coupen.model.js";
 import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 
 export const createCheckoutSession = async (req, res) => {
   try {
@@ -82,37 +84,73 @@ export const createCheckoutSession = async (req, res) => {
 };
 
 export const checkoutSuccess = async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+  const mongoDB_Session = await mongoose.startSession();
 
-    if (session.payment_status === "paid") {
-      if (session.metadata.couponCode) {
+  try {
+    await mongoDB_Session.startTransaction();
+
+    const { sessionId } = req.body;
+    const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+    const products = JSON.parse(stripeSession.metadata.products);
+
+    if (stripeSession.payment_status === "paid") {
+      // Deactivate coupon if used
+      if (stripeSession.metadata.couponCode) {
         await Coupon.findOneAndUpdate(
           {
-            code: session.metadata.couponCode,
-            userId: session.metadata.userId,
+            code: stripeSession.metadata.couponCode,
+            userId: stripeSession.metadata.userId,
           },
           {
             isActive: false,
+          },
+          {
+            session: mongoDB_Session,
           }
         );
       }
 
-      // create a new Order
-      const products = JSON.parse(session.metadata.products);
+      console.log("Products in payment:", products);
+
+      // Update product quantities
+
+      for (const product of products) {
+        const foundProduct = await Product.findById(product.id).session(
+          mongoDB_Session
+        );
+
+        if (!foundProduct) {
+          return res.status(404).json({
+            message: `Product with id ${product.id} not found`,
+          });
+        }
+        if (foundProduct && foundProduct.quantity >= product.quantity) {
+          foundProduct.quantity -= product.quantity;
+
+          await foundProduct.save({ session: mongoDB_Session });
+        } else {
+          return res.status(400).json({
+            message: `Product with id ${product.id} has insufficient quantity`,
+          });
+        }
+      }
+
       const newOrder = new Order({
-        user: session.metadata.userId,
-        products: products.map((product) => ({
-          product: product.id,
-          quantity: product.quantity,
-          price: product.price,
+        user: stripeSession.metadata.userId,
+        products: products.map((p) => ({
+          product: p.id,
+          quantity: p.quantity,
+          price: p.price,
         })),
-        totalAmount: session.amount_total / 100, // convert from cents to dollars,
+        totalAmount: stripeSession.amount_total / 100, // convert from cents to dollars,
         stripeSessionId: sessionId,
+        status: "Pending",
       });
 
-      await newOrder.save();
+      await newOrder.save({ session: mongoDB_Session });
+
+      await mongoDB_Session.commitTransaction();
+      mongoDB_Session.endSession();
 
       res.status(200).json({
         success: true,
@@ -122,6 +160,9 @@ export const checkoutSuccess = async (req, res) => {
       });
     }
   } catch (error) {
+    await mongoDB_Session.abortTransaction();
+    mongoDB_Session.endSession();
+
     console.error("Error processing successful checkout:", error);
     res.status(500).json({
       message: "Error processing successful checkout",

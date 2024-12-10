@@ -1,24 +1,34 @@
 import React, { useEffect, useState } from "react";
-import { BarChart, PlusCircle, ShoppingBasket } from "lucide-react";
+import {
+  BarChart,
+  PlusCircle,
+  ShoppingBag,
+  ShoppingBasket,
+} from "lucide-react";
 import AnalyticsTab from "../../components/dashboard/AnalyticsTab/AnalyticsTab";
 import ProductsList from "../../components/products/ProductsList/ProductsList";
 import CreateProductForm from "../../components/products/CreateProductForm/CreateProductForm";
 
 import { motion } from "framer-motion";
 import { useProductStore } from "../../stores/useProductStore";
+import { useOrderStore } from "../../stores/useOrderStore";
+import OrdersTab from "../../components/orders/OrdersTab/OrdersTab";
 
 const tabs = [
   { id: "create", label: "Create Product", icon: PlusCircle },
   { id: "products", label: "Products", icon: ShoppingBasket },
   { id: "analytics", label: "Analytics", icon: BarChart },
+  { id: "orders", label: "Orders", icon: ShoppingBag },
 ];
 const AdminDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { fetchAllProducts } = useProductStore();
+  const { orders, getOrders } = useOrderStore();
 
   useEffect(() => {
     fetchAllProducts();
-  }, [fetchAllProducts]);
+    getOrders();
+  }, [fetchAllProducts, getOrders]);
 
   return (
     <section className="min-h-screen relative overflow-hidden">
@@ -60,6 +70,7 @@ const AdminDashboardPage = () => {
         {activeTab === "create" && <CreateProductForm />}
         {activeTab === "products" && <ProductsList />}
         {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "orders" && <OrdersTab orders={orders} />}
       </div>
     </section>
   );

@@ -6,9 +6,9 @@ import fs from "fs/promises";
 
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({}); // Fetch all products from the database
+    const products = await Product.find({}); // Fetch all products from the database and {} means fetch all products
 
-    res.json({ products });
+    res.status(200).json({ success: true, products });
   } catch (error) {
     console.log("Error in getAllProducts controller:", error);
     res.status(500).json({
@@ -76,7 +76,14 @@ export const getFeaturedProducts = async (req, res) => {
 };
 
 export const createProduct = async (req, res) => {
-  const { name, price, description, category, isFeatured } = req.body;
+  const {
+    name,
+    price,
+    description,
+    quantity = 1,
+    category,
+    isFeatured,
+  } = req.body;
 
   const requstedFiles = req.files;
 
@@ -122,6 +129,7 @@ export const createProduct = async (req, res) => {
       name,
       price,
       description,
+      quantity,
       images: uploadedImages,
       category,
       isFeatured,
