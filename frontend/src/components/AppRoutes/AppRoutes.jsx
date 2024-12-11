@@ -13,6 +13,7 @@ import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
 import { useCartStore } from "../../stores/useCartStore.js";
 import ResetPasswordPage from "../../pages/resetPasswordPage/index.jsx";
 import SingleProductPage from "../../pages/singleProductPage/index.jsx";
+import SingleOrderDetailPage from "../../pages/singleOrderDetailPage/index.jsx";
 
 const AppRoutes = () => {
   const { user, checkAuth, checkingAuth } = getUserData();
@@ -36,6 +37,10 @@ const AppRoutes = () => {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         <Route path="/products/:productId" element={<SingleProductPage />} />
+        <Route
+          path="/order-detail/:orderId"
+          element={<SingleOrderDetailPage />}
+        />
 
         <Route path="/" element={<HomePage />} />
         {/* user signup and login pages */}

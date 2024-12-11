@@ -11,7 +11,6 @@ import CreateProductForm from "../../components/products/CreateProductForm/Creat
 
 import { motion } from "framer-motion";
 import { useProductStore } from "../../stores/useProductStore";
-import { useOrderStore } from "../../stores/useOrderStore";
 import OrdersTab from "../../components/orders/OrdersTab/OrdersTab";
 
 const tabs = [
@@ -20,32 +19,31 @@ const tabs = [
   { id: "analytics", label: "Analytics", icon: BarChart },
   { id: "orders", label: "Orders", icon: ShoppingBag },
 ];
+
 const AdminDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { fetchAllProducts } = useProductStore();
-  const { orders, getOrders } = useOrderStore();
 
   useEffect(() => {
     fetchAllProducts();
-    getOrders();
-  }, [fetchAllProducts, getOrders]);
+  }, [fetchAllProducts]);
 
   return (
     <section className="min-h-screen relative overflow-hidden">
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Dashboard Title */}
         <motion.h1
           className="text-4xl font-bold mb-8 text-emerald-400 text-center"
           initial={{ opacity: 0, y: -40 }}
           animate={{ opacity: 1, y: 0 }}
-          // initial={{ opacity: 0, y: -20 }}
-          // animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
           Admin Dashboard
         </motion.h1>
 
+        {/* Navigation Buttons */}
         <motion.div
-          className="flex justify-center mb-8"
+          className="flex flex-wrap justify-center mb-8 space-x-2 space-y-2 md:space-y-0 md:justify-center"
           initial={{ opacity: 0, x: 80 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
@@ -54,23 +52,25 @@ const AdminDashboardPage = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-2 md:px-4 md:py-2 mx-2 rounded-md transition-colors duration-200 ${
+              className={`flex items-center justify-center px-4 py-2 rounded-md text-white font-medium transition-colors duration-200 ${
                 activeTab === tab.id
-                  ? "bg-emerald-600 text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
+                  ? "bg-emerald-600"
+                  : "bg-gray-700 hover:bg-gray-600"
+              } md:text-lg md:px-6 md:py-3`}
             >
-              <tab.icon className="mr-2 h-5 w-5" />
-              <span className=" text-xs font-bold sm:text-lg md:text-xl lg:text-xl whitespace-nowrap md:whitespace-normal py-2 md:py-0 ">
-                {tab.label}
-              </span>
+              <tab.icon className="mr-2 h-6 w-6" />
+              <span>{tab.label}</span>
             </button>
           ))}
         </motion.div>
-        {activeTab === "create" && <CreateProductForm />}
-        {activeTab === "products" && <ProductsList />}
-        {activeTab === "analytics" && <AnalyticsTab />}
-        {activeTab === "orders" && <OrdersTab orders={orders} />}
+
+        {/* Content Area */}
+        <div className="p-2 md:p-4 bg-gray-800 rounded-lg shadow">
+          {activeTab === "create" && <CreateProductForm />}
+          {activeTab === "products" && <ProductsList />}
+          {activeTab === "analytics" && <AnalyticsTab />}
+          {activeTab === "orders" && <OrdersTab />}
+        </div>
       </div>
     </section>
   );

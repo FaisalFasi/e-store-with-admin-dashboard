@@ -20,6 +20,7 @@
     "cloudinary": "^2.5.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.0",
     "express-async-handler": "^1.2.0",

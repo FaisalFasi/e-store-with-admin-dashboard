@@ -16,14 +16,18 @@ export const useOrderStore = create((set, get) => ({
   orders: [],
   singleOrder: {},
 
-  getOrders: async () => {
+  getOrders: async (filterBy, startDate, endDate) => {
     set({ loading: true });
 
     try {
-      const response = await axiosBaseURL.get("/orders");
-      console.log("Orders:", response?.data?.orders);
+      const response = await axiosBaseURL.get("/orders", {
+        params: { filterBy, startDate, endDate },
+      });
+      const fetchedOrders = response?.data?.orders || [];
+
+      console.log("Orders in store:", fetchedOrders);
       set({
-        orders: response?.data?.orders,
+        orders: fetchedOrders,
         loading: false,
       });
     } catch (error) {
@@ -35,6 +39,7 @@ export const useOrderStore = create((set, get) => ({
   getOrderById: async (orderId) => {
     set({ loading: true });
 
+    console.log("Order ID in store:", orderId);
     try {
       const response = await axiosBaseURL.get(`/orders/${orderId}`);
       console.log("Order:", response?.data?.order);

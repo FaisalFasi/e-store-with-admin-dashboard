@@ -44,8 +44,12 @@ const orderSchema = new mongoose.Schema(
       default: "Pending",
     },
     paymentDetails: {
-      method: { type: String, default: "Card" }, // Card, COD, etc.
-      transactionId: { type: String }, // Stripe/PayPal/COD reference
+      method: {
+        type: String,
+        enum: ["Card", "COD", "PayPal", "Stripe"],
+        default: "Card",
+      },
+      transactionId: { type: String },
       paymentStatus: {
         type: String,
         enum: ["unpaid", "paid"],
@@ -53,13 +57,17 @@ const orderSchema = new mongoose.Schema(
       },
     },
     dispatchDetails: {
-      dispatchedBy: { type: String }, // Admin ID or name
+      dispatchedBy: { type: String },
       dispatchedAt: { type: Date },
       deliveryEstimate: { type: Date },
     },
-    cancellationReason: {
-      type: String,
-      default: null, // Reason for order cancellation
+    cancellationReason: { type: String, default: null },
+
+    shippingAddress: {
+      address: { type: String, required: true },
+      city: { type: String, required: true },
+      postalCode: { type: String, required: true },
+      country: { type: String, required: true },
     },
     orderHistory: [
       {
@@ -75,20 +83,19 @@ const orderSchema = new mongoose.Schema(
           ],
         },
         updatedAt: { type: Date, default: Date.now },
-        note: { type: String }, // Optional note for each status update
+        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        note: { type: String },
       },
     ],
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-    updatedAt: {
-      type: Date,
-      default: Date.now,
-    },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
+
+orderSchema.index({ user: 1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ createdAt: -1 });
 
 const Order = mongoose.model("Order", orderSchema);
 
