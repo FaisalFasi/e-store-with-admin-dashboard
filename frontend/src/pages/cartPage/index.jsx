@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CartItem from "../../components/cart/CartItem/CartItem";
 import PeopleAlsoBought from "../../components/products/PeopleAlsoBought/PeopleAlsoBought";
-import OrderSummary from "../../components/checkout/OrderSummary/OrderSummary";
+import OrderSummary from "../../components/cart/OrderSummary/OrderSummary";
 import GiftCouponCard from "../../components/cart/GiftCouponCard/GiftCouponCard";
 import { useCartStore } from "../../stores/useCartStore";
 
@@ -23,7 +23,7 @@ const CartPage = () => {
           // animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Cart Items{" "}
+          Cart Items
         </motion.h1>
       )}
       <div className="mt-6 sm:mt-8 md:gap-6 lg:flex lg:items-start xl:gap-8">
