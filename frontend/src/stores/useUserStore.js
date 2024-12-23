@@ -7,6 +7,21 @@ export const useUserStore = create((set, get) => ({
   loading: false,
   checkingAuth: false,
   // functions to be used in components
+  loginAsGuest: async () => {
+    try {
+      set({ loading: true });
+      const { data } = await axiosBaseURL.post("/auth/guest-login"); // Adjust endpoint if needed
+      console.log("data in guest login:", data);
+      set({ user: data.guestUser });
+      toast.success("Logged in as Guest!");
+    } catch (error) {
+      console.error("Error logging in as guest:", error);
+      toast.error("Failed to log in as guest.");
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   signUp: async ({ name, email, password, confirmPassword, captcha }) => {
     set({ loading: true });
 

@@ -1,8 +1,9 @@
 import express from "express";
-import { saveAddress } from "../controllers/address.controller.js";
+import { saveShippingAddress } from "../controllers/address.controller.js";
+import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.get("/", saveAddress);
+router.post("/", protectRoute, saveShippingAddress);
 
 export default router;

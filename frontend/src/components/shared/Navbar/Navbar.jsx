@@ -1,4 +1,4 @@
-import { ShoppingCart, UserPlus, LogIn, LogOut, Lock } from "lucide-react";
+import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, Key } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../../stores/useCartStore";
 import { getUserData } from "../../../utils/getUserData";
@@ -8,7 +8,7 @@ import { Mails } from "lucide-react";
 import Button from "../Button/Button";
 
 const Navbar = () => {
-  const { user, logout } = getUserData();
+  const { user, logout, loginAsGuest } = getUserData();
   let isAdmin = user?.role === "admin";
   const { cart } = useCartStore();
   const [openSubscribePopup, setOpenSubscribePopup] = useState(false);
@@ -84,22 +84,49 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to={"/signup"}
+                  to="/signup"
                   className="bg-emerald-600 hover:bg-emerald-700 text-white py-1 md:py-2 px-2 md:px-4 text-sm md:text-xl
-									rounded-md flex items-center transition duration-300 ease-in-out"
+                      rounded-md flex items-center transition duration-300 ease-in-out"
                 >
                   <UserPlus className="mr-2" size={18} />
                   Sign Up
                 </Link>
                 <Link
-                  to={"/login"}
+                  to="/login"
                   className="bg-gray-700 hover:bg-gray-600 text-white py-1 md:py-2  px-2 md:px-4 text-sm md:text-xl 
-									rounded-md flex items-center transition duration-300 ease-in-out"
+                      rounded-md flex items-center transition duration-300 ease-in-out"
                 >
                   <LogIn className="mr-2" size={18} />
                   Login
                 </Link>
+                <button
+                  onClick={() => loginAsGuest()}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white py-1 md:py-2 px-2 md:px-4 text-sm md:text-xl 
+                      rounded-md flex items-center transition duration-300 ease-in-out"
+                >
+                  <Key className="mr-2" size={18} />
+                  Guest
+                </button>
               </>
+
+              // <>
+              //   <Link
+              //     to={"/signup"}
+              //     className="bg-emerald-600 hover:bg-emerald-700 text-white py-1 md:py-2 px-2 md:px-4 text-sm md:text-xl
+              // 		rounded-md flex items-center transition duration-300 ease-in-out"
+              //   >
+              //     <UserPlus className="mr-2" size={18} />
+              //     Sign Up
+              //   </Link>
+              //   <Link
+              //     to={"/login"}
+              //     className="bg-gray-700 hover:bg-gray-600 text-white py-1 md:py-2  px-2 md:px-4 text-sm md:text-xl
+              // 		rounded-md flex items-center transition duration-300 ease-in-out"
+              //   >
+              //     <LogIn className="mr-2" size={18} />
+              //     Login
+              //   </Link>
+              // </>
             )}
           </nav>
         </div>

@@ -46,7 +46,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/newsletter", newsLetterRoutes);
-app.use("/api/save-address", addressRoutes);
+app.use("/api/address", addressRoutes);
 
 // app.use("/api/chatbot", chatbotRoutes);
 

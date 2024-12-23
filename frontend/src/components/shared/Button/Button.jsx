@@ -8,6 +8,7 @@ const Button = ({
   children,
   className = "",
   icon,
+  disabled,
 }) => {
   const baseClasses =
     "text-sm md:text-base lg:text-lg px-2 py-1 md:py-2 md:px-4 font-bold  rounded-md flex items-center justify-center gap-2 transition duration-300 ease-in-out";
@@ -21,7 +22,7 @@ const Button = ({
   // Render as a link if "to" is provided
   if (to) {
     return (
-      <Link to={to} className={combinedClasses}>
+      <Link to={to} className={combinedClasses} disabled={disabled}>
         {icon && <span className="flex-shrink-0">{icon}</span>}
         <span>{children}</span>
       </Link>
@@ -30,7 +31,7 @@ const Button = ({
 
   // Render as a button otherwise
   return (
-    <button onClick={onClick} className={combinedClasses}>
+    <button onClick={onClick} className={combinedClasses} disabled={disabled}>
       {icon && <span className="flex-shrink-0">{icon}</span>}
       <span>{children}</span>
     </button>

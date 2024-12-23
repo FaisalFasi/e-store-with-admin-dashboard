@@ -6,7 +6,7 @@ import { MoveRight } from "lucide-react";
 import axiosBaseURL from "../../../lib/axios";
 import { loadStripe } from "@stripe/stripe-js";
 
-export const OrderSummary = () => {
+export const OrderSummary = ({ onProceed }) => {
   const stripePromise = loadStripe(
     "pk_test_51QHTGCGL2ttkOT4rL7vt5eQHDnaeimKzWDxjcQ89KJjjZ6JMt1GlHOXkrQDZODVxI30k2331AfVvRyjQAUM2sK5L00WGfGGhzq"
   );
@@ -92,7 +92,8 @@ export const OrderSummary = () => {
           className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={handlePayment}
+          onClick={onProceed}
+          // onClick={handlePayment}
         >
           Proceed to Checkout
         </motion.button>

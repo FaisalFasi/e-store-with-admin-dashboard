@@ -1,16 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useCartStore } from "../../../stores/useCartStore";
 
 const AddressForm = ({ onSubmit }) => {
-  const [address, setAddress] = useState({
-    fullName: "",
-    street: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "",
-    phoneNumber: "",
-  });
+  const { saveShippingAddress } = useCartStore();
+  const savedAddress = localStorage.getItem("address");
+  const initialState = savedAddress
+    ? JSON.parse(savedAddress)
+    : {
+        fullName: "",
+        street: "",
+        city: "",
+        state: "",
+        postalCode: "",
+        country: "",
+        phoneNumber: "",
+      };
+  const [address, setAddress] = useState(initialState);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    localStorage.setItem("address", JSON.stringify(address));
+  }, [address]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -20,29 +31,48 @@ const AddressForm = ({ onSubmit }) => {
     }));
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    // Basic validation
+    Object.keys(address).forEach((field) => {
+      if (!address[field]) {
+        newErrors[field] = `${field} is required`;
+      }
+    });
+    // Phone number validation (basic check)
+    if (address.phoneNumber && !/^\d{11}$/.test(address.phoneNumber)) {
+      newErrors.phoneNumber = "Phone number must be 11 digits";
+    }
+    // Postal code validation (basic check for numeric values)
+    if (address.postalCode && !/^\d{5}$/.test(address.postalCode)) {
+      newErrors.postalCode = "Postal code must be 5 digits";
+    }
+    return newErrors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(address);
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length === 0) {
+      onSubmit(address);
+    }
+  };
+  const handleSaveShippingAddress = async () => {
+    console.log("Saving address:", address);
+    localStorage.setItem("address", JSON.stringify(address));
+    await saveShippingAddress(address);
   };
 
   return (
-    <section className="min-h-screen relative overflow-hidden bg-gray-100 py-8">
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Title */}
-        <motion.h1
-          className="text-4xl font-bold mb-8 text-emerald-400 text-center"
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          Enter Your Address
-        </motion.h1>
-
+    <section className="min-h-screen relative overflow-hidden rounded-lg">
+      <div className="flex w-full z-10 container ">
         {/* Form */}
         <motion.form
-          className="bg-white shadow-lg rounded-lg p-6 max-w-lg mx-auto"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          className=" bg-gray-800 shadow-lg rounded-lg p-4 mb-8 w-full "
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           onSubmit={handleSubmit}
         >
@@ -59,7 +89,7 @@ const AddressForm = ({ onSubmit }) => {
             >
               <label
                 htmlFor={field}
-                className="block text-gray-700 font-medium mb-1 capitalize"
+                className="block text-sm font-medium text-gray-300 capitalize"
               >
                 {field}
               </label>
@@ -69,21 +99,38 @@ const AddressForm = ({ onSubmit }) => {
                 name={field}
                 value={address[field]}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                className={`mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                  errors[field] ? "border-red-500" : ""
+                }`}
                 placeholder={`Enter your ${field}`}
               />
+              {errors[field] && (
+                <p className="text-sm text-red-500 mt-1">{errors[field]}</p>
+              )}
             </motion.div>
           ))}
+          <motion.div className="flex gap-2 flex-wrap md:flex-nowrap">
+            <motion.button
+              type="button"
+              className="w-full bg-gray-500 hover:bg-emerald-500 text-white font-medium py-2 rounded-md transition-all duration-200 mt-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              onClick={handleSaveShippingAddress}
+            >
+              Save Address
+            </motion.button>
 
-          <motion.button
-            type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-md transition-all duration-200"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-          >
-            Proceed to Payment
-          </motion.button>
+            <motion.button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-md transition-all duration-200 mt-4"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+            >
+              Proceed to Payment
+            </motion.button>
+          </motion.div>
         </motion.form>
       </div>
     </section>

@@ -7,6 +7,7 @@ import {
   getProfile,
   requestPasswordReset,
   resetPassword,
+  createGuestUser,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import limiter from "../middleware/limiter.js";
@@ -22,6 +23,7 @@ router.get("/profile", protectRoute, getProfile);
 // for resetting password
 router.post("/request-forgot-password", requestPasswordReset);
 router.post("/reset-password", resetPassword);
+router.post("/create-guest", createGuestUser);
 
 // router.post("/reset-password/:resetToken", resetPassword);
 

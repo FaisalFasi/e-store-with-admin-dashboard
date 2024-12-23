@@ -6,7 +6,7 @@ import Product from "../models/product.model.js";
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { products, couponCode } = req.body;
+    const { products, couponCode, guestId } = req.body;
 
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: "Invalid or empty products array" });
@@ -33,9 +33,10 @@ export const createCheckoutSession = async (req, res) => {
 
     let coupon = null;
     if (couponCode) {
+      const userId = req.user ? req.user._id : null;
       coupon = await Coupon.findOne({
         code: couponCode,
-        userId: req.user._id,
+        userId: userId,
         isActive: true,
       });
       if (coupon) {
@@ -59,7 +60,10 @@ export const createCheckoutSession = async (req, res) => {
           ]
         : [],
       metadata: {
-        userId: req.user._id.toString(),
+        userType: req.user ? "loggedIn" : "guest",
+        userId: req.user ? req.user._id.toString() : "", // Save user ID if logged in
+        guestId: guestId || "", // Save guest ID if not logged in
+        // userId: req.user._id.toString(),
         couponCode: couponCode || "",
         products: JSON.stringify(
           products.map((p) => ({

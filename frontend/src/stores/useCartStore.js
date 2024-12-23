@@ -128,4 +128,23 @@ export const useCartStore = create((set, get) => ({
     }
     set({ subTotal, total });
   },
+
+  // enter shipping address
+  saveShippingAddress: async (address) => {
+    console.log("Shipping address:", address);
+    try {
+      const response = await axiosBaseURL.post("/address", address);
+
+      if (response.status === 201) {
+        localStorage.removeItem("address"); // Clear localStorage on successful save
+        toast.success("Guest address saved successfully");
+        return response;
+      } else {
+        console.error("Failed to save address");
+      }
+    } catch (error) {
+      console.log("Error in submitShippingAddress:", error);
+      toast.error("Failed to save address");
+    }
+  },
 }));

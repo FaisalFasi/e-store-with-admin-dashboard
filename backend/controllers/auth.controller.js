@@ -5,6 +5,7 @@ import {
   sendResetPasswordEmail,
   generateResetToken,
 } from "../utils/sendEmail.js";
+import { generateGuestId } from "../utils/uuidGenerator.js";
 
 const generateToken = (userId) => {
   const accessToken = jwt.sign(
@@ -289,5 +290,45 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to reset password" });
+  }
+};
+
+// When a guest performs an action (e.g., saving an address or adding items to the cart), create a guest user in the database.
+export const createGuestUser = async (req, res) => {
+  try {
+    // Check if guestId exists in the request
+    const { guestId } = req.body;
+
+    // If guestId is not provided, generate a new one
+    let guestUser = null;
+
+    if (!guestId) {
+      const newGuestId = generateGuestId();
+      guestUser = new User({
+        guestId: newGuestId,
+        isGuest: true,
+      });
+      const savedGuest = await guestUser.save();
+
+      return res.status(201).json({
+        user: savedGuest,
+        message: "Guest user created successfully.",
+      });
+    } else {
+      // If guestId exists, find the user
+      guestUser = await User.findOne({ guestId, isGuest: true });
+      if (!guestUser) {
+        return res.status(404).json({ message: "Guest user not found." });
+      }
+
+      res.status(200).json({
+        user: guestUser,
+        message: "Guest user found.",
+      });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to create or retrieve guest user.", error });
   }
 };
