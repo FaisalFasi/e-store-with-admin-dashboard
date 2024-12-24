@@ -146,12 +146,11 @@ export const useCartStore = create((set, get) => ({
   },
 
   // enter shipping address
-  saveShippingAddress: async (address, orderId = null) => {
+  saveShippingAddress: async (address) => {
     console.log("Shipping address:", address);
     try {
       const response = await axiosBaseURL.post("/address", {
         ...address,
-        orderId,
       });
       if (response.status === 201 || response.status === 200) {
         // localStorage.removeItem("address"); // Clear localStorage on successful save

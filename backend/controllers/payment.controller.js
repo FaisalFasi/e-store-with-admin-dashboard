@@ -10,7 +10,6 @@ export const createCheckoutSession = async (req, res) => {
     const { products, couponCode, guestId } = req.body;
     const userId = req.user ? req.user._id : null;
 
-    console.log("userId in create checkout session", userId);
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: "Invalid or empty products array" });
     }
@@ -105,13 +104,36 @@ export const checkoutSuccess = async (req, res) => {
   const mongoDB_Session = await mongoose.startSession();
   const userId = req.user ? req.user._id : null;
 
-  console.log("userId in checkout success", userId);
   try {
-    await mongoDB_Session.startTransaction();
-
     const { sessionId } = req.body;
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+
+    if (!stripeSession || !stripeSession.id) {
+      return res.status(400).json({ message: "Invalid Stripe session ID" });
+    }
+    // Get products from metadata
     const products = JSON.parse(stripeSession.metadata.products);
+
+    // Check if stripeSessionId is null
+    if (!stripeSession.id || stripeSession.id === null) {
+      return res
+        .status(400)
+        .json({ message: "Stripe session ID cannot be null" });
+    }
+    // start transaction for mongodb
+
+    // Check if order already exists with the same stripeSessionId
+    const existingOrder = await Order.findOne({
+      stripeSessionId: stripeSession.id,
+    });
+
+    if (existingOrder) {
+      return res
+        .status(400)
+        .json({ message: "Order with this Stripe session ID already exists." });
+    }
+    // start transaction for mongodb
+    await mongoDB_Session.startTransaction();
 
     if (stripeSession.payment_status === "paid") {
       // Deactivate coupon if used
@@ -130,10 +152,9 @@ export const checkoutSuccess = async (req, res) => {
         );
       }
 
-      console.log("Products in payment:", products);
-
       // Update product quantities
       for (const product of products) {
+        // here session is used to make sure that the transaction is atomic and atomic means that either all the operations are successful or none of them are successful
         const foundProduct = await Product.findById(product.id).session(
           mongoDB_Session
         );
@@ -143,7 +164,7 @@ export const checkoutSuccess = async (req, res) => {
             message: `Product with id ${product.id} not found`,
           });
         }
-        if (foundProduct && foundProduct.quantity >= product.quantity) {
+        if (foundProduct.quantity >= product.quantity) {
           foundProduct.quantity -= product.quantity;
 
           await foundProduct.save({ session: mongoDB_Session });
@@ -160,7 +181,6 @@ export const checkoutSuccess = async (req, res) => {
         return res.status(404).json({ message: "Shipping Address not found" });
       }
 
-      console.log("transactionId", stripeSession.payment_intent);
       const newOrder = new Order({
         user: userId,
         products: products.map((p) => ({
@@ -169,7 +189,7 @@ export const checkoutSuccess = async (req, res) => {
           price: p.price,
         })),
         totalAmount: stripeSession.amount_total / 100, // convert from cents to dollars,
-        stripeSessionId: sessionId,
+        stripeSessionId: stripeSession.id,
         status: "Pending",
         paymentDetails: {
           method: "Card",
@@ -177,7 +197,7 @@ export const checkoutSuccess = async (req, res) => {
           paymentStatus: "paid",
         },
         dispatchDetails: {
-          dispatchedBy: "",
+          dispatchedBy: "DHL or FedEx or UPS or Hermes",
           dispatchedAt: null,
           deliveryEstimate: null,
         },
