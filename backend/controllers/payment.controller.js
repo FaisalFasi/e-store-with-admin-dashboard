@@ -3,13 +3,28 @@ import { stripe } from "../lib/stripe.js";
 import Coupon from "../models/coupen.model.js";
 import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
+import UserAddress from "../models/address.model.js";
 
 export const createCheckoutSession = async (req, res) => {
   try {
     const { products, couponCode, guestId } = req.body;
+    const userId = req.user ? req.user._id : null;
 
+    console.log("userId in create checkout session", userId);
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: "Invalid or empty products array" });
+    }
+
+    // Validate shipping address before proceeding
+    if (!userId) {
+      return res.status(400).json({ error: "User is not logged in" });
+    }
+
+    const shipping_address = await UserAddress.findOne({ userId });
+    if (!shipping_address) {
+      return res
+        .status(400)
+        .json({ message: "Please update your address and try again" });
     }
 
     let totalAmount = 0;
@@ -33,7 +48,6 @@ export const createCheckoutSession = async (req, res) => {
 
     let coupon = null;
     if (couponCode) {
-      const userId = req.user ? req.user._id : null;
       coupon = await Coupon.findOne({
         code: couponCode,
         userId: userId,
@@ -89,7 +103,9 @@ export const createCheckoutSession = async (req, res) => {
 
 export const checkoutSuccess = async (req, res) => {
   const mongoDB_Session = await mongoose.startSession();
+  const userId = req.user ? req.user._id : null;
 
+  console.log("userId in checkout success", userId);
   try {
     await mongoDB_Session.startTransaction();
 
@@ -103,7 +119,7 @@ export const checkoutSuccess = async (req, res) => {
         await Coupon.findOneAndUpdate(
           {
             code: stripeSession.metadata.couponCode,
-            userId: stripeSession.metadata.userId,
+            userId: userId,
           },
           {
             isActive: false,
@@ -117,7 +133,6 @@ export const checkoutSuccess = async (req, res) => {
       console.log("Products in payment:", products);
 
       // Update product quantities
-
       for (const product of products) {
         const foundProduct = await Product.findById(product.id).session(
           mongoDB_Session
@@ -138,9 +153,16 @@ export const checkoutSuccess = async (req, res) => {
           });
         }
       }
+      const shipping_address = await UserAddress.findOne({
+        userId: userId,
+      });
+      if (!shipping_address) {
+        return res.status(404).json({ message: "Shipping Address not found" });
+      }
 
+      console.log("transactionId", stripeSession.payment_intent);
       const newOrder = new Order({
-        user: stripeSession.metadata.userId,
+        user: userId,
         products: products.map((p) => ({
           product: p.id,
           quantity: p.quantity,
@@ -149,6 +171,17 @@ export const checkoutSuccess = async (req, res) => {
         totalAmount: stripeSession.amount_total / 100, // convert from cents to dollars,
         stripeSessionId: sessionId,
         status: "Pending",
+        paymentDetails: {
+          method: "Card",
+          transactionId: stripeSession.payment_intent,
+          paymentStatus: "paid",
+        },
+        dispatchDetails: {
+          dispatchedBy: "",
+          dispatchedAt: null,
+          deliveryEstimate: null,
+        },
+        shippingAddress: shipping_address,
       });
 
       await newOrder.save({ session: mongoDB_Session });

@@ -181,6 +181,7 @@ export const getProductByCategory = async (req, res) => {
 
   try {
     const products = await Product.find({ category: category });
+    console.log("products:", products);
 
     if (!products) {
       return res

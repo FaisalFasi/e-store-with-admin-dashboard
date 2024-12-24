@@ -45,15 +45,3 @@ productSchema.index({ name: "text", category: "text" });
 const Product = mongoose.model("Product", productSchema);
 
 export default Product;
-
-// const productSchema = new mongoose.Schema({
-//   name: { type: String, required: true },
-//   description: { type: String, required: true, maxLength: 2000 },
-//   price: { type: Number, min: 0, required: true },
-//   images: { type: [String], required: true },
-//   category: { type: String, required: true },
-//   isFeatured: { type: Boolean, default: false },
-//   quantity: { type: Number, required: true, min: 0 }, // Inventory
-//   createdAt: { type: Date, default: Date.now },
-//   updatedAt: { type: Date, default: Date.now },
-// }, { timestamps: true });

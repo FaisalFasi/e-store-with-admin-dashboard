@@ -7,85 +7,29 @@ import GiftCouponCard from "../GiftCouponCard/GiftCouponCard";
 import PeopleAlsoBought from "../../products/PeopleAlsoBought/PeopleAlsoBought";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCheckoutStore } from "../../../stores/useCheckoutStore";
 
 // Component: Cart View
-const CartView = ({ cart, onProceed, step }) => (
-  <>
-    {cart.length > 0 && (
-      <motion.div>
-        <motion.h1
-          className="text-4xl font-bold mb-8 text-emerald-400 text-center"
-          initial={{ opacity: 0, y: -40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          Cart Items
-        </motion.h1>
-        {/* Progress Bar */}
-        <div className="mb-6">
-          <ProgressBar step={step} />
-        </div>
-      </motion.div>
-    )}
-    <div className="mt-6 sm:mt-8 md:gap-6 lg:flex lg:items-start xl:gap-8">
-      <motion.div
-        className="mx-auto w-full flex-none lg:max-w-2xl xl:max-w-4xl"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        {cart.length === 0 ? (
-          <EmptyCartUI />
-        ) : (
-          <div className="space-y-6">
-            {cart.map((item) => (
-              <CartItem key={item._id} item={item} />
-            ))}
-          </div>
-        )}
-      </motion.div>
-      {cart.length > 0 && (
-        <motion.div
-          className="mx-auto mt-6 max-w-4xl flex-1 space-y-6 lg:mt-0 lg:w-full"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <OrderSummary onProceed={onProceed} />
-          <GiftCouponCard />
-          <button
-            onClick={onProceed}
-            className="w-full mt-4 bg-emerald-500 text-white py-2 px-4 rounded-md hover:bg-emerald-600"
+const CartView = ({ cart }) => {
+  const { currentStep, setCurrentStep } = useCheckoutStore();
+
+  return (
+    <>
+      <div className="mt-6 sm:mt-8 md:gap-6 lg:flex lg:items-start xl:gap-8">
+        {cart.length > 0 && (
+          <motion.div
+            className="mx-auto mt-6 max-w-4xl flex-1 space-y-6 lg:mt-0 lg:w-full"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
-            Proceed to Checkout
-          </button>
-        </motion.div>
-      )}
-    </div>
-    <div>{cart.length > 0 && <PeopleAlsoBought />}</div>
-  </>
-);
+            <OrderSummary />
+            <GiftCouponCard />
+          </motion.div>
+        )}
+      </div>
+    </>
+  );
+};
 
 export default CartView;
-
-// Component: Empty Cart
-const EmptyCartUI = () => (
-  <motion.div
-    className="flex flex-col items-center justify-center space-y-4 py-16"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-  >
-    <ShoppingCart className="h-24 w-24 text-gray-300" />
-    <h3 className="text-2xl font-semibold ">Your cart is empty</h3>
-    <p className="text-gray-400">
-      Looks like you {"haven't"} added anything to your cart yet.
-    </p>
-    <Link
-      className="mt-4 rounded-md bg-emerald-500 px-6 py-2 text-white transition-colors hover:bg-emerald-600"
-      to="/"
-    >
-      Start Shopping
-    </Link>
-  </motion.div>
-);

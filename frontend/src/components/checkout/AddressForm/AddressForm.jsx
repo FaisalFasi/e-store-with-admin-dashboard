@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore";
+import { useCheckoutStore } from "../../../stores/useCheckoutStore";
 
-const AddressForm = ({ onSubmit }) => {
-  const { saveShippingAddress } = useCartStore();
-  const savedAddress = localStorage.getItem("address");
-  const initialState = savedAddress
-    ? JSON.parse(savedAddress)
-    : {
-        fullName: "",
-        street: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        country: "",
-        phoneNumber: "",
-      };
-  const [address, setAddress] = useState(initialState);
-  const [errors, setErrors] = useState({});
+const AddressForm = () => {
+  const { saveShippingAddress, cart, coupon } = useCartStore();
+  const {
+    handlePayment,
+    address,
+    setAddress,
+    setCurrentStep,
+    errors,
+    setErrors,
+  } = useCheckoutStore();
 
   useEffect(() => {
     localStorage.setItem("address", JSON.stringify(address));
@@ -25,10 +20,7 @@ const AddressForm = ({ onSubmit }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setAddress((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setAddress({ [name]: value });
   };
 
   const validateForm = () => {
@@ -52,15 +44,19 @@ const AddressForm = ({ onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     const validationErrors = validateForm();
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
-      onSubmit(address);
+      setCurrentStep("address");
+      handleSaveShippingAddress();
+      // paymeent function is called from the useCheckoutStore.js
+      handlePayment(cart, coupon);
     }
   };
+
   const handleSaveShippingAddress = async () => {
-    console.log("Saving address:", address);
     localStorage.setItem("address", JSON.stringify(address));
     await saveShippingAddress(address);
   };
@@ -112,15 +108,14 @@ const AddressForm = ({ onSubmit }) => {
           <motion.div className="flex gap-2 flex-wrap md:flex-nowrap">
             <motion.button
               type="button"
-              className="w-full bg-gray-500 hover:bg-emerald-500 text-white font-medium py-2 rounded-md transition-all duration-200 mt-4"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-md transition-all duration-200 mt-4"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8 }}
-              onClick={handleSaveShippingAddress}
+              onClick={() => setCurrentStep("cart")}
             >
-              Save Address
+              Go Back
             </motion.button>
-
             <motion.button
               type="submit"
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-md transition-all duration-200 mt-4"

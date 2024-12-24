@@ -20,6 +20,7 @@ const CreateProductForm = () => {
     description: "",
     price: "",
     category: "",
+    quantity: 1,
     images: [], // Update to handle multiple images
   });
   const fileInputRef = useRef(null); // Create a ref to the file input
@@ -33,6 +34,7 @@ const CreateProductForm = () => {
     formData.append("description", newProduct.description);
     formData.append("price", newProduct.price);
     formData.append("category", newProduct.category);
+    formData.append("quantity", newProduct.quantity);
 
     newProduct.images.forEach((image) => {
       formData.append("images", image); // 'images' must match your backend field
@@ -46,6 +48,7 @@ const CreateProductForm = () => {
         description: "",
         price: "",
         category: "",
+        quantity: 0,
         images: [],
       });
     } catch {
@@ -127,7 +130,6 @@ const CreateProductForm = () => {
             required
           />
         </div>
-
         <div>
           <label
             htmlFor="description"
@@ -149,7 +151,6 @@ const CreateProductForm = () => {
             required
           />
         </div>
-
         <div>
           <label
             htmlFor="price"
@@ -173,7 +174,6 @@ const CreateProductForm = () => {
             required
           />
         </div>
-
         <div>
           <label
             htmlFor="category"
@@ -200,6 +200,28 @@ const CreateProductForm = () => {
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <label
+            htmlFor="quantity"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Quantity
+          </label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            min={0}
+            value={newProduct.quantity}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, quantity: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
+            py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500
+            focus:border-emerald-500"
+            required
+          />
         </div>
         <div>
           <label
@@ -237,7 +259,6 @@ const CreateProductForm = () => {
             ))}
           </div>
         </div>
-
         <button
           type="submit"
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"

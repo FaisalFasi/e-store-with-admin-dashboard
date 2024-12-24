@@ -1,17 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore";
 import { MoveRight } from "lucide-react";
 import axiosBaseURL from "../../../lib/axios";
 import { loadStripe } from "@stripe/stripe-js";
+import { useCheckoutStore } from "../../../stores/useCheckoutStore";
 
-export const OrderSummary = ({ onProceed }) => {
-  const stripePromise = loadStripe(
-    "pk_test_51QHTGCGL2ttkOT4rL7vt5eQHDnaeimKzWDxjcQ89KJjjZ6JMt1GlHOXkrQDZODVxI30k2331AfVvRyjQAUM2sK5L00WGfGGhzq"
-  );
-
-  const { total, subTotal, coupon, isCouponApplied, cart } = useCartStore();
+export const OrderSummary = () => {
+  const { total, subTotal, coupon, isCouponApplied } = useCartStore();
+  const { openAddressModal, resetToAddress } = useCheckoutStore();
 
   const savings = subTotal && total ? subTotal - total : 0;
 
@@ -19,21 +17,9 @@ export const OrderSummary = ({ onProceed }) => {
   const formattedTotal = total ? total.toFixed(2) : "0.00";
   const formattedSavings = savings ? savings.toFixed(2) : "0.00";
 
-  const handlePayment = async () => {
-    const stripe = await stripePromise;
-    const res = await axiosBaseURL.post("/payments/create-checkout-session", {
-      products: cart,
-      couponCode: coupon ? coupon.code : null,
-    });
-
-    const session = res?.data;
-    const result = await stripe.redirectToCheckout({
-      sessionId: session.id,
-    });
-
-    if (result.error) {
-      console.error("Error:", result.error);
-    }
+  const handleSubmit = async () => {
+    openAddressModal();
+    resetToAddress();
   };
 
   return (
@@ -92,10 +78,9 @@ export const OrderSummary = ({ onProceed }) => {
           className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={onProceed}
-          // onClick={handlePayment}
+          onClick={handleSubmit}
         >
-          Proceed to Checkout
+          Proceed to checkout
         </motion.button>
 
         <div className="flex items-center justify-center gap-2">

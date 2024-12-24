@@ -54,7 +54,23 @@ export const useCartStore = create((set, get) => ({
   },
   addToCart: async (product) => {
     try {
+      const availableStock = product.quantity; // Assuming the product has a `stock` property
+      console.log("Product:", product);
+      console.log("Available stock:", availableStock);
+      // Find the existing item in the cart
+      const existingItem = get().cart.find((item) => item._id === product._id);
+      const cartQuantity = existingItem ? existingItem.quantity : 0;
+
+      console.log("Existing item:", existingItem);
+      // Check if the cart quantity exceeds the available stock
+      if (cartQuantity >= availableStock) {
+        toast.error(
+          `You can't add more of this product. Only ${availableStock} left in stock.`
+        );
+        return;
+      }
       await axiosBaseURL.post("/cart", { productId: product._id });
+
       toast.success("Product added to cart");
 
       set((prevState) => {
@@ -130,14 +146,16 @@ export const useCartStore = create((set, get) => ({
   },
 
   // enter shipping address
-  saveShippingAddress: async (address) => {
+  saveShippingAddress: async (address, orderId = null) => {
     console.log("Shipping address:", address);
     try {
-      const response = await axiosBaseURL.post("/address", address);
-
-      if (response.status === 201) {
-        localStorage.removeItem("address"); // Clear localStorage on successful save
-        toast.success("Guest address saved successfully");
+      const response = await axiosBaseURL.post("/address", {
+        ...address,
+        orderId,
+      });
+      if (response.status === 201 || response.status === 200) {
+        // localStorage.removeItem("address"); // Clear localStorage on successful save
+        toast.success(response.data.message || " address saved successfully");
         return response;
       } else {
         console.error("Failed to save address");

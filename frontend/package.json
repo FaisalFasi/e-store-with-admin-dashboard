@@ -12,6 +12,9 @@
   "dependencies": {
     "@botpress/webchat": "^2.3.6",
     "@botpress/webchat-generator": "^0.2.15",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.3.0",
     "@stripe/react-stripe-js": "^2.8.1",
     "@stripe/stripe-js": "^4.9.0",
     "axios": "^1.7.7",
