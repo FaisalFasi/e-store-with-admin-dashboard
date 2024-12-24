@@ -7,6 +7,8 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    stripeSessionId: { type: String, unique: true, required: true }, // Enforces uniqueness
+
     products: [
       {
         product: {
@@ -96,9 +98,11 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Indexes
 orderSchema.index({ user: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
+orderSchema.index({ paymentStatus: 1 });
 
 const Order = mongoose.model("Order", orderSchema);
 
