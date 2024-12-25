@@ -12,14 +12,7 @@ import { Link } from "react-router-dom";
 
 const CartPage = () => {
   const { cart } = useCartStore();
-  const {
-    currentStep,
-    setCurrentStep,
-    isAddressModalOpen,
-    closeAdressModal,
-    openAddressModal,
-    resetToCart,
-  } = useCheckoutStore();
+  const { currentStep, isAddressModalOpen } = useCheckoutStore();
 
   return (
     <div className="relative z-10 container mx-auto px-4">

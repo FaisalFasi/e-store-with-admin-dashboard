@@ -109,19 +109,37 @@ export const checkoutSuccess = async (req, res) => {
 
   try {
     const { sessionId } = req.body;
+
     // Retrieve the Stripe session
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
     if (!stripeSession || !stripeSession.id) {
       return res.status(400).json({ message: "Invalid Stripe session ID" });
     }
+
     // Validate Stripe session payment status
     if (stripeSession.payment_status !== "paid") {
       return res.status(400).json({ message: "Payment status is not 'paid'" });
     }
 
     await mongoDB_Session.withTransaction(async () => {
+      // Check if an order already exists for this Stripe session
+      const existingOrder = await Order.findOne({
+        stripeSessionId: stripeSession.id,
+      }).session(mongoDB_Session);
+
+      if (existingOrder) {
+        // If the order already exists, return success response
+        return res.status(200).json({
+          success: true,
+          message: "Order already processed.",
+          orderId: existingOrder._id,
+        });
+      }
+
+      // Parse the products from Stripe metadata
       const products = JSON.parse(stripeSession.metadata.products);
 
+      // Update product inventory
       for (const product of products) {
         const foundProduct = await Product.findById(product.id).session(
           mongoDB_Session
@@ -135,14 +153,13 @@ export const checkoutSuccess = async (req, res) => {
         await foundProduct.save({ session: mongoDB_Session });
       }
 
-      // Atomically check if the order exists and create it if not
-      const existingOrder = await Order.findOneAndUpdate(
-        { stripeSessionId: stripeSession.id }, // Query to check if the order exists
-        {
-          $setOnInsert: {
+      // Create a new order
+      const newOrder = await Order.create(
+        [
+          {
             user: userId,
             products: products.map((p) => ({
-              product: p._id,
+              product: p.id,
               quantity: p.quantity,
               price: p.price,
             })),
@@ -165,11 +182,11 @@ export const checkoutSuccess = async (req, res) => {
             },
             stripeSessionId: stripeSession.id, // Ensure idempotency
           },
-        },
-        { session: mongoDB_Session, upsert: true, new: true } // Options: use transaction, create if not exists
+        ],
+        { session: mongoDB_Session }
       );
 
-      // If coupon exists, deactivate it
+      // Deactivate the coupon if it exists
       if (stripeSession.metadata.couponCode) {
         await Coupon.findOneAndUpdate(
           { code: stripeSession.metadata.couponCode, userId: userId },
@@ -178,19 +195,10 @@ export const checkoutSuccess = async (req, res) => {
         );
       }
 
-      if (!existingOrder) {
-        // Handle the case where the order was newly created
-        return res.status(200).json({
-          success: true,
-          message: "Order created successfully.",
-          orderId: existingOrder._id,
-        });
-      }
-      // Return success response for existing order
       return res.status(200).json({
         success: true,
-        message: "Order processed successfully.",
-        orderId: existingOrder._id,
+        message: "Order created successfully.",
+        orderId: newOrder[0]._id,
       });
     });
   } catch (error) {
@@ -201,9 +209,111 @@ export const checkoutSuccess = async (req, res) => {
       error: error.message,
     });
   } finally {
-    mongoDB_Session.endSession(); // Always end the session
+    mongoDB_Session.endSession();
   }
 };
+
+// export const checkoutSuccess = async (req, res) => {
+//   const mongoDB_Session = await mongoose.startSession();
+//   const userId = req.user ? req.user._id : null;
+
+//   try {
+//     const { sessionId } = req.body;
+//     // Retrieve the Stripe session
+//     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+//     if (!stripeSession || !stripeSession.id) {
+//       return res.status(400).json({ message: "Invalid Stripe session ID" });
+//     }
+//     // Validate Stripe session payment status
+//     if (stripeSession.payment_status !== "paid") {
+//       return res.status(400).json({ message: "Payment status is not 'paid'" });
+//     }
+
+//     await mongoDB_Session.withTransaction(async () => {
+//       const products = JSON.parse(stripeSession.metadata.products);
+
+//       for (const product of products) {
+//         const foundProduct = await Product.findById(product.id).session(
+//           mongoDB_Session
+//         );
+//         if (!foundProduct || foundProduct.quantity < product.quantity) {
+//           return res.status(400).json({
+//             message: `Insufficient inventory for Product: ${foundProduct.name}`,
+//           });
+//         }
+//         foundProduct.quantity -= product.quantity;
+//         await foundProduct.save({ session: mongoDB_Session });
+//       }
+
+//       // Atomically check if the order exists and create it if not
+//       const existingOrder = await Order.findOneAndUpdate(
+//         { stripeSessionId: stripeSession.id }, // Query to check if the order exists
+//         {
+//           $setOnInsert: {
+//             user: userId,
+//             products: products.map((p) => ({
+//               product: p._id,
+//               quantity: p.quantity,
+//               price: p.price,
+//             })),
+//             totalAmount: stripeSession.amount_total / 100, // Convert cents to dollars
+//             status: "Pending",
+//             paymentDetails: {
+//               method: "Card",
+//               transactionId: stripeSession.payment_intent,
+//               paymentStatus: "paid",
+//             },
+//             dispatchDetails: {
+//               dispatchedBy: "DHL or FedEx or UPS or Hermes",
+//               dispatchedAt: null,
+//               deliveryEstimate: null,
+//             },
+//             shippingAddress: await UserAddress.findOne({ userId }),
+//             orderHistory: {
+//               status: "Payment Confirmed",
+//               timestamp: Date.now(),
+//             },
+//             stripeSessionId: stripeSession.id, // Ensure idempotency
+//           },
+//         },
+//         { session: mongoDB_Session, upsert: true, new: true } // Options: use transaction, create if not exists
+//       );
+
+//       // If coupon exists, deactivate it
+//       if (stripeSession.metadata.couponCode) {
+//         await Coupon.findOneAndUpdate(
+//           { code: stripeSession.metadata.couponCode, userId: userId },
+//           { isActive: false },
+//           { session: mongoDB_Session }
+//         );
+//       }
+
+//       if (!existingOrder) {
+//         // Handle the case where the order was newly created
+//         return res.status(200).json({
+//           success: true,
+//           message: "Order created successfully.",
+//           orderId: existingOrder._id,
+//         });
+//       }
+//       // Return success response for existing order
+//       return res.status(200).json({
+//         success: true,
+//         message: "Order processed successfully.",
+//         orderId: existingOrder._id,
+//       });
+//     });
+//   } catch (error) {
+//     console.error("Error processing checkout:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Error processing checkout",
+//       error: error.message,
+//     });
+//   } finally {
+//     mongoDB_Session.endSession(); // Always end the session
+//   }
+// };
 
 async function createStripeCoupon(discountPercentage) {
   const coupon = await stripe.coupons.create({

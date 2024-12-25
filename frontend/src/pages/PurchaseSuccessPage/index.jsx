@@ -14,14 +14,24 @@ const PurchaseSuccessPage = () => {
   useEffect(() => {
     const handleCheckoutSuccess = async (sessionId) => {
       try {
+        if (sessionStorage.getItem("paymentProcessed") === "true") {
+          console.log("Payment already processed");
+          setIsProcessing(false);
+          return;
+        }
+        console.log("Clearing cart after successful purchase");
         // Clear the cart after successful purchase
         const response = await axiosBaseURL.post("/payments/checkout-success", {
           sessionId,
         });
         console.log("Checkout success response: ", response);
         clearCart();
+        sessionStorage.setItem("paymentProcessed", "true");
+        console.log("Payment processed");
+        // sessionStorage.setItem("paymentProcessed", true);
       } catch (error) {
         console.error("Error clearing cart: ", error);
+        setError("An error occurred while processing the payment.");
       } finally {
         setIsProcessing(false);
       }
@@ -37,6 +47,11 @@ const PurchaseSuccessPage = () => {
       setIsProcessing(false);
       setError("No session ID found");
     }
+
+    // Cleanup sessionStorage for the next checkout attempt
+    return () => {
+      sessionStorage.removeItem("paymentProcessed");
+    };
   }, [clearCart]);
 
   if (isProcessing) return <div>Loading...</div>;
