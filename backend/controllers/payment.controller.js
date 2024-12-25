@@ -99,9 +99,7 @@ export const createCheckoutSession = async (req, res) => {
     res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
   } catch (error) {
     console.error("Error processing checkout:", error);
-    res
-      .status(500)
-      .json({ message: "Error processing checkout", error: error.message });
+    res.status(500).json({ message: "Error processing checkout" });
   }
 };
 
@@ -111,27 +109,40 @@ export const checkoutSuccess = async (req, res) => {
 
   try {
     const { sessionId } = req.body;
-
     // Retrieve the Stripe session
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
     if (!stripeSession || !stripeSession.id) {
       return res.status(400).json({ message: "Invalid Stripe session ID" });
     }
-
     // Validate Stripe session payment status
     if (stripeSession.payment_status !== "paid") {
       return res.status(400).json({ message: "Payment status is not 'paid'" });
     }
 
     await mongoDB_Session.withTransaction(async () => {
+      const products = JSON.parse(stripeSession.metadata.products);
+
+      for (const product of products) {
+        const foundProduct = await Product.findById(product.id).session(
+          mongoDB_Session
+        );
+        if (!foundProduct || foundProduct.quantity < product.quantity) {
+          return res.status(400).json({
+            message: `Insufficient inventory for Product: ${foundProduct.name}`,
+          });
+        }
+        foundProduct.quantity -= product.quantity;
+        await foundProduct.save({ session: mongoDB_Session });
+      }
+
       // Atomically check if the order exists and create it if not
       const existingOrder = await Order.findOneAndUpdate(
         { stripeSessionId: stripeSession.id }, // Query to check if the order exists
         {
           $setOnInsert: {
             user: userId,
-            products: JSON.parse(stripeSession.metadata.products).map((p) => ({
-              product: p.id,
+            products: products.map((p) => ({
+              product: p._id,
               quantity: p.quantity,
               price: p.price,
             })),
@@ -147,49 +158,15 @@ export const checkoutSuccess = async (req, res) => {
               dispatchedAt: null,
               deliveryEstimate: null,
             },
-            shippingAddress: await UserAddress.findOne({ userId: userId }),
+            shippingAddress: await UserAddress.findOne({ userId }),
+            orderHistory: {
+              status: "Payment Confirmed",
+              timestamp: Date.now(),
+            },
             stripeSessionId: stripeSession.id, // Ensure idempotency
           },
         },
         { session: mongoDB_Session, upsert: true, new: true } // Options: use transaction, create if not exists
-      );
-
-      // If an existing order is found, return it
-      if (!existingOrder.n) {
-        return res.status(200).json({
-          success: true,
-          message: "Order already exists for this checkout session.",
-          orderId: existingOrder._id,
-        });
-      }
-      // Deduct product inventory
-      // Deduct product inventory with map and concurrency
-      const products = JSON.parse(stripeSession.metadata.products);
-
-      await Promise.all(
-        products.map(async (product) => {
-          // Fetch the product within the transaction
-          const foundProduct = await Product.findById(product.id).session(
-            mongoDB_Session
-          );
-
-          if (!foundProduct) {
-            throw new Error(`Product with id ${product.id} not found`);
-          }
-
-          // Check if sufficient quantity is available
-          if (foundProduct.quantity < product.quantity) {
-            throw new Error(
-              `Insufficient quantity for product with id ${product.id}`
-            );
-          }
-
-          // Deduct the quantity
-          foundProduct.quantity -= product.quantity;
-
-          // Save the updated product within the transaction
-          await foundProduct.save({ session: mongoDB_Session });
-        })
       );
 
       // If coupon exists, deactivate it
@@ -201,10 +178,18 @@ export const checkoutSuccess = async (req, res) => {
         );
       }
 
-      // Return success response
+      if (!existingOrder) {
+        // Handle the case where the order was newly created
+        return res.status(200).json({
+          success: true,
+          message: "Order created successfully.",
+          orderId: existingOrder._id,
+        });
+      }
+      // Return success response for existing order
       return res.status(200).json({
         success: true,
-        message: "Order created successfully.",
+        message: "Order processed successfully.",
         orderId: existingOrder._id,
       });
     });
@@ -243,131 +228,3 @@ async function createNewCoupon(userId) {
 
   return newCoupon;
 }
-
-// export const checkoutSuccess = async (req, res) => {
-//   const mongoDB_Session = await mongoose.startSession();
-//   const userId = req.user ? req.user._id : null;
-
-//   try {
-//     const { sessionId } = req.body;
-//     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
-
-//     if (!stripeSession || !stripeSession.id) {
-//       return res.status(400).json({ message: "Invalid Stripe session ID" });
-//     }
-//     // Get products from metadata
-//     const products = JSON.parse(stripeSession.metadata.products);
-
-//     // Check if stripeSessionId is null
-//     if (!stripeSession.id || stripeSession.id === null) {
-//       return res
-//         .status(400)
-//         .json({ message: "Stripe session ID cannot be null" });
-//     }
-//     // start transaction for mongodb
-
-//     // Check if order already exists with the same stripeSessionId
-//     const existingOrder = await Order.findOne({
-//       stripeSessionId: stripeSession.id,
-//     });
-
-//     if (existingOrder) {
-//       return res
-//         .status(400)
-//         .json({ message: "Order with this Stripe session ID already exists." });
-//     }
-//     // start transaction for mongodb
-//     await mongoDB_Session.startTransaction();
-
-//     if (stripeSession.payment_status === "paid") {
-//       // Deactivate coupon if used
-//       if (stripeSession.metadata.couponCode) {
-//         await Coupon.findOneAndUpdate(
-//           {
-//             code: stripeSession.metadata.couponCode,
-//             userId: userId,
-//           },
-//           {
-//             isActive: false,
-//           },
-//           {
-//             session: mongoDB_Session,
-//           }
-//         );
-//       }
-
-//       // Update product quantities
-//       for (const product of products) {
-//         // here session is used to make sure that the transaction is atomic and atomic means that either all the operations are successful or none of them are successful
-//         const foundProduct = await Product.findById(product.id).session(
-//           mongoDB_Session
-//         );
-
-//         if (!foundProduct) {
-//           return res.status(404).json({
-//             message: `Product with id ${product.id} not found`,
-//           });
-//         }
-//         if (foundProduct.quantity >= product.quantity) {
-//           foundProduct.quantity -= product.quantity;
-
-//           await foundProduct.save({ session: mongoDB_Session });
-//         } else {
-//           return res.status(400).json({
-//             message: `Product with id ${product.id} has insufficient quantity`,
-//           });
-//         }
-//       }
-//       const shipping_address = await UserAddress.findOne({
-//         userId: userId,
-//       });
-//       if (!shipping_address) {
-//         return res.status(404).json({ message: "Shipping Address not found" });
-//       }
-
-//       const newOrder = new Order({
-//         user: userId,
-//         products: products.map((p) => ({
-//           product: p.id,
-//           quantity: p.quantity,
-//           price: p.price,
-//         })),
-//         totalAmount: stripeSession.amount_total / 100, // convert from cents to dollars,
-//         stripeSessionId: stripeSession.id,
-//         status: "Pending",
-//         paymentDetails: {
-//           method: "Card",
-//           transactionId: stripeSession.payment_intent,
-//           paymentStatus: "paid",
-//         },
-//         dispatchDetails: {
-//           dispatchedBy: "DHL or FedEx or UPS or Hermes",
-//           dispatchedAt: null,
-//           deliveryEstimate: null,
-//         },
-//         shippingAddress: shipping_address,
-//       });
-
-//       await newOrder.save({ session: mongoDB_Session });
-
-//       await mongoDB_Session.commitTransaction();
-//       mongoDB_Session.endSession();
-
-//       res.status(200).json({
-//         success: true,
-//         message:
-//           "Payment successful, order created, and coupon deactivated if used.",
-//         orderId: newOrder._id,
-//       });
-//     }
-//   } catch (error) {
-//     await mongoDB_Session.abortTransaction();
-//     mongoDB_Session.endSession();
-
-//     console.error("Error processing successful checkout:", error);
-//     res.status(500).json({
-//       message: "Error processing successful checkout",
-//       error: error.message,
-//     });
-//   }
-// };

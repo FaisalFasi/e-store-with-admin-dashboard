@@ -7,8 +7,6 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    stripeSessionId: { type: String, unique: true, required: true }, // Enforces uniqueness
-
     products: [
       {
         product: {
@@ -37,6 +35,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         "Pending",
+        "Payment Confirmed",
         "Completed",
         "Dispatched",
         "Shipped",
@@ -80,6 +79,7 @@ const orderSchema = new mongoose.Schema(
           type: String,
           enum: [
             "Pending",
+            "Payment Confirmed",
             "Completed",
             "Dispatched",
             "Shipped",
@@ -87,11 +87,11 @@ const orderSchema = new mongoose.Schema(
             "Cancelled",
           ],
         },
-        updatedAt: { type: Date, default: Date.now },
-        updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        note: { type: String },
+        timestamp: { type: Date, default: Date.now },
       },
     ],
+    stripeSessionId: { type: String, unique: true, required: true }, // Enforces uniqueness
+
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
@@ -103,6 +103,7 @@ orderSchema.index({ user: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ paymentStatus: 1 });
+orderSchema.index({ stripeSessionId: 1 }, { unique: true });
 
 const Order = mongoose.model("Order", orderSchema);
 

@@ -42,8 +42,6 @@ export const getProductById = async (req, res) => {
 };
 
 export const getFeaturedProducts = async (req, res) => {
-  console.log(req.body, "Fetching featured products from cache");
-
   try {
     let featuredProducts = await redis.get("featured_products");
 
@@ -87,9 +85,6 @@ export const createProduct = async (req, res) => {
 
   const requstedFiles = req.files;
 
-  console.log("req.body:", req.body);
-  console.log("requstedFiles:", requstedFiles);
-
   // Validate files
   if (!requstedFiles || requstedFiles.length === 0) {
     return res.status(400).json({ message: "No images uploaded." });
@@ -107,7 +102,6 @@ export const createProduct = async (req, res) => {
           const result = await cloudinary.uploader.upload(file.path, {
             folder: "products",
           });
-          console.log("result:", result);
           // Clean up temporary file
           await fs.unlink(file.path);
 
@@ -122,8 +116,6 @@ export const createProduct = async (req, res) => {
         }
       })
     );
-
-    console.log("uploadedImages:", uploadedImages);
 
     const product = await Product.create({
       name,
@@ -160,7 +152,6 @@ export const getRecommendedProducts = async (req, res) => {
         },
       },
     ]);
-    console.log("recommendedProducts:", recommendedProducts);
 
     if (!recommendedProducts) {
       return res.status(404).json({ message: "No recommended products found" });
@@ -181,7 +172,6 @@ export const getProductByCategory = async (req, res) => {
 
   try {
     const products = await Product.find({ category: category });
-    console.log("products:", products);
 
     if (!products) {
       return res
@@ -247,7 +237,6 @@ export const deleteProduct = async (req, res) => {
       const publicId = product.imageUrl.split("/").pop().split(".")[0]; // Extracting the public ID from the image URL
       try {
         await cloudinary.uploader.destroy(publicId);
-        console.log("Image deleted from Cloudinary");
       } catch (error) {
         console.log(
           "Error in deleteProduct controller while deleting image from Cloudinary:",

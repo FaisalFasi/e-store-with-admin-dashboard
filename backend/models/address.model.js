@@ -14,7 +14,14 @@ const addressSchema = new mongoose.Schema(
     zip: { type: String, required: true },
     state: { type: String, required: true },
     country: { type: String, required: true },
-    phoneNumber: { type: String, required: true },
+    phoneNumber: {
+      type: String,
+      required: true,
+      validate: {
+        validator: (value) => /^[+]?[1-9]\d{1,14}$/.test(value), // E.164 format
+        message: "Invalid phone number format",
+      },
+    },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
   },
