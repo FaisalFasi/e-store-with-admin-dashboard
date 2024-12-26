@@ -1,275 +1,265 @@
-import React, { useState } from "react";
+import { useState, useRef } from "react";
+import { motion } from "framer-motion";
+import { PlusCircle } from "lucide-react"; // Optional icon
 import { useCategoryStore } from "../../../stores/useCategoryStore";
+import LoadingSpinner from "../../shared/LoadingSpinner/LoadingSpinner";
 
 const CreateCategoryForm = () => {
   const { createCategory, loading } = useCategoryStore();
-  const [categoryData, setCategoryData] = useState({
+  const [newCategory, setNewCategory] = useState({
     name: "",
     slug: "",
     description: "",
-    image: "",
+    image: null,
     parentCategory: "",
-    status: "",
-    sortOrder: 0,
+    status: "active",
+    sortOrder: "",
     metaTitle: "",
     metaDescription: "",
   });
+  const fileInputRef = useRef(null);
 
-  // Input handler
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setCategoryData((prevData) => ({ ...prevData, [name]: value }));
-  };
-
-  // Form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await createCategory(categoryData);
-    resetForm();
-  };
+    const formData = new FormData();
+    formData.append("name", newCategory.name);
+    formData.append("slug", newCategory.slug);
+    formData.append("description", newCategory.description);
+    if (newCategory.image) formData.append("image", newCategory.image);
+    formData.append("parentCategory", newCategory.parentCategory);
+    formData.append("status", newCategory.status);
+    formData.append("sortOrder", newCategory.sortOrder);
+    formData.append("metaTitle", newCategory.metaTitle);
+    formData.append("metaDescription", newCategory.metaDescription);
 
-  // Reset form fields
-  const resetForm = () => {
-    setCategoryData({
+    await createCategory(formData);
+    setNewCategory({
       name: "",
       slug: "",
       description: "",
-      image: "",
+      image: null,
       parentCategory: "",
-      status: "",
-      sortOrder: 0,
+      status: "active",
+      sortOrder: "",
       metaTitle: "",
       metaDescription: "",
     });
   };
 
-  // Reusable input component
-  const InputField = ({
-    id,
-    label,
-    type = "text",
-    name,
-    value,
-    placeholder,
-    required = false,
-  }) => (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-300 mb-1"
-      >
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        id={id}
-        type={type}
-        name={name}
-        value={value}
-        onChange={handleInputChange}
-        required={required}
-        className="w-full px-4 py-2 bg-gray-800 text-gray-200 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
-        placeholder={placeholder}
-      />
-    </div>
-  );
-
-  // Reusable textarea component
-  const TextAreaField = ({ id, label, name, value, placeholder }) => (
-    <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-300 mb-1"
-      >
-        {label}
-      </label>
-      <textarea
-        id={id}
-        name={name}
-        value={value}
-        onChange={handleInputChange}
-        rows={3}
-        className="w-full px-4 py-2 bg-gray-800 text-gray-200 border border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
-        placeholder={placeholder}
-      ></textarea>
-    </div>
-  );
-
   return (
-    <div className="max-w-4xl mx-auto bg-gray-900 shadow-md rounded-lg p-8">
-      <h2 className="text-2xl font-semibold text-gray-100 mb-6">
-        Create Category
+    <motion.div
+      className="bg-gray-800 w-full p-6 rounded-lg md:max-w-xl lg:max-w-2xl"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <h2 className="text-2xl font-semibold mb-6 text-emerald-300">
+        Create New Category
       </h2>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-      >
-        <InputField
-          id="name"
-          label="Name"
-          name="name"
-          value={categoryData.name}
-          placeholder="Enter category name"
-          required
-        />
-        <InputField
-          id="slug"
-          label="Slug"
-          name="slug"
-          value={categoryData.slug}
-          placeholder="Enter category slug"
-          required
-        />
-        <TextAreaField
-          id="description"
-          label="Description"
-          name="description"
-          value={categoryData.description}
-          placeholder="Enter category description"
-        />
-        <InputField
-          id="image"
-          label="Image URL"
-          name="image"
-          value={categoryData.image}
-          placeholder="Enter image URL"
-        />
-        <InputField
-          id="parentCategory"
-          label="Parent Category"
-          name="parentCategory"
-          value={categoryData.parentCategory}
-          placeholder="Enter parent category ID (optional)"
-        />
-        <InputField
-          id="status"
-          label="Status"
-          name="status"
-          value={categoryData.status}
-          placeholder="Enter status (e.g., active/inactive)"
-        />
-        <InputField
-          id="sortOrder"
-          label="Sort Order"
-          type="number"
-          name="sortOrder"
-          value={categoryData.sortOrder}
-          placeholder="Enter sort order"
-        />
-        <InputField
-          id="metaTitle"
-          label="Meta Title"
-          name="metaTitle"
-          value={categoryData.metaTitle}
-          placeholder="Enter meta title"
-        />
-        <TextAreaField
-          id="metaDescription"
-          label="Meta Description"
-          name="metaDescription"
-          value={categoryData.metaDescription}
-          placeholder="Enter meta description"
-        />
-        <div className="sm:col-span-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Name */}
+        <div>
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-300"
           >
-            {loading ? "Creating..." : "Create Category"}
-          </button>
+            Category Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={newCategory.name}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, name: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+            required
+          />
         </div>
+
+        {/* Slug */}
+        <div>
+          <label
+            htmlFor="slug"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Slug
+          </label>
+          <input
+            type="text"
+            id="slug"
+            value={newCategory.slug}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, slug: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+            required
+          />
+        </div>
+
+        {/* Description */}
+        <div>
+          <label
+            htmlFor="description"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Description
+          </label>
+          <textarea
+            id="description"
+            rows={3}
+            value={newCategory.description}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, description: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        {/* Parent Category */}
+        <div>
+          <label
+            htmlFor="parentCategory"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Parent Category
+          </label>
+          <input
+            type="text"
+            id="parentCategory"
+            value={newCategory.parentCategory}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, parentCategory: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        {/* Image */}
+        <div>
+          <label
+            htmlFor="image"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Upload Image
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            id="image"
+            accept="image/*"
+            onChange={(e) =>
+              setNewCategory({
+                ...newCategory,
+                image: e.target.files?.[0] || null,
+              })
+            }
+            className="block w-full text-sm text-gray-300 border border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-700 focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        {/* Status */}
+        <div>
+          <label
+            htmlFor="status"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Status
+          </label>
+          <select
+            id="status"
+            value={newCategory.status}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, status: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        {/* Sort Order */}
+        <div>
+          <label
+            htmlFor="sortOrder"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Sort Order
+          </label>
+          <input
+            type="number"
+            id="sortOrder"
+            value={newCategory.sortOrder}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, sortOrder: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        {/* Meta Title */}
+        <div>
+          <label
+            htmlFor="metaTitle"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Meta Title
+          </label>
+          <input
+            type="text"
+            id="metaTitle"
+            value={newCategory.metaTitle}
+            onChange={(e) =>
+              setNewCategory({ ...newCategory, metaTitle: e.target.value })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        {/* Meta Description */}
+        <div>
+          <label
+            htmlFor="metaDescription"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Meta Description
+          </label>
+          <textarea
+            id="metaDescription"
+            rows={3}
+            value={newCategory.metaDescription}
+            onChange={(e) =>
+              setNewCategory({
+                ...newCategory,
+                metaDescription: e.target.value,
+              })
+            }
+            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:ring-emerald-500 focus:border-emerald-500"
+          />
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <LoadingSpinner />
+              Loading...
+            </>
+          ) : (
+            <>
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Create Category
+            </>
+          )}
+        </button>
       </form>
-    </div>
+    </motion.div>
   );
 };
 
 export default CreateCategoryForm;
-
-// import React, { useState } from "react";
-
-// const CreateCategoryForm = () => {
-//   const [categoryName, setCategoryName] = useState("");
-//   const [description, setDescription] = useState("");
-//   const [image, setImage] = useState("");
-//   const [slug, setSlug] = useState("");
-
-//   const handleCategorySubmit = (e) => {
-//     e.preventDefault();
-//     // Handle the category creation logic here
-//     // Call your backend API to create the category
-//     console.log("Category Created:", {
-//       categoryName,
-//       description,
-//       image,
-//       slug,
-//     });
-//   };
-
-//   return (
-//     <form onSubmit={handleCategorySubmit} className="space-y-6">
-//       <div className="flex flex-col space-y-2">
-//         <label htmlFor="categoryName" className="text-white">
-//           Category Name
-//         </label>
-//         <input
-//           type="text"
-//           id="categoryName"
-//           value={categoryName}
-//           onChange={(e) => setCategoryName(e.target.value)}
-//           className="p-2 rounded-md bg-gray-700 text-white"
-//           required
-//         />
-//       </div>
-
-//       <div className="flex flex-col space-y-2">
-//         <label htmlFor="description" className="text-white">
-//           Description
-//         </label>
-//         <textarea
-//           id="description"
-//           value={description}
-//           onChange={(e) => setDescription(e.target.value)}
-//           className="p-2 rounded-md bg-gray-700 text-white"
-//           required
-//         />
-//       </div>
-
-//       <div className="flex flex-col space-y-2">
-//         <label htmlFor="image" className="text-white">
-//           Image URL
-//         </label>
-//         <input
-//           type="url"
-//           id="image"
-//           value={image}
-//           onChange={(e) => setImage(e.target.value)}
-//           className="p-2 rounded-md bg-gray-700 text-white"
-//           required
-//         />
-//       </div>
-
-//       <div className="flex flex-col space-y-2">
-//         <label htmlFor="slug" className="text-white">
-//           Slug
-//         </label>
-//         <input
-//           type="text"
-//           id="slug"
-//           value={slug}
-//           onChange={(e) => setSlug(e.target.value)}
-//           className="p-2 rounded-md bg-gray-700 text-white"
-//           required
-//         />
-//       </div>
-
-//       <button
-//         type="submit"
-//         className="w-full py-3 mt-4 text-white bg-emerald-600 rounded-md"
-//       >
-//         Create Category
-//       </button>
-//     </form>
-//   );
-// };
-
-// export default CreateCategoryForm;
