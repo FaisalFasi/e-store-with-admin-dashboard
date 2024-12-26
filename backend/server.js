@@ -15,6 +15,7 @@ import analyticsRoutes from "./routes/analytics.route.js";
 import newsLetterRoutes from "./routes/newsLetter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import addressRoutes from "./routes/address.route.js";
+import categoryRoutes from "./routes/category.route.js";
 
 dotenv.config();
 
@@ -38,8 +39,10 @@ app.set("trust proxy", 1);
 // app.use(logIpMiddleware); // This will log the IP address for every request
 
 app.use("/api/auth", authRoutes);
+
 app.use("/api/products", productRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/category", categoryRoutes);
 
 app.use("/api/cart", cartRoutes);
 app.use("/api/coupons", couponRoutes);
