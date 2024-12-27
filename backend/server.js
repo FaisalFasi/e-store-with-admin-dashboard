@@ -16,6 +16,7 @@ import newsLetterRoutes from "./routes/newsLetter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import addressRoutes from "./routes/address.route.js";
 import categoryRoutes from "./routes/category.route.js";
+import initializeCategories from "./helpers/defaultCategoriesHelper/defaultCategoriesHelper.js";
 
 dotenv.config();
 
@@ -53,7 +54,7 @@ app.use("/api/address", addressRoutes);
 
 // app.use("/api/chatbot", chatbotRoutes);
 
-// Serve static assets if in production mode, like the frontend build folder in this case
+// Serve static assets if in production mode, this is done so that when we build the frontend using npm run build command
 // it will optimize the build folder and serve it as static assets
 if (process.env.NODE_ENV === "production") {
   // Set static folder
@@ -63,7 +64,7 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
   });
 }
-
+initializeCategories();
 // Connect to the database and 0.0.0.0 means it will listen on all the network interfaces available on the server
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server is running on http://:" + PORT);

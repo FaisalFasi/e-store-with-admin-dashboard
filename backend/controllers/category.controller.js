@@ -19,7 +19,7 @@ export const createCategory = async (req, res) => {
       slug,
       description,
       image,
-      parentCategory,
+      parentCategory: parentCategory || null,
       status,
       sortOrder,
       metaTitle,
@@ -45,6 +45,17 @@ export const createCategory = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error creating category", error: error.message });
+  }
+};
+
+// Controller to fetch all parent categories
+export const getParentCategories = async (req, res) => {
+  try {
+    const parentCategories = await Category.find({ parentCategory: null });
+    console.log("Parent categories ", parentCategories);
+    res.status(200).json(parentCategories);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching categories", error });
   }
 };
 

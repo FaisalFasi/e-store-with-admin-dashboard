@@ -124,9 +124,9 @@ const CreateProductForm = () => {
             onChange={(e) =>
               setNewProduct({ ...newProduct, name: e.target.value })
             }
-            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2
-						 px-3 text-white focus:outline-none focus:ring-2
-						focus:ring-emerald-500 focus:border-emerald-500"
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+          px-3  focus:outline-none focus:ring-2
+         focus:ring-emerald-500 focus:border-emerald-500"
             required
           />
         </div>
@@ -145,9 +145,9 @@ const CreateProductForm = () => {
               setNewProduct({ ...newProduct, description: e.target.value })
             }
             rows="3"
-            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
-						 py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500
-						 focus:border-emerald-500"
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+            px-3  focus:outline-none focus:ring-2
+           focus:ring-emerald-500 focus:border-emerald-500"
             required
           />
         </div>
@@ -168,9 +168,9 @@ const CreateProductForm = () => {
               setNewProduct({ ...newProduct, price: e.target.value })
             }
             step="0.01"
-            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
-						py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500
-						 focus:border-emerald-500"
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+            px-3  focus:outline-none focus:ring-2
+           focus:ring-emerald-500 focus:border-emerald-500"
             required
           />
         </div>
@@ -188,9 +188,9 @@ const CreateProductForm = () => {
             onChange={(e) =>
               setNewProduct({ ...newProduct, category: e.target.value })
             }
-            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md
-						 shadow-sm py-2 px-3 text-white focus:outline-none
-						 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+          px-3  focus:outline-none focus:ring-2
+         focus:ring-emerald-500 focus:border-emerald-500"
             required
           >
             <option value="">Select a category</option>
@@ -217,9 +217,9 @@ const CreateProductForm = () => {
             onChange={(e) =>
               setNewProduct({ ...newProduct, quantity: e.target.value })
             }
-            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm
-            py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500
-            focus:border-emerald-500"
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+          px-3  focus:outline-none focus:ring-2
+         focus:ring-emerald-500 focus:border-emerald-500"
             required
           />
         </div>
@@ -238,7 +238,9 @@ const CreateProductForm = () => {
             multiple
             accept="image/*"
             onChange={handleImageChange}
-            className="block w-full text-sm text-gray-300 border border-gray-600 rounded-md shadow-sm py-2 px-3 bg-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+            px-3  focus:outline-none focus:ring-2
+           focus:ring-emerald-500 focus:border-emerald-500"
           />
           <div className="mt-3 flex flex-wrap gap-4">
             {newProduct?.images?.map((image, index) => (

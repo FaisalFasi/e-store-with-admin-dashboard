@@ -1,0 +1,31 @@
+/* Default light mode colors */
+:root {
+  --bg-color: #374151; /* Dark background (e.g., gray-700) */
+  --text-color: #ffffff; /* Light text color (e.g., gray-300) */
+}
+
+/* Dark mode colors */
+body.dark {
+  --bg-color: #1f2937; /* Dark mode background */
+  --text-color: #d1d5db; /* Light text color (same as light mode) */
+}
+
+/* Autofill styles for both dark and light modes */
+input:-webkit-autofill {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  -webkit-text-fill-color: var(--text-color) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+input:-webkit-autofill:focus {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  -webkit-text-fill-color: var(--text-color) !important;
+}
+
+input:-webkit-autofill:hover {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  -webkit-text-fill-color: var(--text-color) !important;
+}

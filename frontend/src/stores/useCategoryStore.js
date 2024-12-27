@@ -12,15 +12,29 @@ export const useCategoryStore = create((set) => ({
     set({ loading: true });
     try {
       const response = await axiosBaseURL.get("/category");
-      console.log("Categories get endpoint ", response.data);
+      console.log("Categories : ", response.data);
 
       set({ categories: response.data, loading: false });
+      return response?.data;
     } catch (error) {
       set({ loading: false });
       console.log("Error getting categories", error.message);
     }
   },
 
+  getParentCategories: async () => {
+    set({ loading: true });
+    try {
+      const response = await axiosBaseURL.get("/category/parent-categories");
+      console.log("Categories : ", response.data);
+
+      set({ categories: response.data, loading: false });
+      return response?.data;
+    } catch (error) {
+      set({ loading: false });
+      console.log("Error getting categories", error.message);
+    }
+  },
   createCategory: async (category) => {
     set({ loading: true });
     try {
@@ -35,6 +49,7 @@ export const useCategoryStore = create((set) => ({
         categories: [response.data, ...state.categories],
         loading: false,
       }));
+      return response?.data;
     } catch (error) {
       set({ loading: false });
       console.log("Error creating category", error.message);

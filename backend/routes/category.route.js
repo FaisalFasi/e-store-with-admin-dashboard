@@ -5,13 +5,16 @@ import {
   getAllCategories,
   updateCategory,
   deleteCategory,
+  getParentCategories,
 } from "../controllers/category.controller.js";
 
 const router = express.Router();
 
 router.get("/", protectRoute, adminRoute, getAllCategories);
-router.post("/create-category", protectRoute, adminRoute, createCategory);
-router.put("/category/:id", protectRoute, adminRoute, updateCategory);
-router.delete("/category/:id", protectRoute, adminRoute, deleteCategory);
+router.get("/parent-categories", protectRoute, adminRoute, getParentCategories);
+router.post("/", protectRoute, adminRoute, createCategory);
+
+router.put("/:id", protectRoute, adminRoute, updateCategory);
+router.delete("/:id", protectRoute, adminRoute, deleteCategory);
 
 export default router;
