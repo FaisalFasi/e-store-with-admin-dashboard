@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get("/", protectRoute, adminRoute, getAllCategories);
 router.get("/parent-categories", protectRoute, adminRoute, getParentCategories);
-router.post("/", protectRoute, adminRoute, createCategory);
+router.post("/create-category", protectRoute, adminRoute, createCategory);
 
 router.put("/:id", protectRoute, adminRoute, updateCategory);
 router.delete("/:id", protectRoute, adminRoute, deleteCategory);

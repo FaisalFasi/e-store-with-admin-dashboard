@@ -26,8 +26,6 @@ export const useCategoryStore = create((set) => ({
     set({ loading: true });
     try {
       const response = await axiosBaseURL.get("/category/parent-categories");
-      console.log("Categories : ", response.data);
-
       set({ categories: response.data, loading: false });
       return response?.data;
     } catch (error) {
@@ -37,6 +35,8 @@ export const useCategoryStore = create((set) => ({
   },
   createCategory: async (category) => {
     set({ loading: true });
+
+    console.log("Category to create ", category);
     try {
       const response = await axiosBaseURL.post(
         "/category/create-category",

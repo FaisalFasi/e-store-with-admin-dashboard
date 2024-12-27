@@ -104,13 +104,10 @@ const CreateCategoryForm = () => {
     [categories]
   );
 
-  // Debounced input change handler
-  const handleInputChange = useCallback(
-    debounce((key, value) => {
-      setNewCategory((prev) => ({ ...prev, [key]: value }));
-    }, 300),
-    []
-  );
+  // Optimize the handle input change function with useCallback
+  const handleInputChange = useCallback((key, value) => {
+    setNewCategory((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -25,6 +25,7 @@ export const createCategory = async (req, res) => {
       metaTitle,
       metaDescription,
     };
+    console.log("Category data ", categoryData);
     // add validation for the new category
     for (let key in categoryData) {
       if (
