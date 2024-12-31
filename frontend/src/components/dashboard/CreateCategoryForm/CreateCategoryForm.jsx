@@ -4,16 +4,17 @@ import { PlusCircle } from "lucide-react"; // Optional icon
 import { useCategoryStore } from "../../../stores/useCategoryStore";
 import LoadingSpinner from "../../shared/LoadingSpinner/LoadingSpinner";
 import InputField from "../../shared/InputField/InputField";
-import { debounce } from "lodash"; // If lodash is available
+import toast from "react-hot-toast";
 
 const initialCategoryState = {
   name: "",
   slug: "",
   description: "",
   image: null,
-  parentCategory: "",
+  categoryType: "parent", // Default to parent category
+  parentCategory: "parent", // Empty initially, only used if categoryType is "child"
   status: "active",
-  sortOrder: "",
+  sortOrder: "0",
   metaTitle: "",
   metaDescription: "",
 };
@@ -22,19 +23,21 @@ const CreateCategoryForm = () => {
   const { createCategory, loading, getParentCategories, categories } =
     useCategoryStore(); // Assuming categories are available
   const [newCategory, setNewCategory] = useState(initialCategoryState);
-  const [categoryType, setCategoryType] = useState("parent"); // To track category type (parent or child)
 
   const inputFields = [
     {
-      id: "name",
-      label: "Category Name",
+      name: "name",
+      label: `${
+        newCategory.categoryType === "child" ? "Sub" : ""
+      } Category Name`,
       type: "text",
       value: newCategory.name,
       placeholder: "Enter category name",
       required: true,
     },
+
     {
-      id: "slug",
+      name: "slug",
       label: "Slug",
       type: "text",
       value: newCategory.slug,
@@ -42,7 +45,7 @@ const CreateCategoryForm = () => {
       required: true,
     },
     {
-      id: "description",
+      name: "description",
       label: "Description",
       type: "textarea",
       value: newCategory.description,
@@ -50,14 +53,14 @@ const CreateCategoryForm = () => {
       rows: 3,
     },
     {
-      id: "image",
+      name: "image",
       label: "Upload Image",
       type: "file",
       accept: "image/*",
       placeholder: "Choose a category image",
     },
     {
-      id: "status",
+      name: "status",
       label: "Status",
       type: "select",
       value: newCategory.status,
@@ -68,21 +71,21 @@ const CreateCategoryForm = () => {
       placeholder: "Select category status",
     },
     {
-      id: "sortOrder",
+      name: "sortOrder",
       label: "Sort Order",
       type: "number",
       value: newCategory.sortOrder,
       placeholder: "Enter sorting order (e.g., 1, 2, 3)",
     },
     {
-      id: "metaTitle",
+      name: "metaTitle",
       label: "Meta Title",
       type: "text",
       value: newCategory.metaTitle,
       placeholder: "Enter meta title for SEO",
     },
     {
-      id: "metaDescription",
+      name: "metaDescription",
       label: "Meta Description",
       type: "textarea",
       value: newCategory.metaDescription,
@@ -90,9 +93,10 @@ const CreateCategoryForm = () => {
       rows: 3,
     },
   ];
+
   useEffect(() => {
     getParentCategories();
-  }, [getParentCategories]);
+  }, []);
 
   // UseMemo for constant data
   const selctCategory = useMemo(
@@ -105,41 +109,60 @@ const CreateCategoryForm = () => {
   );
 
   // Optimize the handle input change function with useCallback
-  const handleInputChange = useCallback((key, value) => {
+  const handleInputChange = (key, value) => {
+    console.log("Key: ", key, "Value: ", value);
     setNewCategory((prev) => ({ ...prev, [key]: value }));
-  }, []);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
 
+    const missingFields = [];
     Object.keys(newCategory).forEach((key) => {
-      if (key === "image" && newCategory.image) {
-        formData.append(key, newCategory.image);
-      } else {
-        formData.append(key, newCategory[key]);
+      if (
+        // add validation for the image field
+        !newCategory[key] ||
+        newCategory[key].toString().trim() === ""
+      ) {
+        missingFields.push(key);
       }
     });
 
-    const data = await createCategory(formData);
+    if (missingFields.length > 0) {
+      return toast.error(`Missing fields: ${missingFields.join(", ")}`);
+    }
+
+    const formData = new FormData(e.target);
+    const imageFile = formData.get("image");
+
+    console.log("imageFile: ", imageFile);
+
+    if (imageFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+
+        formData.set("image", base64String);
+        console.log("base64String: ", base64String);
+      };
+    } else {
+      return toast.error("Please select an image");
+    }
+
+    const dataObject = Object.fromEntries(formData);
+    console.log("Data Object: ", dataObject);
+
+    console.log("Data Object after ---: ", dataObject);
+
+    const data = await createCategory(dataObject);
     console.log("Created category: ", data);
     setNewCategory(initialCategoryState);
   };
 
-  const handleCategoryTypeChange = (e) => {
-    const { value } = e.target;
-    console.log("Category Type: ", value);
-    setCategoryType(value);
-    setNewCategory((prev) => ({
-      ...prev,
-      parentCategory: value === "child" ? "" : prev.parentCategory,
-    }));
-  };
-
   const handleParentCategoryChange = (e) => {
     const selectedParentCategory = e.target.value;
-    console.log(" Category Selected: ", selectedParentCategory);
     handleInputChange("parentCategory", selectedParentCategory);
+    console.log(" Category Selected: ", selectedParentCategory);
   };
 
   return (
@@ -164,8 +187,11 @@ const CreateCategoryForm = () => {
                 type="radio"
                 name="categoryType"
                 value="parent"
-                checked={categoryType === "parent"}
-                onChange={handleCategoryTypeChange}
+                checked={newCategory.categoryType === "parent"}
+                onChange={(e) =>
+                  handleInputChange("categoryType", e.target.value)
+                }
+                // onChange={() => handleInputChange("parent")}
               />
               Parent Category
             </label>
@@ -174,8 +200,12 @@ const CreateCategoryForm = () => {
                 type="radio"
                 name="categoryType"
                 value="child"
-                checked={categoryType === "child"}
-                onChange={handleCategoryTypeChange}
+                // checked  is used to set the default value
+                checked={newCategory.categoryType === "child"} // here !! converts the value to boolean
+                onChange={(e) =>
+                  handleInputChange("categoryType", e.target.value)
+                }
+                // onChange={() => handleInputChange("child")}
               />
               Child Category
             </label>
@@ -183,15 +213,15 @@ const CreateCategoryForm = () => {
         </div>
 
         {/* Parent Category Dropdown (only if creating a child category) */}
-        {categoryType === "child" && (
+        {newCategory.categoryType === "child" && (
           <div className="mb-4">
             <InputField
               type="select"
               label="Parent Category"
-              id="parentCategory"
+              name="parentCategory"
               value={newCategory.parentCategory}
               options={selctCategory}
-              onChange={(e) => handleParentCategoryChange(e)}
+              onChange={handleParentCategoryChange}
             />
           </div>
         )}
@@ -199,12 +229,12 @@ const CreateCategoryForm = () => {
         {/* Render input fields dynamically */}
         {inputFields.map((field) => (
           <InputField
-            key={field.id}
+            key={field.name}
             placeholder={field.placeholder}
             {...field}
             onChange={(e) =>
               handleInputChange(
-                field.id,
+                field.name,
                 field.type === "file" ? e.target.files[0] : e.target.value
               )
             }

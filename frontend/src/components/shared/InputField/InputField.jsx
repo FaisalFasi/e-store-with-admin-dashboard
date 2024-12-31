@@ -3,6 +3,7 @@ import React from "react";
 const InputField = ({
   type = "text", // Default type is text
   id,
+  name,
   label,
   value,
   onChange,
@@ -17,7 +18,7 @@ const InputField = ({
     <div className={`mb-4 ${className}`}>
       {label && (
         <label
-          htmlFor={id}
+          htmlFor={name}
           className="block text-sm font-medium text-gray-300 mb-1"
         >
           {label}
@@ -25,7 +26,8 @@ const InputField = ({
       )}
       {type === "textarea" ? (
         <textarea
-          id={id}
+          id={name}
+          name={name}
           value={value}
           onChange={onChange}
           rows={rows || 3}
@@ -36,7 +38,8 @@ const InputField = ({
         />
       ) : type === "select" ? (
         <select
-          id={id}
+          id={name}
+          name={name}
           value={value}
           onChange={onChange}
           required={required}
@@ -53,7 +56,8 @@ const InputField = ({
       ) : (
         <input
           type={type}
-          id={id}
+          id={name}
+          name={name}
           value={value}
           onChange={onChange}
           required={required}

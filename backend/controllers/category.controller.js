@@ -1,3 +1,4 @@
+import { isValidObjectId } from "mongoose";
 import Category from "../models/category.model.js";
 
 export const createCategory = async (req, res) => {
@@ -7,6 +8,7 @@ export const createCategory = async (req, res) => {
     description,
     image,
     parentCategory,
+    categoryType,
     status,
     sortOrder,
     metaTitle,
@@ -24,6 +26,8 @@ export const createCategory = async (req, res) => {
       sortOrder,
       metaTitle,
       metaDescription,
+      categoryType,
+      createdBy: req.user._id,
     };
     console.log("Category data ", categoryData);
     // add validation for the new category
@@ -36,6 +40,16 @@ export const createCategory = async (req, res) => {
       ) {
         return res.status(400).json({ message: "All fields are required" });
       }
+    }
+    if (categoryType === "child" && !parentCategory) {
+      if (!isValidObjectId(parentCategory)) {
+        console.log("Parent category in validation ", parentCategory);
+        return res.status(400).json({ message: "Parent category is required" });
+      }
+    } else if (categoryType === "parent" && parentCategory) {
+      return res
+        .status(400)
+        .json({ message: "Parent category should not have parent category" });
     }
 
     const newCategory = Category.create(categoryData);

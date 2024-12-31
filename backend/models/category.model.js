@@ -22,7 +22,7 @@ const categorySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    //   When to use: Only provide this if your category is a child of another category. If it's a top-level category, leave it out or set it to null (which is the default).
+    //   When to use: Only provide this if your category is a child of a category. If it's a top-level category, leave it out or set it to null (which is the default).
     parentCategory: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -49,6 +49,12 @@ const categorySchema = new mongoose.Schema(
     metaDescription: {
       type: String,
       default: "",
+    },
+    // When to use: This field is used to differentiate between parent and child categories. If it's a parent category, leave it as "parent". If it's a child category, set it to "child".
+    categoryType: {
+      type: String,
+      enum: ["parent", "child"],
+      default: "parent",
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
