@@ -3,6 +3,10 @@ import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../../../stores/useProductStore";
 import toast from "react-hot-toast";
+import {
+  handleImageUpload,
+  removeImageFromList,
+} from "../../../utils/imageUtils/imageUtils";
 
 const categories = [
   "jeans",
@@ -42,16 +46,17 @@ const CreateProductForm = () => {
     });
 
     try {
-      await createProduct(formData);
-
-      setNewProduct({
-        name: "",
-        description: "",
-        price: "",
-        category: "",
-        quantity: 0,
-        images: [],
-      });
+      const data = await createProduct(formData);
+      if (data) {
+        setNewProduct({
+          name: "",
+          description: "",
+          price: "",
+          category: "",
+          quantity: 0,
+          images: [],
+        });
+      }
     } catch {
       console.log("Error creating a product");
     }
@@ -59,27 +64,10 @@ const CreateProductForm = () => {
 
   const handleImageChange = (e) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return toast.error("No files selected.");
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (files.length === 0) return;
 
-    const imageFiles = [];
-
-    // Collect valid files for upload
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      // Validate file type
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(
-          `Invalid file type: ${file.name}. Allowed types are JPEG, PNG, and WEBP.`
-        );
-        // here continue is used to skip the current iteration and move to the next iteration
-        continue;
-      }
-
-      imageFiles.push(file); // Store the image file for uploading
-    }
+    const imageFiles = handleImageUpload(files);
 
     // Update state with selected image files
     setNewProduct((prevProduct) => ({
@@ -88,12 +76,15 @@ const CreateProductForm = () => {
     }));
   };
 
-  const removeImage = (index, e) => {
+  const removeImage = (index) => {
+    const updateImages = removeImageFromList(newProduct.images, index);
+
     setNewProduct((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index),
+      images: updateImages,
     }));
-    if (newProduct.images.length === 1) {
+
+    if (updateImages.length <= 0) {
       fileInputRef.current.value = "";
     }
   };
@@ -247,13 +238,13 @@ const CreateProductForm = () => {
             {newProduct?.images?.map((image, index) => (
               <div key={index} className="relative">
                 <img
-                  src={URL.createObjectURL(image)}
+                  src={URL?.createObjectURL(image)}
                   alt={`Uploaded ${index}`}
                   className="h-20 w-20 object-cover rounded-md"
                 />
                 <button
                   type="button"
-                  onClick={(e) => removeImage(index)}
+                  onClick={() => removeImage(index)}
                   className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
                 >
                   X

@@ -9,15 +9,16 @@ import toast from "react-hot-toast";
  */
 
 export const handleImageUpload = (files) => {
-  const imagesFiles = [];
   const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
   const maxFiles = 5;
 
+  // If no files selected, just return the existing images
   if (!files || files.length === 0) {
-    return toast.error("No files selected.");
+    return [];
   }
 
-  const validImages = [];
+  const validImages = []; // Start with existing images
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
 
@@ -35,11 +36,12 @@ export const handleImageUpload = (files) => {
       break;
     }
 
+    // Add the valid image to the list
     validImages.push(file);
   }
 
-  // Update the state with valid images
-  return imagesFiles([...validImages]);
+  // Return the updated list of images (existing + new)
+  return validImages;
 };
 
 /**

@@ -1,10 +1,14 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle } from "lucide-react"; // Optional icon
 import { useCategoryStore } from "../../../stores/useCategoryStore";
 import LoadingSpinner from "../../shared/LoadingSpinner/LoadingSpinner";
 import InputField from "../../shared/InputField/InputField";
 import toast from "react-hot-toast";
+import {
+  handleImageUpload,
+  removeImageFromList,
+} from "../../../utils/imageUtils/imageUtils";
 
 const initialCategoryState = {
   name: "",
@@ -23,6 +27,7 @@ const CreateCategoryForm = () => {
   const { createCategory, loading, getParentCategories, categories } =
     useCategoryStore(); // Assuming categories are available
   const [newCategory, setNewCategory] = useState(initialCategoryState);
+  const fileInputRef = useRef(null);
 
   const inputFields = [
     {
@@ -111,13 +116,39 @@ const CreateCategoryForm = () => {
   const handleParentCategoryChange = (e) => {
     const selectedParentCategory = e.target.value;
     handleInputChange("parentCategory", selectedParentCategory);
-    console.log(" Category Selected: ", selectedParentCategory);
   };
 
   // Optimize the handle input change function with useCallback
   const handleInputChange = (key, value) => {
-    console.log("Key: ", key, "Value: ", value);
-    setNewCategory((prev) => ({ ...prev, [key]: value }));
+    // check if key is image and value is not null
+    if (key === "image") handleImageChange(value);
+    else setNewCategory((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleImageChange = (files) => {
+    if (!files || files === "undefined") return;
+
+    // Handle image upload
+    const imageFiles = handleImageUpload([files]);
+
+    const previewImage = URL.createObjectURL(imageFiles[0]);
+    // Update state with selected image files
+    setNewCategory((prevCategory) => ({
+      ...prevCategory,
+      image: previewImage,
+    }));
+  };
+
+  const removeImage = (index) => {
+    const updateImages = removeImageFromList([newCategory.image], index);
+
+    setNewCategory((prev) => ({
+      ...prev,
+      image: updateImages[0] ? null : updateImages[0],
+    }));
+
+    // Clear the file input
+    if (updateImages.length <= 0) fileInputRef.current.value = "";
   };
 
   const handleSubmit = async (e) => {
@@ -125,11 +156,7 @@ const CreateCategoryForm = () => {
 
     const missingFields = [];
     Object.keys(newCategory).forEach((key) => {
-      if (
-        // add validation for the image field
-        !newCategory[key] ||
-        newCategory[key].toString().trim() === ""
-      ) {
+      if (!newCategory[key] || newCategory[key].toString().trim() === "") {
         missingFields.push(key);
       }
     });
@@ -141,38 +168,16 @@ const CreateCategoryForm = () => {
     const formData = new FormData(e.target);
     const imageFile = formData.get("image");
 
-    console.log("imageFile: ", imageFile);
-
-    if (imageFile && imageFile.size > 0) {
-      try {
-        const base64String = await convertImageToBase64(imageFile);
-        console.log("Base64 String: ", base64String);
-        formData.set("image", base64String); // Add the Base64 string to the form data
-      } catch (error) {
-        console.log("Error converting image to Base64: ", error.message);
-        return toast.error("Failed to convert image to Base64");
-      }
-    } else {
-      return toast.error("Please select an image");
+    if (!imageFile) {
+      return toast.error("Please upload an image");
     }
+    formData.set("image", imageFile);
 
     const dataObject = Object.fromEntries(formData);
 
-    console.log("Data Object after ---: ", dataObject);
-
     const data = await createCategory(dataObject);
-    console.log("Created category: ", data);
+
     if (data) setNewCategory(initialCategoryState);
-  };
-  const convertImageToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(reader.result);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   return (
@@ -241,6 +246,10 @@ const CreateCategoryForm = () => {
           <InputField
             key={field.name}
             placeholder={field.placeholder}
+            multiple={false}
+            fileInputRef={fileInputRef}
+            handleImageRemove={removeImage}
+            selectedImages={[newCategory?.image]}
             {...field}
             onChange={(e) =>
               handleInputChange(

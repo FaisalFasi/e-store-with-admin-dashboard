@@ -8,11 +8,15 @@ const InputField = ({
   value,
   onChange,
   options = [], // For select input type
-  accept, // For file input type
+  accept = "image/*", // For file input type
   rows, // For textarea input type
   required = false,
   className = "",
   placeholder,
+  multiple = true,
+  selectedImages = [],
+  handleImageRemove,
+  fileInputRef = null,
 }) => {
   return (
     <div className={`mb-4 ${className}`}>
@@ -53,6 +57,42 @@ const InputField = ({
             </option>
           ))}
         </select>
+      ) : type === "file" ? (
+        <div>
+          <input
+            type="file"
+            id={name}
+            name={name}
+            ref={fileInputRef}
+            onChange={(e) => onChange(e)}
+            accept={accept}
+            multiple={multiple}
+            required={required}
+            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
+          px-3  focus:outline-none focus:ring-2
+         focus:ring-emerald-500 focus:border-emerald-500"
+          />
+          <div className="mt-3 flex flex-wrap gap-4">
+            {selectedImages[0] != null &&
+              selectedImages.length > 0 &&
+              selectedImages?.map((image, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={image}
+                    alt={`Uploaded ${index}`}
+                    className="h-20 w-20 object-cover rounded-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleImageRemove(index)}
+                    className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+                  >
+                    X
+                  </button>
+                </div>
+              ))}
+          </div>
+        </div>
       ) : (
         <input
           type={type}

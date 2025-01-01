@@ -13,6 +13,13 @@ import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
 import multer from "multer";
 
 const router = express.Router();
+// where this uploads folder is created?
+// It is created in the root folder of the project.
+// The uploads folder is created when you upload a file.
+// The file is saved temporarily in the uploads folder before being processed by the controller.
+// The file is then deleted after processing.
+// The uploads folder is not committed to the repository.
+
 const upload = multer({ dest: "uploads/" }); // Save files temporarily in 'uploads' folder
 
 router.post(
