@@ -37,6 +37,7 @@ const CreateProductForm = () => {
     formData.append("quantity", newProduct.quantity);
 
     newProduct.images.forEach((image) => {
+      // Append each image to the form data with the same field name. image will be store like images[0], images[1], etc.
       formData.append("images", image); // 'images' must match your backend field
     });
 

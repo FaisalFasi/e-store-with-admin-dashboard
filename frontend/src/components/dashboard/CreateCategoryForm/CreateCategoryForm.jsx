@@ -108,6 +108,12 @@ const CreateCategoryForm = () => {
     [categories]
   );
 
+  const handleParentCategoryChange = (e) => {
+    const selectedParentCategory = e.target.value;
+    handleInputChange("parentCategory", selectedParentCategory);
+    console.log(" Category Selected: ", selectedParentCategory);
+  };
+
   // Optimize the handle input change function with useCallback
   const handleInputChange = (key, value) => {
     console.log("Key: ", key, "Value: ", value);
@@ -137,32 +143,36 @@ const CreateCategoryForm = () => {
 
     console.log("imageFile: ", imageFile);
 
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result;
-
-        formData.set("image", base64String);
-        console.log("base64String: ", base64String);
-      };
+    if (imageFile && imageFile.size > 0) {
+      try {
+        const base64String = await convertImageToBase64(imageFile);
+        console.log("Base64 String: ", base64String);
+        formData.set("image", base64String); // Add the Base64 string to the form data
+      } catch (error) {
+        console.log("Error converting image to Base64: ", error.message);
+        return toast.error("Failed to convert image to Base64");
+      }
     } else {
       return toast.error("Please select an image");
     }
 
     const dataObject = Object.fromEntries(formData);
-    console.log("Data Object: ", dataObject);
 
     console.log("Data Object after ---: ", dataObject);
 
     const data = await createCategory(dataObject);
     console.log("Created category: ", data);
-    setNewCategory(initialCategoryState);
+    if (data) setNewCategory(initialCategoryState);
   };
-
-  const handleParentCategoryChange = (e) => {
-    const selectedParentCategory = e.target.value;
-    handleInputChange("parentCategory", selectedParentCategory);
-    console.log(" Category Selected: ", selectedParentCategory);
+  const convertImageToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
