@@ -40,8 +40,14 @@ export const useCategoryStore = create((set) => ({
     try {
       const response = await axiosBaseURL.post(
         "/category/create-category",
-        category
+        category,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
+
       console.log("Create category endpoint ", response.data);
 
       // Assuming the response contains the created category object

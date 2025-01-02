@@ -173,9 +173,9 @@ const CreateCategoryForm = () => {
     }
     formData.set("image", imageFile);
 
-    const dataObject = Object.fromEntries(formData);
+    // const dataObject = Object.fromEntries(formData);
 
-    const data = await createCategory(dataObject);
+    const data = await createCategory(formData);
 
     if (data) setNewCategory(initialCategoryState);
   };

@@ -1,12 +1,18 @@
 import { isValidObjectId } from "mongoose";
 import Category from "../models/category.model.js";
+import { imageValidationHelper } from "../helpers/validationHelper/imageValidationHelper.js";
+import {
+  validateCategoryData,
+  validateCategoryType,
+} from "../helpers/validationHelper/categoryValidationHelper.js";
+import cloudinary from "../lib/cloudinary.js";
+import fs from "fs/promises";
 
 export const createCategory = async (req, res) => {
   const {
     name,
     slug,
     description,
-    image,
     parentCategory,
     categoryType,
     status,
@@ -14,13 +20,47 @@ export const createCategory = async (req, res) => {
     metaTitle,
     metaDescription,
   } = req.body;
+
+  const requestedFiles = Array.isArray(req.files) ? req.files : [req.file];
+  console.log("Received image ", requestedFiles);
+
+  const validImage = imageValidationHelper(requestedFiles);
+  console.log("Image validation ", validImage);
+
+  if (!validImage.valid) {
+    return res.status(400).json({ message: validImage.message });
+  }
+
   try {
+    const uploadedImages = await Promise.all(
+      requestedFiles?.map(async (file) => {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "category",
+          });
+          // Clean up temporary file
+          if (result) await fs.unlink(file.path);
+
+          console.log("Uploaded image ", result);
+          return result.secure_url; // Return the URL of the uploaded image
+        } catch (error) {
+          console.error(`Error uploading ${file.filename}:`, error);
+          // Return an error res message if the image upload fails with status code
+          return res.status(500).json({
+            message: "Internal Server Error while uploading images",
+            error,
+          });
+        }
+      })
+    );
+
+    console.log("Uploaded images ", uploadedImages);
     const categoryData = {
       name,
       // slug is used to create a unique URL for the category
       slug,
       description,
-      image,
+      image: uploadedImages[0],
       parentCategory: parentCategory || null,
       status,
       sortOrder,
@@ -31,29 +71,18 @@ export const createCategory = async (req, res) => {
     };
     console.log("Category data ", categoryData);
     // add validation for the new category
-    for (let key in categoryData) {
-      if (
-        !categoryData[key] ||
-        categoryData[key] === "" ||
-        categoryData[key] === null ||
-        categoryData[key] === undefined
-      ) {
-        return res.status(400).json({ message: "All fields are required" });
-      }
-    }
-    if (categoryType === "child" && !parentCategory) {
-      if (!isValidObjectId(parentCategory)) {
-        console.log("Parent category in validation ", parentCategory);
-        return res.status(400).json({ message: "Parent category is required" });
-      }
-    } else if (categoryType === "parent" && parentCategory) {
-      return res
-        .status(400)
-        .json({ message: "Parent category should not have parent category" });
+    const isValidCategoryData = validateCategoryData(categoryData);
+    if (!isValidCategoryData.valid) {
+      return res.status(400).json({ message: isValidCategoryData.message });
     }
 
-    const newCategory = Category.create(categoryData);
-    const category = await newCategory.save();
+    const isValidCategoyType = validateCategoryType(categoryData);
+    if (!isValidCategoyType.valid) {
+      return res.status(400).json({ message: isValidCategoyType.message });
+    }
+
+    const category = await Category.create(categoryData);
+    category.save();
 
     res.status(201).json(category);
   } catch (error) {
@@ -67,7 +96,6 @@ export const createCategory = async (req, res) => {
 export const getParentCategories = async (req, res) => {
   try {
     const parentCategories = await Category.find({ parentCategory: null });
-    console.log("Parent categories ", parentCategories);
     res.status(200).json(parentCategories);
   } catch (error) {
     res.status(500).json({ message: "Error fetching categories", error });

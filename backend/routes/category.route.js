@@ -7,12 +7,22 @@ import {
   deleteCategory,
   getParentCategories,
 } from "../controllers/category.controller.js";
+import multer from "multer";
 
 const router = express.Router();
+// here multer is used to handle file uploads
+const upload = multer({ dest: "uploads/" }); // Save files temporarily in 'uploads' folder
 
 router.get("/", protectRoute, adminRoute, getAllCategories);
 router.get("/parent-categories", protectRoute, adminRoute, getParentCategories);
-router.post("/create-category", protectRoute, adminRoute, createCategory);
+// The upload.single("image") middleware is used to handle single file upload
+router.post(
+  "/create-category",
+  protectRoute,
+  adminRoute,
+  upload.single("image"),
+  createCategory
+);
 
 router.put("/:id", protectRoute, adminRoute, updateCategory);
 router.delete("/:id", protectRoute, adminRoute, deleteCategory);
