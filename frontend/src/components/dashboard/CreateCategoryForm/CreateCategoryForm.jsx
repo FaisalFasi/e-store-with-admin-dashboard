@@ -6,7 +6,8 @@ import LoadingSpinner from "../../shared/LoadingSpinner/LoadingSpinner";
 import InputField from "../../shared/InputField/InputField";
 import toast from "react-hot-toast";
 import {
-  handleImageUpload,
+  validateImages,
+  handleImageValidation,
   removeImageFromList,
 } from "../../../utils/imageUtils/imageUtils";
 
@@ -121,22 +122,15 @@ const CreateCategoryForm = () => {
   // Optimize the handle input change function with useCallback
   const handleInputChange = (key, value) => {
     // check if key is image and value is not null
-    if (key === "image") handleImageChange(value);
-    else setNewCategory((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleImageChange = (files) => {
-    if (!files || files === "undefined") return;
-
-    // Handle image upload
-    const imageFiles = handleImageUpload([files]);
-
-    const previewImage = URL.createObjectURL(imageFiles[0]);
-    // Update state with selected image files
-    setNewCategory((prevCategory) => ({
-      ...prevCategory,
-      image: previewImage,
-    }));
+    if (key === "image") {
+      const validatedImages = validateImages([value]);
+      setNewCategory((prev) => ({
+        ...prev,
+        image: validatedImages[0],
+      }));
+    } else {
+      setNewCategory((prev) => ({ ...prev, [key]: value }));
+    }
   };
 
   const removeImage = (index) => {

@@ -3,6 +3,86 @@ import redis from "../db/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 import fs from "fs/promises";
+import { imageValidationHelper } from "../helpers/validationHelper/imageValidationHelper.js";
+import Variation from "../models/variation.model.js";
+
+export const createProduct = async (req, res) => {
+  const {
+    name,
+    basePrice,
+    description,
+    category,
+    isFeatured,
+    additionalDetails = {},
+    variations = [], // Expecting an array of variation objects (e.g., [{ color, size, quantity, price, sku }])
+  } = req.body;
+
+  const requestedFiles = req.files;
+
+  const validImage = imageValidationHelper(requestedFiles);
+  if (!validImage.valid) {
+    return res.status(400).json({ message: validImage.message });
+  }
+
+  try {
+    // Upload images to Cloudinary
+    const uploadedImages = await Promise.all(
+      requestedFiles.map(async (file) => {
+        try {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "products",
+          });
+          // Clean up temporary file
+          await fs.unlink(file.path);
+
+          return result.secure_url; // Return the URL of the uploaded image
+        } catch (error) {
+          console.error(`Error uploading ${file.filename}:`, error);
+          // Return an error res message if the image upload fails with status code
+          return res.status(500).json({
+            message: "Internal Server Error while uploading images",
+            error,
+          });
+        }
+      })
+    );
+
+    const product = await Product.create({
+      name,
+      description,
+      basePrice,
+      category,
+      isFeatured,
+      additionalDetails,
+      images: uploadedImages,
+    });
+    if (variations && variations.length > 0) {
+      const variationData = variations.map((variation) => ({
+        ...variation,
+        productId: product._id, // Associate the variation with the created product
+      }));
+
+      const createdVariations = await Variation.insertMany(variationData);
+
+      return res.status(201).json({
+        product,
+        variations: createdVariations,
+        message: "Product and variations created successfully!",
+      });
+    }
+
+    res.status(201).json({
+      product,
+      message: "Product created successfully without variations!",
+    });
+  } catch (error) {
+    console.log("Error in createProduct controller:", error);
+    res.status(500).json({
+      message: "Internal Server Error while creating product",
+      error,
+    });
+  }
+};
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -73,69 +153,6 @@ export const getFeaturedProducts = async (req, res) => {
   }
 };
 
-export const createProduct = async (req, res) => {
-  const {
-    name,
-    price,
-    description,
-    quantity = 1,
-    category,
-    isFeatured,
-  } = req.body;
-
-  const requstedFiles = req.files;
-
-  // Validate files
-  if (!requstedFiles || requstedFiles.length === 0) {
-    return res.status(400).json({ message: "No images uploaded." });
-  }
-  // validate if image type is not image
-  if (requstedFiles.some((file) => !file.mimetype.startsWith("image"))) {
-    return res.status(400).json({ message: "Please upload only images." });
-  }
-
-  try {
-    // Upload images to Cloudinary
-    const uploadedImages = await Promise.all(
-      requstedFiles.map(async (file) => {
-        try {
-          const result = await cloudinary.uploader.upload(file.path, {
-            folder: "products",
-          });
-          // Clean up temporary file
-          await fs.unlink(file.path);
-
-          return result.secure_url; // Return the URL of the uploaded image
-        } catch (error) {
-          console.error(`Error uploading ${file.filename}:`, error);
-          // Return an error res message if the image upload fails with status code
-          return res.status(500).json({
-            message: "Internal Server Error while uploading images",
-            error,
-          });
-        }
-      })
-    );
-
-    const product = await Product.create({
-      name,
-      price,
-      description,
-      quantity,
-      images: uploadedImages,
-      category,
-      isFeatured,
-    });
-
-    res.status(201).json({ product });
-  } catch (error) {
-    console.log("Error in createProduct controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while creating product",
-      error,
-    });
-  }
-};
 export const getRecommendedProducts = async (req, res) => {
   // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
   try {
@@ -263,3 +280,66 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
+// export const createProduct = async (req, res) => {
+//   const {
+//     name,
+//     price,
+//     description,
+//     quantity = 1,
+//     category,
+//     isFeatured,
+//   } = req.body;
+
+//   const requstedFiles = req.files;
+
+//   // Validate files
+//   if (!requstedFiles || requstedFiles.length === 0) {
+//     return res.status(400).json({ message: "No images uploaded." });
+//   }
+//   // validate if image type is not image
+//   if (requstedFiles.some((file) => !file.mimetype.startsWith("image"))) {
+//     return res.status(400).json({ message: "Please upload only images." });
+//   }
+
+//   try {
+//     // Upload images to Cloudinary
+//     const uploadedImages = await Promise.all(
+//       requstedFiles.map(async (file) => {
+//         try {
+//           const result = await cloudinary.uploader.upload(file.path, {
+//             folder: "products",
+//           });
+//           // Clean up temporary file
+//           await fs.unlink(file.path);
+
+//           return result.secure_url; // Return the URL of the uploaded image
+//         } catch (error) {
+//           console.error(`Error uploading ${file.filename}:`, error);
+//           // Return an error res message if the image upload fails with status code
+//           return res.status(500).json({
+//             message: "Internal Server Error while uploading images",
+//             error,
+//           });
+//         }
+//       })
+//     );
+
+//     const product = await Product.create({
+//       name,
+//       price,
+//       description,
+//       quantity,
+//       images: uploadedImages,
+//       category,
+//       isFeatured,
+//     });
+
+//     res.status(201).json({ product });
+//   } catch (error) {
+//     console.log("Error in createProduct controller:", error);
+//     res.status(500).json({
+//       message: "Internal Server Error while creating product",
+//       error,
+//     });
+//   }
+// };

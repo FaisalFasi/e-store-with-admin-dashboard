@@ -1,12 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../../../stores/useProductStore";
 import toast from "react-hot-toast";
 import {
-  handleImageUpload,
+  validateImages,
+  handleImageValidation,
   removeImageFromList,
 } from "../../../utils/imageUtils/imageUtils";
+import InputField from "../../shared/InputField/InputField";
 
 const categories = [
   "jeans",
@@ -17,32 +19,179 @@ const categories = [
   "suits",
   "bags",
 ];
+const categoriesWithSubCategories = {
+  Electronics: ["Smartphones", "Laptops", "Headphones"],
+  Clothing: ["Shirts", "Pants", "Jackets"],
+  jeans: ["Slim Fit", "Regular Fit", "Bootcut"],
+  "t-shirts": ["Round Neck", "V-Neck", "Polo"],
+  shoes: ["Casual", "Formal", "Sports"],
+};
+const variationFields = [
+  { name: "size", label: "Size", type: "text" },
+  { name: "color", label: "Color", type: "text" },
+  { name: "quantity", label: "Quantity", type: "number" },
+  { name: "price", label: "Price", type: "number" },
+];
+
+const initailProductState = {
+  name: "",
+  description: "",
+  price: "",
+  category: "",
+  subCategory: "", // Add subCategory to track selected sub-category
+  quantity: 1,
+  images: [],
+  variations: [
+    {
+      size: "",
+      color: "",
+      quantity: 0,
+      price: "",
+    },
+  ], // New state for product variations
+};
 
 const CreateProductForm = () => {
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    description: "",
-    price: "",
-    category: "",
-    quantity: 1,
-    images: [], // Update to handle multiple images
-  });
+  const [newProduct, setNewProduct] = useState(initailProductState);
   const fileInputRef = useRef(null); // Create a ref to the file input
+  const [categoryData, setCategoryData] = useState({
+    selectedCategory: "",
+    subCategories: [],
+  });
+
   const { createProduct, loading } = useProductStore();
 
+  const inputFields = [
+    {
+      name: "name",
+      label: "Product Name",
+      type: "text",
+      value: newProduct.name,
+      placeholder: "Enter product name",
+      required: true,
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      value: newProduct.description,
+      placeholder: "Enter product description",
+      rows: 3,
+    },
+    {
+      name: "price",
+      label: "Price",
+      type: "number",
+      value: newProduct.price,
+      placeholder: "Enter product price",
+      required: true,
+      min: 0,
+      step: 0.01,
+    },
+    {
+      name: "category",
+      label: "Category",
+      type: "select",
+      value: categoryData.selectedCategory,
+
+      options: Object.keys(categoriesWithSubCategories).map((category) => ({
+        value: category,
+        label: category,
+      })),
+      onChange: (e) => handleCategoryChange(e),
+      placeholder: "Select product category",
+      required: true,
+    },
+    {
+      name: "subCategory",
+      label: "Sub-category",
+      type: "select",
+      value: newProduct.subCategory || "", // Set the first sub-category as default
+      options: categoryData.subCategories.map((subCategory) => ({
+        value: subCategory,
+        label: subCategory,
+      })),
+      onChange: (e) => handleInputChange("subCategory", e.target.value),
+      disabled: categoryData.subCategories.length > 0, // Disable if no sub-categories available
+    },
+    {
+      name: "quantity",
+      label: "Quantity",
+      type: "number",
+      value: newProduct.quantity,
+      placeholder: "Enter product quantity",
+      required: true,
+      min: 0,
+    },
+    {
+      name: "images",
+      label: "Upload Images",
+      type: "file",
+      accept: "image/*",
+      placeholder: "Choose product images",
+    },
+  ];
+
+  useEffect(() => {}, []);
+
+  const handleCategoryChange = (e) => {
+    const selectedCategory = e.target.value;
+    setCategoryData({
+      selectedCategory: selectedCategory,
+      subCategories: categoriesWithSubCategories[selectedCategory] || [],
+    });
+    setNewProduct((prevProduct) => ({
+      ...prevProduct,
+      category: selectedCategory,
+    }));
+  };
+
+  const handleVariationChange = (index, e) => {
+    const { name, value } = e.target;
+    const updatedVariations = [...newProduct.variations];
+
+    updatedVariations[index] = { ...updatedVariations[index], [name]: value };
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
+
+  const addVariation = () => {
+    setNewProduct({
+      ...newProduct,
+      variations: [
+        ...newProduct.variations,
+        {
+          size: "",
+          color: "",
+          quantity: 0,
+          price: "",
+        },
+      ],
+    });
+  };
+  const removeVariation = (index) => {
+    const updatedVariations = newProduct.variations.filter(
+      (_, i) => i !== index
+    );
+    setNewProduct({
+      ...newProduct,
+      variations: updatedVariations,
+    });
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append("name", newProduct.name);
-    formData.append("description", newProduct.description);
-    formData.append("price", newProduct.price);
-    formData.append("category", newProduct.category);
-    formData.append("quantity", newProduct.quantity);
+    console.log("New ------- ", newProduct);
+
+    // formData.append("name", newProduct.name);
+    // formData.append("description", newProduct.description);
+    // formData.append("price", newProduct.price);
+    // formData.append("category", newProduct.category);
+    // formData.append("quantity", newProduct.quantity);
 
     newProduct.images.forEach((image) => {
-      // Append each image to the form data with the same field name. image will be store like images[0], images[1], etc.
-      formData.append("images", image); // 'images' must match your backend field
+      // set the field name as 'images' which is expected by the backend
+      formData.set("images", image); // 'images' must match your backend field
     });
 
     try {
@@ -61,19 +210,18 @@ const CreateProductForm = () => {
       console.log("Error creating a product");
     }
   };
+  const handleInputChange = (key, value) => {
+    // check if key is image and value is not null
+    if (key === "images") {
+      const validatedImages = validateImages(value);
 
-  const handleImageChange = (e) => {
-    const files = e.target.files;
-
-    if (files.length === 0) return;
-
-    const imageFiles = handleImageUpload(files);
-
-    // Update state with selected image files
-    setNewProduct((prevProduct) => ({
-      ...prevProduct,
-      images: [...prevProduct.images, ...imageFiles],
-    }));
+      setNewProduct((prevProduct) => ({
+        ...prevProduct,
+        images: [...prevProduct.images, ...validatedImages], // Append new images
+      }));
+    } else {
+      setNewProduct((prev) => ({ ...prev, [key]: value }));
+    }
   };
 
   const removeImage = (index) => {
@@ -84,10 +232,9 @@ const CreateProductForm = () => {
       images: updateImages,
     }));
 
-    if (updateImages.length <= 0) {
-      fileInputRef.current.value = "";
-    }
+    if (updateImages.length <= 0) fileInputRef.current.value = "";
   };
+
   return (
     <motion.div
       className="bg-gray-800 w-full p-4 rounded-lg md:p-4 mb-8 md:max-w-xl lg:max-w-2xl "
@@ -101,158 +248,64 @@ const CreateProductForm = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Product name, description, price, and category fields (same as your code) */}
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Product Name
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={newProduct.name}
+        {inputFields.map((field) => (
+          <InputField
+            key={field.name}
+            placeholder={field.placeholder}
+            multiple={true}
+            fileInputRef={fileInputRef}
+            handleImageRemove={removeImage}
+            selectedImages={newProduct?.images}
+            disabled={field.disabled}
+            {...field}
             onChange={(e) =>
-              setNewProduct({ ...newProduct, name: e.target.value })
+              field.onChange
+                ? field.onChange(e)
+                : handleInputChange(
+                    field.name,
+                    field.type === "file" ? e.target.files : e.target.value
+                  )
             }
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-          px-3  focus:outline-none focus:ring-2
-         focus:ring-emerald-500 focus:border-emerald-500"
-            required
           />
-        </div>
-        <div>
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={newProduct.description}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, description: e.target.value })
-            }
-            rows="3"
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-            px-3  focus:outline-none focus:ring-2
-           focus:ring-emerald-500 focus:border-emerald-500"
-            required
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="price"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Price
-          </label>
-          <input
-            type="number"
-            id="price"
-            name="price"
-            min={0}
-            value={newProduct.price}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, price: e.target.value })
-            }
-            step="0.01"
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-            px-3  focus:outline-none focus:ring-2
-           focus:ring-emerald-500 focus:border-emerald-500"
-            required
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="category"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={newProduct.category}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, category: e.target.value })
-            }
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-          px-3  focus:outline-none focus:ring-2
-         focus:ring-emerald-500 focus:border-emerald-500"
-            required
-          >
-            <option value="">Select a category</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="quantity"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Quantity
-          </label>
-          <input
-            type="number"
-            id="quantity"
-            name="quantity"
-            min={0}
-            value={newProduct.quantity}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, quantity: e.target.value })
-            }
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-          px-3  focus:outline-none focus:ring-2
-         focus:ring-emerald-500 focus:border-emerald-500"
-            required
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="images"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Upload Images
-          </label>
-
-          <input
-            ref={fileInputRef} // Attach ref to file input
-            type="file"
-            id="images"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-            px-3  focus:outline-none focus:ring-2
-           focus:ring-emerald-500 focus:border-emerald-500"
-          />
-          <div className="mt-3 flex flex-wrap gap-4">
-            {newProduct?.images?.map((image, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={URL?.createObjectURL(image)}
-                  alt={`Uploaded ${index}`}
-                  className="h-20 w-20 object-cover rounded-md"
+        ))}
+        {/* Product variations */}
+        {/* Variations */}
+        {newProduct.variations.map((variation, index) => (
+          <div key={index} className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-emerald-300">
+                Variation {index + 1}
+              </h3>
+              <button
+                type="button"
+                onClick={() => removeVariation(index)}
+                className="text-red-500 hover:text-red-700 mt-2"
+              >
+                Remove Variant
+              </button>
+            </div>
+            <div className="">
+              {variationFields.map((field) => (
+                <InputField
+                  key={field.name}
+                  name={field.name}
+                  label={field.label}
+                  type={field.type}
+                  value={variation[field.name]}
+                  onChange={(e) => handleVariationChange(index, e)}
                 />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
-                >
-                  X
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        ))}
+        <button
+          type="button"
+          onClick={addVariation}
+          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+        >
+          Add Variation
+        </button>
+
         <button
           type="submit"
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"

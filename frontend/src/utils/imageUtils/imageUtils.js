@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
  * @returns {Array} - Array of valid image files.
  */
 
-export const handleImageUpload = (files) => {
+export const handleImageValidation = (files) => {
   const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
   const maxFiles = 5;
 
@@ -42,6 +42,23 @@ export const handleImageUpload = (files) => {
 
   // Return the updated list of images (existing + new)
   return validImages;
+};
+
+// handle image change
+/**
+ * Handles the image change event.
+ * @param {FileList} files - The selected files from the input.
+ * @returns {Array} - Array of valid image files.
+ */
+
+export const validateImages = (files) => {
+  if (!files || files === "undefined") return;
+
+  const validFiles = handleImageValidation(files);
+
+  const previewImages = validFiles.map((file) => URL.createObjectURL(file));
+
+  return previewImages;
 };
 
 /**

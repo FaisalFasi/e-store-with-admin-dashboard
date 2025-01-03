@@ -17,7 +17,9 @@ const InputField = ({
   selectedImages = [],
   handleImageRemove,
   fileInputRef = null,
+  disabled = false,
 }) => {
+  // console.log("selectedImages", selectedImages);
   return (
     <div className={`mb-4 ${className}`}>
       {label && (
@@ -45,6 +47,7 @@ const InputField = ({
           id={name}
           name={name}
           value={value}
+          disabled={disabled}
           onChange={onChange}
           required={required}
           className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
