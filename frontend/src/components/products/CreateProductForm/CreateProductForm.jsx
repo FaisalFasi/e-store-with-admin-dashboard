@@ -54,9 +54,14 @@ const initailProductState = {
 const CreateProductForm = () => {
   const [newProduct, setNewProduct] = useState(initailProductState);
   const fileInputRef = useRef(null); // Create a ref to the file input
-  const [categoryData, setCategoryData] = useState({
-    selectedCategory: "",
-    subCategories: [],
+  const [categoryData, setCategoryData] = useState(() => {
+    // Ensure categoriesWithSubCategories is available and not empty
+    const firstCategory = Object.keys(categoriesWithSubCategories)[0];
+
+    return {
+      selectedCategory: firstCategory || "", // Set the first category or empty string if no categories
+      subCategories: categoriesWithSubCategories[firstCategory] || [], // Set the subcategories for the first category
+    };
   });
 
   const { createProduct, loading } = useProductStore();
@@ -102,18 +107,21 @@ const CreateProductForm = () => {
       placeholder: "Select product category",
       required: true,
     },
-    {
-      name: "subCategory",
-      label: "Sub-category",
-      type: "select",
-      value: newProduct.subCategory || "", // Set the first sub-category as default
-      options: categoryData.subCategories.map((subCategory) => ({
-        value: subCategory,
-        label: subCategory,
-      })),
-      onChange: (e) => handleInputChange("subCategory", e.target.value),
-      disabled: categoryData.subCategories.length > 0, // Disable if no sub-categories available
-    },
+    ...(categoryData.subCategories.length > 0
+      ? [
+          {
+            name: "subCategory",
+            label: "Sub-category",
+            type: "select",
+            value: newProduct.subCategory || "", // Default value
+            options: categoryData.subCategories.map((subCategory) => ({
+              value: subCategory,
+              label: subCategory,
+            })),
+            onChange: (e) => handleInputChange("subCategory", e.target.value),
+          },
+        ]
+      : []),
     {
       name: "quantity",
       label: "Quantity",
@@ -132,18 +140,14 @@ const CreateProductForm = () => {
     },
   ];
 
-  useEffect(() => {}, []);
-
   const handleCategoryChange = (e) => {
     const selectedCategory = e.target.value;
     setCategoryData({
       selectedCategory: selectedCategory,
       subCategories: categoriesWithSubCategories[selectedCategory] || [],
     });
-    setNewProduct((prevProduct) => ({
-      ...prevProduct,
-      category: selectedCategory,
-    }));
+
+    handleInputChange("category", selectedCategory);
   };
 
   const handleVariationChange = (index, e) => {
