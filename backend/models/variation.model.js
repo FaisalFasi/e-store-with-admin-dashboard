@@ -24,10 +24,15 @@ const variationSchema = new mongoose.Schema(
       type: Number, // Price for this specific variation
       required: true,
     },
+    // i need sku for the cart page bcz i need to know which product i am adding to the cart and sku will store the product id and the variation id
     sku: {
       type: String, // Unique identifier for this variation
       required: true,
       unique: true,
+    },
+    images: {
+      type: [String], // Array of image URLs
+      required: true,
     },
   },
   { timestamps: true }

@@ -11,6 +11,7 @@ export const useProductStore = create((set, get) => ({
   setProducts: (products) => set({ products }),
 
   createProduct: async (formData) => {
+    console.log("Form Data in store: ", formData);
     try {
       set({ loading: true });
 

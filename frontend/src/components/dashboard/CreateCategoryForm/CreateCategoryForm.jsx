@@ -7,7 +7,6 @@ import InputField from "../../shared/InputField/InputField";
 import toast from "react-hot-toast";
 import {
   validateImages,
-  handleImageValidation,
   removeImageFromList,
 } from "../../../utils/imageUtils/imageUtils";
 

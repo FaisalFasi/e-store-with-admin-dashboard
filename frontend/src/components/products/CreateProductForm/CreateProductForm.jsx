@@ -5,20 +5,10 @@ import { useProductStore } from "../../../stores/useProductStore";
 import toast from "react-hot-toast";
 import {
   validateImages,
-  handleImageValidation,
   removeImageFromList,
 } from "../../../utils/imageUtils/imageUtils";
 import InputField from "../../shared/InputField/InputField";
 
-const categories = [
-  "jeans",
-  "t-shirts",
-  "shoes",
-  "glasses",
-  "jackets",
-  "suits",
-  "bags",
-];
 const categoriesWithSubCategories = {
   Electronics: ["Smartphones", "Laptops", "Headphones"],
   Clothing: ["Shirts", "Pants", "Jackets"],
@@ -36,19 +26,12 @@ const variationFields = [
 const initailProductState = {
   name: "",
   description: "",
-  price: "",
+  basePrice: "",
   category: "",
   subCategory: "", // Add subCategory to track selected sub-category
   quantity: 1,
-  images: [],
-  variations: [
-    {
-      size: "",
-      color: "",
-      quantity: 0,
-      price: "",
-    },
-  ], // New state for product variations
+  baseImages: [],
+  variations: [],
 };
 
 const CreateProductForm = () => {
@@ -84,10 +67,10 @@ const CreateProductForm = () => {
       rows: 3,
     },
     {
-      name: "price",
+      name: "basePrice",
       label: "Price",
       type: "number",
-      value: newProduct.price,
+      value: newProduct.basePrice,
       placeholder: "Enter product price",
       required: true,
       min: 0,
@@ -132,23 +115,13 @@ const CreateProductForm = () => {
       min: 0,
     },
     {
-      name: "images",
+      name: "baseImages",
       label: "Upload Images",
       type: "file",
       accept: "image/*",
       placeholder: "Choose product images",
     },
   ];
-
-  const handleCategoryChange = (e) => {
-    const selectedCategory = e.target.value;
-    setCategoryData({
-      selectedCategory: selectedCategory,
-      subCategories: categoriesWithSubCategories[selectedCategory] || [],
-    });
-
-    handleInputChange("category", selectedCategory);
-  };
 
   const handleVariationChange = (index, e) => {
     const { name, value } = e.target;
@@ -181,39 +154,17 @@ const CreateProductForm = () => {
       variations: updatedVariations,
     });
   };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
 
-    const formData = new FormData();
-    console.log("New ------- ", newProduct);
-
-    // formData.append("name", newProduct.name);
-    // formData.append("description", newProduct.description);
-    // formData.append("price", newProduct.price);
-    // formData.append("category", newProduct.category);
-    // formData.append("quantity", newProduct.quantity);
-
-    newProduct.images.forEach((image) => {
-      // set the field name as 'images' which is expected by the backend
-      formData.set("images", image); // 'images' must match your backend field
+  const handleCategoryChange = (e) => {
+    const selectedCategory = e.target.value;
+    setCategoryData({
+      selectedCategory: selectedCategory,
+      subCategories: categoriesWithSubCategories[selectedCategory] || [],
     });
 
-    try {
-      const data = await createProduct(formData);
-      if (data) {
-        setNewProduct({
-          name: "",
-          description: "",
-          price: "",
-          category: "",
-          quantity: 0,
-          images: [],
-        });
-      }
-    } catch {
-      console.log("Error creating a product");
-    }
+    handleInputChange("category", selectedCategory);
   };
+
   const handleInputChange = (key, value) => {
     // check if key is image and value is not null
     if (key === "images") {
@@ -221,7 +172,7 @@ const CreateProductForm = () => {
 
       setNewProduct((prevProduct) => ({
         ...prevProduct,
-        images: [...prevProduct.images, ...validatedImages], // Append new images
+        baseImages: [...prevProduct.baseImages, ...validatedImages], // Append new images
       }));
     } else {
       setNewProduct((prev) => ({ ...prev, [key]: value }));
@@ -229,15 +180,69 @@ const CreateProductForm = () => {
   };
 
   const removeImage = (index) => {
-    const updateImages = removeImageFromList(newProduct.images, index);
+    const updateImages = removeImageFromList(newProduct.baseImages, index);
 
     setNewProduct((prev) => ({
       ...prev,
-      images: updateImages,
+      baseImages: updateImages,
     }));
 
     if (updateImages.length <= 0) fileInputRef.current.value = "";
   };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+
+    // Add variations to the form data
+    if (newProduct.variations.length > 0) {
+      console.log("Variations ------->>", newProduct.variations);
+      formData.append("variations", JSON.stringify(newProduct.variations));
+    }
+    console.log("Form Data ------->>", Object.fromEntries(formData.entries()));
+
+    const data = await createProduct(formData);
+    console.log("Data after API call ------->>", data.message);
+
+    // Reset form and state if submission is successful
+    if (data.message) {
+      // setNewProduct(initailProductState);
+      // if (fileInputRef?.current) {
+      //   fileInputRef.current.value = ""; // Clear file input
+      // }
+      toast.success("Product created successfully!");
+    }
+  };
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   const formData = new FormData(e.target);
+  //   console.log("Form Data ------->>", Object.fromEntries(formData.entries()));
+
+  //   const imageFiles = formData.getAll("images");
+  //   console.log("Image Files ------->> ", imageFiles);
+
+  //   if (!imageFiles || imageFiles.length === 0) {
+  //     return toast.error("Please upload an image");
+  //   }
+
+  //   imageFiles.forEach((file, index) => {
+  //     formData.append(`images`, file);
+  //   });
+  //   const formtDataEntries = Object.fromEntries(formData);
+  //   console.log("Form Data Entries ------->> ", formtDataEntries);
+
+  //   const data = await createProduct(formtDataEntries);
+  //   console.log("Data after ------->> ", data);
+
+  //   if (data) {
+  //     setNewProduct(initailProductState);
+  //     if (fileInputRef?.current) {
+  //       fileInputRef.current.value = "";
+  //     }
+  //   }
+  // };
 
   return (
     <motion.div
@@ -259,7 +264,7 @@ const CreateProductForm = () => {
             multiple={true}
             fileInputRef={fileInputRef}
             handleImageRemove={removeImage}
-            selectedImages={newProduct?.images}
+            selectedImages={newProduct?.baseImages}
             disabled={field.disabled}
             {...field}
             onChange={(e) =>
@@ -274,34 +279,35 @@ const CreateProductForm = () => {
         ))}
         {/* Product variations */}
         {/* Variations */}
-        {newProduct.variations.map((variation, index) => (
-          <div key={index} className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-emerald-300">
-                Variation {index + 1}
-              </h3>
-              <button
-                type="button"
-                onClick={() => removeVariation(index)}
-                className="text-red-500 hover:text-red-700 mt-2"
-              >
-                Remove Variant
-              </button>
+        {newProduct?.variations &&
+          newProduct?.variations?.map((variation, index) => (
+            <div key={index} className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-emerald-300">
+                  Variation {index + 1}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => removeVariation(index)}
+                  className="text-red-500 hover:text-red-700 mt-2"
+                >
+                  Remove Variant
+                </button>
+              </div>
+              <div className="">
+                {variationFields?.map((field) => (
+                  <InputField
+                    key={field.name}
+                    name={field.name}
+                    label={field.label}
+                    type={field.type}
+                    value={variation[field.name]}
+                    onChange={(e) => handleVariationChange(index, e)}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="">
-              {variationFields.map((field) => (
-                <InputField
-                  key={field.name}
-                  name={field.name}
-                  label={field.label}
-                  type={field.type}
-                  value={variation[field.name]}
-                  onChange={(e) => handleVariationChange(index, e)}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
+          ))}
         <button
           type="button"
           onClick={addVariation}
