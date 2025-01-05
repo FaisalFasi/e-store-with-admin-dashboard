@@ -24,6 +24,13 @@ const productSchema = new mongoose.Schema(
       ref: "Category", // Reference to the Category model
       required: true,
     },
+    defaultVariation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Variation", // Reference to the Variation model
+    },
+    tags: {
+      type: [String], // Example: ["electronics", "smartphone", "gaming"]
+    },
     additionalDetails: {
       type: Map,
       of: String, // Flexible key-value pair for additional product info like brand, material
@@ -32,13 +39,24 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    discount: {
+      type: Number, // Discount percentage (e.g., 10 for 10%)
+      min: 0,
+      max: 100,
+    },
   },
   { timestamps: true }
 );
 
+productSchema.pre("remove", async function (next) {
+  await Variation.deleteMany({ productId: this._id });
+  next();
+});
+
 productSchema.index({ name: "text", description: "text" });
 productSchema.index({ category: 1 });
 productSchema.index({ isFeatured: 1 });
+productSchema.index({ tags: 1 });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

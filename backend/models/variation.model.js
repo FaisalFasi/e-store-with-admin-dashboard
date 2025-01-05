@@ -9,11 +9,9 @@ const variationSchema = new mongoose.Schema(
     },
     color: {
       type: String, // Example: "Red", "Blue"
-      required: true,
     },
     size: {
       type: String, // Example: "S", "M", "L", "XL"
-      required: true,
     },
     quantity: {
       type: Number,
@@ -24,7 +22,7 @@ const variationSchema = new mongoose.Schema(
       type: Number, // Price for this specific variation
       required: true,
     },
-    // i need sku for the cart page bcz i need to know which product i am adding to the cart and sku will store the product id and the variation id
+    // stock keeping unit is used to uniquely identify each variation
     sku: {
       type: String, // Unique identifier for this variation
       required: true,
@@ -34,9 +32,26 @@ const variationSchema = new mongoose.Schema(
       type: [String], // Array of image URLs
       required: true,
     },
+    isInStock: {
+      type: Boolean,
+      default: function () {
+        return this.quantity > 0;
+      },
+    },
+    barcode: {
+      type: String, // Unique barcode for this variation
+      unique: true,
+      sparse: true, // Allow null values if not all variations have barcodes
+    },
   },
   { timestamps: true }
 );
+variationSchema.pre("save", function (next) {
+  if (!this.sku) {
+    this.sku = `${this.productId}-${this._id}`;
+  }
+  next();
+});
 
 const Variation = mongoose.model("Variation", variationSchema);
 export default Variation;
