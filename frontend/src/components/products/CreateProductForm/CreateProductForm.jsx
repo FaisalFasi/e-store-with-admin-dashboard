@@ -8,6 +8,7 @@ import {
   removeImageFromList,
 } from "../../../utils/imageUtils/imageUtils";
 import InputField from "../../shared/InputField/InputField";
+import Button from "../../shared/Button/Button";
 
 const categoriesWithSubCategories = {
   Electronics: ["Smartphones", "Laptops", "Headphones"],
@@ -21,6 +22,7 @@ const variationFields = [
   { name: "color", label: "Color", type: "text" },
   { name: "quantity", label: "Quantity", type: "number" },
   { name: "price", label: "Price", type: "number" },
+  { name: "images", label: "Upload Images", type: "file" },
 ];
 
 const initailProductState = {
@@ -31,7 +33,14 @@ const initailProductState = {
   subCategory: "", // Add subCategory to track selected sub-category
   quantity: 1,
   baseImages: [],
-  variations: [],
+  variations: [
+    {
+      size: "",
+      color: "",
+      quantity: 0,
+      price: "",
+    },
+  ],
 };
 
 const CreateProductForm = () => {
@@ -157,12 +166,17 @@ const CreateProductForm = () => {
 
   const handleCategoryChange = (e) => {
     const selectedCategory = e.target.value;
-    setCategoryData({
-      selectedCategory: selectedCategory,
-      subCategories: categoriesWithSubCategories[selectedCategory] || [],
-    });
+    const subCategories = categoriesWithSubCategories[selectedCategory] || [];
 
-    handleInputChange("category", selectedCategory);
+    setCategoryData({
+      selectedCategory,
+      subCategories,
+    });
+    setNewProduct((prev) => ({
+      ...prev,
+      category: selectedCategory,
+      subCategory: subCategories.length > 0 ? subCategories[0] : "",
+    }));
   };
 
   const handleInputChange = (key, value) => {
@@ -206,43 +220,13 @@ const CreateProductForm = () => {
 
     // Reset form and state if submission is successful
     if (data.message) {
-      // setNewProduct(initailProductState);
-      // if (fileInputRef?.current) {
-      //   fileInputRef.current.value = ""; // Clear file input
-      // }
+      setNewProduct(initailProductState);
+      if (fileInputRef?.current) {
+        fileInputRef.current.value = ""; // Clear file input
+      }
       toast.success("Product created successfully!");
     }
   };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   const formData = new FormData(e.target);
-  //   console.log("Form Data ------->>", Object.fromEntries(formData.entries()));
-
-  //   const imageFiles = formData.getAll("images");
-  //   console.log("Image Files ------->> ", imageFiles);
-
-  //   if (!imageFiles || imageFiles.length === 0) {
-  //     return toast.error("Please upload an image");
-  //   }
-
-  //   imageFiles.forEach((file, index) => {
-  //     formData.append(`images`, file);
-  //   });
-  //   const formtDataEntries = Object.fromEntries(formData);
-  //   console.log("Form Data Entries ------->> ", formtDataEntries);
-
-  //   const data = await createProduct(formtDataEntries);
-  //   console.log("Data after ------->> ", data);
-
-  //   if (data) {
-  //     setNewProduct(initailProductState);
-  //     if (fileInputRef?.current) {
-  //       fileInputRef.current.value = "";
-  //     }
-  //   }
-  // };
 
   return (
     <motion.div
@@ -284,15 +268,17 @@ const CreateProductForm = () => {
             <div key={index} className="space-y-4">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-emerald-300">
-                  Variation {index + 1}
+                  {index === 0 ? "Required" : `Variant ${index}`}
                 </h3>
-                <button
-                  type="button"
-                  onClick={() => removeVariation(index)}
-                  className="text-red-500 hover:text-red-700 mt-2"
-                >
-                  Remove Variant
-                </button>
+                {index !== 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeVariation(index)}
+                    className="text-red-500 hover:text-red-700 mt-2"
+                  >
+                    Remove Variant
+                  </button>
+                )}
               </div>
               <div className="">
                 {variationFields?.map((field) => (
@@ -308,15 +294,39 @@ const CreateProductForm = () => {
               </div>
             </div>
           ))}
-        <button
+        <Button
           type="button"
+          isBG={true}
           onClick={addVariation}
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+          className="w-full"
         >
           Add Variation
-        </button>
+        </Button>
 
-        <button
+        <Button
+          type="submit"
+          isBG={true}
+          onClick={addVariation}
+          disabled={loading}
+          className="w-full"
+        >
+          {loading ? (
+            <>
+              <Loader
+                className="mr-2 h-5 w-5 animate-spin"
+                aria-hidden="true"
+              />
+              Loading...
+            </>
+          ) : (
+            <>
+              <PlusCircle className="mr-2 h-5 w-5" />
+              Create Product
+            </>
+          )}
+        </Button>
+
+        {/* <button
           type="submit"
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
           disabled={loading}
@@ -335,7 +345,7 @@ const CreateProductForm = () => {
               Create Product
             </>
           )}
-        </button>
+        </button> */}
       </form>
     </motion.div>
   );

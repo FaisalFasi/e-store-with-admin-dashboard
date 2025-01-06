@@ -43,6 +43,10 @@ const variationSchema = new mongoose.Schema(
       unique: true,
       sparse: true, // Allow null values if not all variations have barcodes
     },
+    isDefault: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
@@ -53,5 +57,5 @@ variationSchema.pre("save", function (next) {
   next();
 });
 
-const Variation = mongoose.model("Variation", variationSchema);
-export default Variation;
+const ProductVariation = mongoose.model("ProductVariation", variationSchema);
+export default ProductVariation;

@@ -4,11 +4,13 @@ import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 import fs from "fs/promises";
 import { imageValidationHelper } from "../helpers/validationHelper/imageValidationHelper.js";
-import Variation from "../models/variation.model.js";
+import ProductVariation from "../models/productVariation.model.js";
+import { get_uuid } from "../utils/uuidGenerator.js";
 
 export const createProduct = async (req, res) => {
   const session = await mongoose.startSession(); // Start a transaction
   session.startTransaction();
+
   try {
     const {
       name,
@@ -18,10 +20,12 @@ export const createProduct = async (req, res) => {
       subCategory,
       isFeatured = false,
       discount = 0,
+      tags = [],
       additionalDetails = {},
       variations = [], // Array of variation objects (e.g., [{ color, size, quantity, price }])
     } = req.body;
 
+    console.log("name", name);
     // Assuming `req.files` contains uploaded files
     const requestedFiles = req.files || [];
     const validImage = imageValidationHelper(requestedFiles);
@@ -46,7 +50,7 @@ export const createProduct = async (req, res) => {
     if (variations.length > 0) {
       variations.forEach((variation) => {
         if (!variation.price || !variation.quantity) {
-          res.status(400).json({
+          return res.status(400).json({
             message: "Price and quantity are required for each variation",
           });
         }
@@ -62,31 +66,32 @@ export const createProduct = async (req, res) => {
         subCategory,
         isFeatured,
         discount,
+        tags,
         additionalDetails,
         images: uploadedImages,
       },
       { session }
     );
+    console.log("default product", product);
 
+    let createdVariations = [];
     if (variations && variations.length > 0) {
       const variationData = variations.map((variation) => ({
         ...variation,
         productId: product[0]._id, // Associate the variation with the created product
-        sku:
-          variation.sku ||
-          `${product[0]._id}-${Math.random().toString(36).substring(2, 9)}`, // Generate SKU if not provided
+        sku: get_uuid(), // Generate a unique SKU for the variation
       }));
 
-      let createdVariations = await Variation.insertMany(variationData, {
+      createdVariations = await ProductVariation.create(variationData, {
         session,
       });
+      console.log("default createdVariations", createdVariations);
 
-      await Product.findByIdAndUpdate(
-        product[0]._id,
-        { defaultVariation: createdVariations[0]._id },
-        { session }
-      );
+      product.defauldVariation = createdVariations[0]._id;
     }
+
+    await product.save({ session });
+
     await session.commitTransaction();
     session.endSession();
 
@@ -96,10 +101,10 @@ export const createProduct = async (req, res) => {
       message: "Product and variations created successfully!",
     });
   } catch (error) {
-    console.log("Error in createProduct controller:", error);
     await session.abortTransaction();
     session.endSession();
 
+    console.log("Error in createProduct controller:", error);
     res.status(500).json({
       message: "Internal Server Error while creating product",
       error: error.message,
@@ -251,6 +256,35 @@ export const toggleFeaturedProduct = async (req, res) => {
     });
   }
 };
+export const updateDiscount = async (req, res) => {
+  const { productId, discount, discountExpiry } = req.body;
+
+  try {
+    // Validate the discount (should be a number between 0 and 100)
+    if (discount < 0 || discount > 100) {
+      return res.status(400).json({ message: "Invalid discount value." });
+    }
+
+    // Find the product and update the discount
+    const product = await Product.findByIdAndUpdate(
+      productId,
+      { discount, discountExpiry },
+      { new: true } // Return the updated product
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+
+    return res.status(200).json({
+      product,
+      message: "Product discount updated successfully!",
+    });
+  } catch (error) {
+    console.error("Error updating discount:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
 
 const updateFeaturedProductsCache = async (updatedProduct) => {
   try {
@@ -303,66 +337,3 @@ export const deleteProduct = async (req, res) => {
     });
   }
 };
-// export const createProduct = async (req, res) => {
-//   const {
-//     name,
-//     price,
-//     description,
-//     quantity = 1,
-//     category,
-//     isFeatured,
-//   } = req.body;
-
-//   const requstedFiles = req.files;
-
-//   // Validate files
-//   if (!requstedFiles || requstedFiles.length === 0) {
-//     return res.status(400).json({ message: "No images uploaded." });
-//   }
-//   // validate if image type is not image
-//   if (requstedFiles.some((file) => !file.mimetype.startsWith("image"))) {
-//     return res.status(400).json({ message: "Please upload only images." });
-//   }
-
-//   try {
-//     // Upload images to Cloudinary
-//     const uploadedImages = await Promise.all(
-//       requstedFiles.map(async (file) => {
-//         try {
-//           const result = await cloudinary.uploader.upload(file.path, {
-//             folder: "products",
-//           });
-//           // Clean up temporary file
-//           await fs.unlink(file.path);
-
-//           return result.secure_url; // Return the URL of the uploaded image
-//         } catch (error) {
-//           console.error(`Error uploading ${file.filename}:`, error);
-//           // Return an error res message if the image upload fails with status code
-//           return res.status(500).json({
-//             message: "Internal Server Error while uploading images",
-//             error,
-//           });
-//         }
-//       })
-//     );
-
-//     const product = await Product.create({
-//       name,
-//       price,
-//       description,
-//       quantity,
-//       images: uploadedImages,
-//       category,
-//       isFeatured,
-//     });
-
-//     res.status(201).json({ product });
-//   } catch (error) {
-//     console.log("Error in createProduct controller:", error);
-//     res.status(500).json({
-//       message: "Internal Server Error while creating product",
-//       error,
-//     });
-//   }
-// };

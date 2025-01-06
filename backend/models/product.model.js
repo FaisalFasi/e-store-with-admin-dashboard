@@ -26,7 +26,7 @@ const productSchema = new mongoose.Schema(
     },
     defaultVariation: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Variation", // Reference to the Variation model
+      ref: "ProductVariation", // Reference to the Variation model
     },
     tags: {
       type: [String], // Example: ["electronics", "smartphone", "gaming"]
@@ -44,12 +44,20 @@ const productSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
+    discountExpiry: {
+      type: Date, // Optional expiry date for the discount
+    },
+    status: {
+      type: String,
+      enum: ["draft", "active", "inactive"],
+      default: "draft",
+    },
   },
   { timestamps: true }
 );
 
 productSchema.pre("remove", async function (next) {
-  await Variation.deleteMany({ productId: this._id });
+  await ProductVariation.deleteMany({ productId: this._id });
   next();
 });
 
