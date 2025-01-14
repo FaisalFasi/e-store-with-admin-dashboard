@@ -5,7 +5,7 @@ import {
   sendResetPasswordEmail,
   generateResetToken,
 } from "../utils/sendEmail.js";
-import { generateGuestId } from "../utils/uuidGenerator.js";
+import { get_uuid } from "../utils/uuidGenerator.js";
 
 const generateToken = (userId) => {
   const accessToken = jwt.sign(
@@ -303,7 +303,7 @@ export const createGuestUser = async (req, res) => {
     let guestUser = null;
 
     if (!guestId) {
-      const newGuestId = generateGuestId();
+      const newGuestId = get_uuid();
       guestUser = new User({
         guestId: newGuestId,
         isGuest: true,

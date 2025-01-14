@@ -1,12 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../../../stores/useProductStore";
 import toast from "react-hot-toast";
-import {
-  validateImages,
-  removeImageFromList,
-} from "../../../utils/imageUtils/imageUtils";
+import { validateImages } from "../../../utils/imageUtils/imageUtils";
 import InputField from "../../shared/InputField/InputField";
 import Button from "../../shared/Button/Button";
 
@@ -18,29 +15,49 @@ const categoriesWithSubCategories = {
   shoes: ["Casual", "Formal", "Sports"],
 };
 const variationFields = [
-  { name: "size", label: "Size", type: "text" },
-  { name: "color", label: "Color", type: "text" },
-  { name: "quantity", label: "Quantity", type: "number" },
-  { name: "price", label: "Price", type: "number" },
-  { name: "images", label: "Upload Images", type: "file" },
+  { name: "size", label: "Size", type: "text", required: true },
+  { name: "color", label: "Color", type: "text", required: true },
+  {
+    name: "quantity",
+    label: "Quantity",
+    type: "number",
+    required: true,
+    min: 0,
+
+    step: 1,
+  },
+  {
+    name: "price",
+    label: "Price",
+    type: "number",
+    placeholder: "Enter price for this variation",
+    required: true,
+    min: 0,
+  },
+  {
+    name: "images",
+    label: "Upload Images",
+    type: "file",
+    accept: "image/*",
+    placeholder: "Choose product images",
+    required: true,
+  },
 ];
+
+const initializeVariation = {
+  size: "",
+  color: "",
+  quantity: 0,
+  price: "",
+  images: [],
+};
 
 const initailProductState = {
   name: "",
   description: "",
-  basePrice: "",
-  category: "",
-  subCategory: "", // Add subCategory to track selected sub-category
-  quantity: 1,
-  baseImages: [],
-  variations: [
-    {
-      size: "",
-      color: "",
-      quantity: 0,
-      price: "",
-    },
-  ],
+  category: Object.keys(categoriesWithSubCategories)[0],
+  subCategory: Object.values(categoriesWithSubCategories)[0][0],
+  variations: [initializeVariation],
 };
 
 const CreateProductForm = () => {
@@ -74,17 +91,9 @@ const CreateProductForm = () => {
       value: newProduct.description,
       placeholder: "Enter product description",
       rows: 3,
-    },
-    {
-      name: "basePrice",
-      label: "Price",
-      type: "number",
-      value: newProduct.basePrice,
-      placeholder: "Enter product price",
       required: true,
-      min: 0,
-      step: 0.01,
     },
+
     {
       name: "category",
       label: "Category",
@@ -114,33 +123,29 @@ const CreateProductForm = () => {
           },
         ]
       : []),
-    {
-      name: "quantity",
-      label: "Quantity",
-      type: "number",
-      value: newProduct.quantity,
-      placeholder: "Enter product quantity",
-      required: true,
-      min: 0,
-    },
-    {
-      name: "baseImages",
-      label: "Upload Images",
-      type: "file",
-      accept: "image/*",
-      placeholder: "Choose product images",
-    },
   ];
 
   const handleVariationChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedVariations = [...newProduct.variations];
+    const { name, value, files } = e.target;
 
-    updatedVariations[index] = { ...updatedVariations[index], [name]: value };
-    setNewProduct({ ...newProduct, variations: updatedVariations });
+    if (files) {
+      const validatedImages = validateImages(files);
+      const updatedVariations = [...newProduct.variations];
+      updatedVariations[index] = {
+        ...updatedVariations[index],
+        images: [...validatedImages],
+      };
+      setNewProduct({ ...newProduct, variations: updatedVariations });
+    } else {
+      const updatedVariations = [...newProduct.variations];
+      updatedVariations[index] = { ...updatedVariations[index], [name]: value };
+      setNewProduct({ ...newProduct, variations: updatedVariations });
+    }
   };
 
-  const addVariation = () => {
+  const addVariation = (e) => {
+    e.preventDefault();
+
     setNewProduct({
       ...newProduct,
       variations: [
@@ -150,6 +155,7 @@ const CreateProductForm = () => {
           color: "",
           quantity: 0,
           price: "",
+          images: [],
         },
       ],
     });
@@ -162,6 +168,18 @@ const CreateProductForm = () => {
       ...newProduct,
       variations: updatedVariations,
     });
+  };
+  const removeImage = (index, imageIndex) => {
+    const updatedVariations = [...newProduct.variations];
+
+    updatedVariations[index].images = updatedVariations[index].images.filter(
+      (_, i) => i !== imageIndex
+    );
+
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+
+    if (updatedVariations[index].images.length <= 0)
+      fileInputRef.current.value = "";
   };
 
   const handleCategoryChange = (e) => {
@@ -180,53 +198,100 @@ const CreateProductForm = () => {
   };
 
   const handleInputChange = (key, value) => {
-    // check if key is image and value is not null
-    if (key === "images") {
-      const validatedImages = validateImages(value);
-
-      setNewProduct((prevProduct) => ({
-        ...prevProduct,
-        baseImages: [...prevProduct.baseImages, ...validatedImages], // Append new images
-      }));
-    } else {
-      setNewProduct((prev) => ({ ...prev, [key]: value }));
-    }
+    setNewProduct((prev) => ({ ...prev, [key]: value }));
   };
 
-  const removeImage = (index) => {
-    const updateImages = removeImageFromList(newProduct.baseImages, index);
-
-    setNewProduct((prev) => ({
-      ...prev,
-      baseImages: updateImages,
-    }));
-
-    if (updateImages.length <= 0) fileInputRef.current.value = "";
-  };
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData(e.target);
+    // const formData = new FormData(e.target);
+    const formData = new FormData();
 
-    // Add variations to the form data
-    if (newProduct.variations.length > 0) {
-      console.log("Variations ------->>", newProduct.variations);
-      formData.append("variations", JSON.stringify(newProduct.variations));
+    console.log("New Product ------->>", newProduct);
+
+    // Append the product data to the form data
+    for (const key in newProduct) {
+      if (key === "variations") {
+        const variations = newProduct[key].map((variation) => {
+          const { images, ...rest } = variation; // Exclude images from the variation data
+          return rest;
+        });
+        formData.append("variations", JSON.stringify(variations)); // Add variations without images
+
+        await Promise.all(
+          newProduct[key].map(async (variation, variationIndex) => {
+            await handleImages(variation.images, variationIndex, formData);
+            console.log(
+              "Variation Images ------->>",
+              Object.fromEntries(formData)
+            );
+          })
+        );
+      } else {
+        formData.append(key, newProduct[key]);
+      }
     }
-    console.log("Form Data ------->>", Object.fromEntries(formData.entries()));
+
+    console.log("Form Data entries ------->>", Object.fromEntries(formData));
 
     const data = await createProduct(formData);
-    console.log("Data after API call ------->>", data.message);
+    console.log("Data after API call ------->>", data);
 
     // Reset form and state if submission is successful
     if (data.message) {
-      setNewProduct(initailProductState);
-      if (fileInputRef?.current) {
-        fileInputRef.current.value = ""; // Clear file input
-      }
       toast.success("Product created successfully!");
+      // Optionally reset the form and state
+      // setNewProduct(initailProductState);
+      // if (fileInputRef?.current) {
+      //   fileInputRef.current.value = ""; // Clear file input
+      // }
     }
   };
+
+  async function handleImages(images, variationIndex, formData) {
+    for (let imageIndex = 0; imageIndex < images.length; imageIndex++) {
+      const image = images[imageIndex];
+
+      console.log("Processing Image ------->>", image);
+
+      if (typeof image === "string" && image.startsWith("blob:")) {
+        try {
+          // Fetch the Blob data from the blob URL
+          const response = await fetch(image);
+          const blob = await response.blob();
+
+          // Extract MIME type and determine file extension
+          const mimeType = blob.type || "application/octet-stream";
+          const extension = mimeType.split("/")[1];
+          const fileName = `image-${variationIndex}-${imageIndex}.${extension}`;
+
+          // Append the fetched Blob to FormData
+          // formData.append(
+          //   `images[${variationIndex}][${imageIndex}]`,
+          //   blob,
+          //   fileName
+          // );
+
+          formData.append(
+            `variations[${variationIndex}].images[]`,
+            blob,
+            fileName
+          );
+
+          console.log(
+            "Form Data entries ------->>",
+            Object.fromEntries(formData)
+          );
+        } catch (error) {
+          console.error("Failed to fetch the Blob from URL:", error);
+          toast.error("Failed to process image. Please try again.");
+        }
+      } else {
+        console.log("Invalid image file");
+        toast.error("Please upload a valid image file.");
+      }
+    }
+  }
 
   return (
     <motion.div
@@ -247,53 +312,63 @@ const CreateProductForm = () => {
             placeholder={field.placeholder}
             multiple={true}
             fileInputRef={fileInputRef}
-            handleImageRemove={removeImage}
-            selectedImages={newProduct?.baseImages}
+            // handleImageRemove={removeImage}
+            // selectedImages={newProduct?.images}
             disabled={field.disabled}
             {...field}
             onChange={(e) =>
               field.onChange
                 ? field.onChange(e)
-                : handleInputChange(
-                    field.name,
-                    field.type === "file" ? e.target.files : e.target.value
-                  )
+                : handleInputChange(field.name, e.target.value)
             }
           />
         ))}
         {/* Product variations */}
         {/* Variations */}
-        {newProduct?.variations &&
-          newProduct?.variations?.map((variation, index) => (
-            <div key={index} className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-emerald-300">
-                  {index === 0 ? "Required" : `Variant ${index}`}
-                </h3>
-                {index !== 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeVariation(index)}
-                    className="text-red-500 hover:text-red-700 mt-2"
-                  >
-                    Remove Variant
-                  </button>
-                )}
-              </div>
-              <div className="">
-                {variationFields?.map((field) => (
-                  <InputField
-                    key={field.name}
-                    name={field.name}
-                    label={field.label}
-                    type={field.type}
-                    value={variation[field.name]}
-                    onChange={(e) => handleVariationChange(index, e)}
-                  />
-                ))}
-              </div>
+        {newProduct?.variations?.map((variation, variationsIndex) => (
+          <div key={variationsIndex} className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-emerald-300">
+                {variationsIndex === 0
+                  ? "Required"
+                  : `Variant ${variationsIndex}`}
+              </h3>
+              {variationsIndex !== 0 && (
+                <button
+                  type="button"
+                  onClick={() => removeVariation(variationsIndex)}
+                  className="text-red-500 hover:text-red-700 mt-2"
+                >
+                  Remove Variant
+                </button>
+              )}
             </div>
-          ))}
+            <div className="">
+              {variationFields?.map((field) => (
+                <InputField
+                  key={field.name}
+                  name={field.name}
+                  label={field.label}
+                  type={field.type}
+                  accept="image/*"
+                  placeholder={field.placeholder}
+                  multiple={true}
+                  handleImageRemove={(imageIndex) =>
+                    removeImage(variationsIndex, imageIndex)
+                  } // Pass remove function
+                  fileInputRef={fileInputRef}
+                  selectedImages={
+                    newProduct.variations[variationsIndex]?.images
+                  }
+                  disabled={field.disabled}
+                  value={variation[field.name]}
+                  {...field}
+                  onChange={(e) => handleVariationChange(variationsIndex, e)}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
         <Button
           type="button"
           isBG={true}
@@ -303,49 +378,22 @@ const CreateProductForm = () => {
           Add Variation
         </Button>
 
-        <Button
-          type="submit"
-          isBG={true}
-          onClick={addVariation}
-          disabled={loading}
-          className="w-full"
-        >
+        <Button type="submit" isBG={true} disabled={loading} className="w-full">
           {loading ? (
-            <>
+            <span className="flex items-center">
               <Loader
                 className="mr-2 h-5 w-5 animate-spin"
                 aria-hidden="true"
               />
               Loading...
-            </>
+            </span>
           ) : (
-            <>
+            <span className="flex items-center">
               <PlusCircle className="mr-2 h-5 w-5" />
               Create Product
-            </>
+            </span>
           )}
         </Button>
-
-        {/* <button
-          type="submit"
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <Loader
-                className="mr-2 h-5 w-5 animate-spin"
-                aria-hidden="true"
-              />
-              Loading...
-            </>
-          ) : (
-            <>
-              <PlusCircle className="mr-2 h-5 w-5" />
-              Create Product
-            </>
-          )}
-        </button> */}
       </form>
     </motion.div>
   );

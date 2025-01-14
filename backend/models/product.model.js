@@ -11,14 +11,6 @@ const productSchema = new mongoose.Schema(
       required: true,
       maxLength: 2000,
     },
-    basePrice: {
-      type: Number, // Default price, optional (can be overridden by variations)
-      required: true,
-    },
-    images: {
-      type: [String], // Array of image URLs
-      required: true,
-    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category", // Reference to the Category model
@@ -57,7 +49,7 @@ const productSchema = new mongoose.Schema(
 );
 
 productSchema.pre("remove", async function (next) {
-  await ProductVariation.deleteMany({ productId: this._id });
+  await mongoose.model("ProductVariation").deleteMany({ productId: this._id });
   next();
 });
 

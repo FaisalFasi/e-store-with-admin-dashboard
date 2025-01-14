@@ -1,7 +1,7 @@
 import React from "react";
 
 const InputField = ({
-  type = "text", // Default type is text
+  type = "text", // Default type
   id,
   name,
   label,
@@ -9,17 +9,21 @@ const InputField = ({
   onChange,
   options = [], // For select input type
   accept = "image/*", // For file input type
-  rows, // For textarea input type
+  rows = 3, // For textarea input type
   required = false,
   className = "",
   placeholder,
-  multiple = true,
-  selectedImages = [],
-  handleImageRemove,
-  fileInputRef = null,
-  disabled = false,
+  multiple = true, // For file input type
+  selectedImages = [], // For displaying selected images
+  handleImageRemove = () => {}, // For removing images
+  fileInputRef = null, // File input reference
+  disabled = false, // To disable the input
+  min, // Minimum value for number type
 }) => {
-  // console.log("selectedImages", selectedImages);
+  // Shared classes for input elements
+  const baseClass =
+    "mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500";
+
   return (
     <div className={`mb-4 ${className}`}>
       {label && (
@@ -30,29 +34,29 @@ const InputField = ({
           {label}
         </label>
       )}
+
+      {/* Render input types dynamically */}
       {type === "textarea" ? (
         <textarea
-          id={name}
+          id={id || name}
           name={name}
           value={value}
           onChange={onChange}
-          rows={rows || 3}
+          rows={rows}
           required={required}
           placeholder={placeholder}
-          className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500
-            focus:border-emerald-500"
+          disabled={disabled}
+          className={baseClass}
         />
       ) : type === "select" ? (
         <select
-          id={name}
+          id={id || name}
           name={name}
           value={value}
-          disabled={disabled}
           onChange={onChange}
           required={required}
-          className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-          px-3  focus:outline-none focus:ring-2
-         focus:ring-emerald-500 focus:border-emerald-500"
+          disabled={disabled}
+          className={baseClass}
         >
           {options.map((option, index) => (
             <option key={index} value={option.value}>
@@ -64,52 +68,48 @@ const InputField = ({
         <div>
           <input
             type="file"
-            id={name}
+            id={id || name}
             name={name}
             ref={fileInputRef}
-            onChange={(e) => onChange(e)}
+            onChange={onChange}
             accept={accept}
             multiple={multiple}
             required={required}
-            className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-          px-3  focus:outline-none focus:ring-2
-         focus:ring-emerald-500 focus:border-emerald-500"
+            className={baseClass}
           />
+          {/* Display selected images */}
           <div className="mt-3 flex flex-wrap gap-4">
-            {selectedImages[0] != null &&
-              selectedImages.length > 0 &&
-              selectedImages?.map((image, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={image}
-                    alt={`Uploaded ${index}`}
-                    className="h-20 w-20 object-cover rounded-md"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleImageRemove(index)}
-                    className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
-                  >
-                    X
-                  </button>
-                </div>
-              ))}
+            {selectedImages?.map((image, imageIndex) => (
+              <div key={imageIndex} className="relative">
+                <img
+                  src={image}
+                  alt={`Uploaded ${imageIndex}`}
+                  className="h-20 w-20 object-cover rounded-md"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleImageRemove(imageIndex)}
+                  className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+                >
+                  X
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       ) : (
         <input
           type={type}
-          id={name}
+          id={id || name}
           name={name}
           value={value}
           onChange={onChange}
           required={required}
           placeholder={placeholder}
-          min={type === "number" ? 0 : null} // For number input type
-          accept={accept} // For file input type
-          className="mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 
-          px-3  focus:outline-none focus:ring-2
-         focus:ring-emerald-500 focus:border-emerald-500"
+          disabled={disabled}
+          min={type === "number" ? min : undefined}
+          accept={type === "file" ? accept : undefined}
+          className={baseClass}
         />
       )}
     </div>

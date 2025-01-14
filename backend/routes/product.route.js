@@ -20,6 +20,18 @@ const router = express.Router();
 // The file is then deleted after processing.
 // The uploads folder is not committed to the repository.
 
+// Set up Multer storage configuration
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "uploads/"); // Directory to save images
+//   },
+//   filename: (req, file, cb) => {
+//     const ext = path.extname(file.originalname); // Extract file extension
+//     const fileName = ext + Date.now(); // Create a unique filename
+//     cb(null, fileName);
+//   },
+// });
+// const upload = multer({ storage }); // Save files in the 'uploads' folder
 const upload = multer({ dest: "uploads/" }); // Save files temporarily in 'uploads' folder
 
 router.post(

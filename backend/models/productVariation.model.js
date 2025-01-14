@@ -9,9 +9,11 @@ const variationSchema = new mongoose.Schema(
     },
     color: {
       type: String, // Example: "Red", "Blue"
+      required: true,
     },
     size: {
       type: String, // Example: "S", "M", "L", "XL"
+      required: true,
     },
     quantity: {
       type: Number,

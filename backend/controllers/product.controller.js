@@ -15,102 +15,135 @@ export const createProduct = async (req, res) => {
     const {
       name,
       description,
-      basePrice,
       category,
       subCategory,
-      isFeatured = false,
-      discount = 0,
-      tags = [],
-      additionalDetails = {},
       variations = [], // Array of variation objects (e.g., [{ color, size, quantity, price }])
     } = req.body;
 
-    console.log("name", name);
+    console.log(
+      "name , description, category, subCategory",
+      name,
+      description,
+      category,
+      subCategory
+    );
     // Assuming `req.files` contains uploaded files
     const requestedFiles = req.files || [];
     const validImage = imageValidationHelper(requestedFiles);
     if (!validImage.valid) {
       return res.status(400).json({ message: validImage.message });
     }
+    console.log("requestedFiles", requestedFiles);
 
-    // Upload images to Cloudinary
-    const uploadedImages = await Promise.all(
-      requestedFiles.map(async (file) => {
-        const result = await cloudinary.uploader.upload(file.path, {
-          folder: "products",
-        });
-        // Clean up temporary file
-        await fs.unlink(file.path);
-
-        return result.secure_url; // Return the URL of the uploaded image
-      })
-    );
-
-    // Validate and process variations
-    if (variations.length > 0) {
-      variations.forEach((variation) => {
-        if (!variation.price || !variation.quantity) {
-          return res.status(400).json({
-            message: "Price and quantity are required for each variation",
-          });
-        }
-      });
-    }
-
-    const product = await Product.create(
-      {
-        name,
-        description,
-        basePrice,
-        category,
-        subCategory,
-        isFeatured,
-        discount,
-        tags,
-        additionalDetails,
-        images: uploadedImages,
-      },
-      { session }
-    );
-    console.log("default product", product);
-
-    let createdVariations = [];
-    if (variations && variations.length > 0) {
-      const variationData = variations.map((variation) => ({
-        ...variation,
-        productId: product[0]._id, // Associate the variation with the created product
-        sku: get_uuid(), // Generate a unique SKU for the variation
-      }));
-
-      createdVariations = await ProductVariation.create(variationData, {
-        session,
-      });
-      console.log("default createdVariations", createdVariations);
-
-      product.defauldVariation = createdVariations[0]._id;
-    }
-
-    await product.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(201).json({
-      product: product[0],
-      variations: createdVariations,
-      message: "Product and variations created successfully!",
-    });
+    // res.status(201).json({ message: "Product created successfully!" });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
     console.log("Error in createProduct controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while creating product",
-      error: error.message,
-    });
   }
 };
+// export const createProduct = async (req, res) => {
+//   const session = await mongoose.startSession(); // Start a transaction
+//   session.startTransaction();
+
+//   try {
+//     const {
+//       name,
+//       description,
+//       basePrice,
+//       category,
+//       subCategory,
+//       isFeatured = false,
+//       discount = 0,
+//       tags = [],
+//       additionalDetails = {},
+//       variations = [], // Array of variation objects (e.g., [{ color, size, quantity, price }])
+//     } = req.body;
+
+//     console.log("name", name);
+//     // Assuming `req.files` contains uploaded files
+//     const requestedFiles = req.files || [];
+//     const validImage = imageValidationHelper(requestedFiles);
+//     if (!validImage.valid) {
+//       return res.status(400).json({ message: validImage.message });
+//     }
+
+//     // Upload images to Cloudinary
+//     const uploadedImages = await Promise.all(
+//       requestedFiles.map(async (file) => {
+//         const result = await cloudinary.uploader.upload(file.path, {
+//           folder: "products",
+//         });
+//         // Clean up temporary file
+//         await fs.unlink(file.path);
+
+//         return result.secure_url; // Return the URL of the uploaded image
+//       })
+//     );
+
+//     // Validate and process variations
+//     if (variations?.length > 0) {
+//       variations?.forEach((variation) => {
+//         if (!variation.price || !variation.quantity) {
+//           return res.status(400).json({
+//             message: "Price and quantity are required for each variation",
+//           });
+//         }
+//       });
+//     }
+
+//     const product = await Product.create(
+//       {
+//         name,
+//         description,
+//         basePrice,
+//         category,
+//         subCategory,
+//         isFeatured,
+//         discount,
+//         tags,
+//         additionalDetails,
+//         images: uploadedImages,
+//       },
+//       { session }
+//     );
+//     console.log("default product", product);
+
+//     let createdVariations = [];
+//     if (variations && variations.length > 0) {
+//       const variationData = variations.map((variation) => ({
+//         ...variation,
+//         productId: product[0]._id, // Associate the variation with the created product
+//         sku: get_uuid(), // Generate a unique SKU for the variation
+//       }));
+
+//       createdVariations = await ProductVariation.create(variationData, {
+//         session,
+//       });
+//       console.log("default createdVariations", createdVariations);
+
+//       product.defauldVariation = createdVariations[0]._id;
+//     }
+
+//     await product.save({ session });
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     res.status(201).json({
+//       product: product[0],
+//       variations: createdVariations,
+//       message: "Product and variations created successfully!",
+//     });
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+
+//     console.log("Error in createProduct controller:", error);
+//     res.status(500).json({
+//       message: "Internal Server Error while creating product",
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const getAllProducts = async (req, res) => {
   try {
