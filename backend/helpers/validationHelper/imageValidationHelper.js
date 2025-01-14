@@ -33,3 +33,29 @@ export const imageValidationHelper = (file) => {
 
   return { valid: true, message: "Valid images." };
 };
+
+export const imageValidationProductCreationHelper = (files) => {
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
+
+  // Check if no files are provided
+  if (!files || files.length === 0) {
+    return { valid: false, message: "No images uploaded." };
+  }
+
+  // Validate each file
+  for (const file of files) {
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return {
+        valid: false,
+        message: "Please upload only jpeg, png, gif, or webp images.",
+      };
+    }
+  }
+
+  return { valid: true, message: "Valid images." };
+};

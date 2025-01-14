@@ -57,7 +57,7 @@ export const validateImages = (files) => {
   const validFiles = handleImageValidation(files);
 
   const previewImages = validFiles.map((file) => URL.createObjectURL(file));
-
+  console.log("Preview : ", previewImages);
   return previewImages;
 };
 

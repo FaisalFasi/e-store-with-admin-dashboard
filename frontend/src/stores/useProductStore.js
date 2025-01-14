@@ -11,14 +11,14 @@ export const useProductStore = create((set, get) => ({
   setProducts: (products) => set({ products }),
 
   createProduct: async (formData) => {
-    console.log("Form Data in store: ", formData);
+    console.log("Form Data in store: ", Object.fromEntries(formData));
     try {
       set({ loading: true });
 
       const response = await axiosBaseURL.post("/products", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        // headers: {
+        //   "Content-Type": "multipart/form-data",
+        // },
       });
 
       // here we are using the prevState to update the products array and add the new product to it without mutating the state directly using the spread operator to copy the previous state and then add the new product to it using the response.data which is the new product that was created in the backend and returned to us as a response from the server after creating the product in the database and then we set the loading to false

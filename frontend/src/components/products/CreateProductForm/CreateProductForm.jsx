@@ -212,21 +212,44 @@ const CreateProductForm = () => {
     // Append the product data to the form data
     for (const key in newProduct) {
       if (key === "variations") {
-        const variations = newProduct[key].map((variation) => {
-          const { images, ...rest } = variation; // Exclude images from the variation data
-          return rest;
-        });
-        formData.append("variations", JSON.stringify(variations)); // Add variations without images
-
-        await Promise.all(
+        const formattedVariations = await Promise.all(
           newProduct[key].map(async (variation, variationIndex) => {
-            await handleImages(variation.images, variationIndex, formData);
-            console.log(
-              "Variation Images ------->>",
-              Object.fromEntries(formData)
+            const { images, ...variationDetails } = variation;
+
+            // Process images into `File` objects and append them to FormData
+            const processedImages = await Promise.all(
+              (images || []).map(async (blobUrl, imageIndex) => {
+                const response = await fetch(blobUrl);
+                const blob = await response.blob();
+
+                // get the filename with image dynamic name and type
+                const fileName = `variation-${variationIndex}-image-${imageIndex}.${
+                  blob.type.split("/")[1]
+                }`;
+                console.log("File Name ------->>", fileName);
+
+                formData.append(
+                  `variations[${variationIndex}].images[${imageIndex}]`,
+                  new File([blob], fileName, { type: blob.type })
+                );
+              })
             );
+
+            // Return only metadata for variations (no files here)
+            return {
+              ...variationDetails,
+              images: processedImages.length
+                ? processedImages.map(
+                    (_, idx) => `variations[${variationIndex}].images[${idx}]`
+                  )
+                : [], // Placeholder for image references
+            };
           })
         );
+
+        // Append variations metadata (no actual files) as JSON
+        formData.append("variations", JSON.stringify(formattedVariations));
+        // formData.append("variations", JSON.stringify(formattedVariations));
       } else {
         formData.append(key, newProduct[key]);
       }
@@ -248,51 +271,26 @@ const CreateProductForm = () => {
     }
   };
 
-  async function handleImages(images, variationIndex, formData) {
-    for (let imageIndex = 0; imageIndex < images.length; imageIndex++) {
-      const image = images[imageIndex];
+  // for (const key in newProduct) {
+  //   if (key === "variations") {
+  //     // First, ensure that your variations are correctly formatted
+  //     const formattedVariations = newProduct[key].map((variation) => {
+  //       // If you want to handle images separately, you can do it here.
+  //       const { images, ...variationDetails } = variation;
 
-      console.log("Processing Image ------->>", image);
+  //       // You can handle image appending separately if needed, or just handle variations
+  //       return {
+  //         ...variationDetails,
+  //         images: images || [], // You can leave it empty if no images are present
+  //       };
+  //     });
 
-      if (typeof image === "string" && image.startsWith("blob:")) {
-        try {
-          // Fetch the Blob data from the blob URL
-          const response = await fetch(image);
-          const blob = await response.blob();
-
-          // Extract MIME type and determine file extension
-          const mimeType = blob.type || "application/octet-stream";
-          const extension = mimeType.split("/")[1];
-          const fileName = `image-${variationIndex}-${imageIndex}.${extension}`;
-
-          // Append the fetched Blob to FormData
-          // formData.append(
-          //   `images[${variationIndex}][${imageIndex}]`,
-          //   blob,
-          //   fileName
-          // );
-
-          formData.append(
-            `variations[${variationIndex}].images[]`,
-            blob,
-            fileName
-          );
-
-          console.log(
-            "Form Data entries ------->>",
-            Object.fromEntries(formData)
-          );
-        } catch (error) {
-          console.error("Failed to fetch the Blob from URL:", error);
-          toast.error("Failed to process image. Please try again.");
-        }
-      } else {
-        console.log("Invalid image file");
-        toast.error("Please upload a valid image file.");
-      }
-    }
-  }
-
+  //     // Now append the formatted variations to the FormData as a JSON string
+  //     formData.append("variations", JSON.stringify(formattedVariations));
+  //   } else {
+  //     formData.append(key, newProduct[key]);
+  //   }
+  // }
   return (
     <motion.div
       className="bg-gray-800 w-full p-4 rounded-lg md:p-4 mb-8 md:max-w-xl lg:max-w-2xl "

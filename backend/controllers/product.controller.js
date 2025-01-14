@@ -12,30 +12,54 @@ export const createProduct = async (req, res) => {
   session.startTransaction();
 
   try {
-    const {
+    const { name, description, category, subCategory } = req.body;
+
+    const variations = JSON.parse(req.body.variations);
+
+    console.log(
+      "name , description, category, subCategory, variations --",
       name,
       description,
       category,
       subCategory,
-      variations = [], // Array of variation objects (e.g., [{ color, size, quantity, price }])
-    } = req.body;
+      variations
+    );
 
-    console.log(
-      "name , description, category, subCategory",
+    // Assuming `req.files` contains uploaded files
+    const requestedFiles = req.files || [];
+    console.log("requestedFiles", requestedFiles);
+
+    for (const variation of variations) {
+      if (
+        !variation.price ||
+        !variation.quantity ||
+        !variation.color ||
+        !variation.size ||
+        variation.images.length === 0
+      ) {
+        return res.status(400).json({
+          message: "Price and quantity are required for each variation",
+        });
+      } else {
+        // const requestedFiles = variation.images || [];
+        // const validImage = imageValidationHelper(requestedFiles);
+        // if (!validImage.valid)
+        //   return res.status(400).json({ message: validImage.message });
+        // else console.log("validImage", validImage);
+      }
+    }
+
+    const newProduct = {
       name,
       description,
       category,
-      subCategory
-    );
-    // Assuming `req.files` contains uploaded files
-    const requestedFiles = req.files || [];
-    const validImage = imageValidationHelper(requestedFiles);
-    if (!validImage.valid) {
-      return res.status(400).json({ message: validImage.message });
-    }
+      subCategory,
+      variations: variations,
+    };
+
     console.log("requestedFiles", requestedFiles);
 
-    // res.status(201).json({ message: "Product created successfully!" });
+    res.status(201).json({ message: "Product created successfully!" });
   } catch (error) {
     console.log("Error in createProduct controller:", error);
   }
