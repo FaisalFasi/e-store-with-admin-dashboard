@@ -33,6 +33,7 @@ const categorySchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
+    // When to use: This field is used to sort categories in the frontend. The lower the number, the higher the category will appear in the list.
     sortOrder: {
       type: Number,
       default: 0,

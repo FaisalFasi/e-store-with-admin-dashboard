@@ -2,19 +2,50 @@ import { create } from "zustand";
 import axiosBaseURL from "../lib/axios";
 
 export const useCategoryStore = create((set) => ({
+  parentCategories: [],
+  subCategories: [],
   categories: [],
+
   loading: false,
   setLoading: (loading) => set({ loading }),
 
-  setCategories: (categories) => set({ categories }),
+  setCategories: (categories) => {
+    // Separate parent categories and subcategories
+    const parentCategories = categories.filter(
+      (category) => category.parentCategory === null
+    );
+    const subCategories = categories.filter(
+      (category) => category.parentCategory !== null
+    );
 
+    set({
+      parentCategories,
+      subCategories,
+      loading: false,
+    });
+  },
   getAllCategories: async () => {
     set({ loading: true });
     try {
       const response = await axiosBaseURL.get("/category");
       console.log("Categories : ", response.data);
 
-      set({ categories: response.data, loading: false });
+      const parentCategories = response.data.filter(
+        (category) => category.parentCategory === null
+      );
+      const subCategories = response.data.filter(
+        (category) => category.parentCategory !== null
+      );
+
+      set({
+        categories: response.data,
+        parentCategories,
+        subCategories,
+        loading: false,
+      });
+      console.log("parentCategories : ", parentCategories);
+      console.log("subCategories : ", subCategories);
+
       return response?.data;
     } catch (error) {
       set({ loading: false });

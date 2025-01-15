@@ -6,6 +6,7 @@ import fs from "fs/promises";
 import { imageValidationHelper } from "../helpers/validationHelper/imageValidationHelper.js";
 import ProductVariation from "../models/productVariation.model.js";
 import { get_uuid } from "../utils/uuidGenerator.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const createProduct = async (req, res) => {
   const session = await mongoose.startSession(); // Start a transaction
@@ -17,7 +18,7 @@ export const createProduct = async (req, res) => {
     const variations = JSON.parse(req.body.variations);
 
     console.log(
-      "name , description, category, subCategory, variations --",
+      "received data --",
       name,
       description,
       category,
@@ -25,41 +26,73 @@ export const createProduct = async (req, res) => {
       variations
     );
 
-    // Assuming `req.files` contains uploaded files
+    // Assuming `req.files` contains uploaded files (images)
     const requestedFiles = req.files || [];
     console.log("requestedFiles", requestedFiles);
 
-    for (const variation of variations) {
-      if (
-        !variation.price ||
-        !variation.quantity ||
-        !variation.color ||
-        !variation.size ||
-        variation.images.length === 0
-      ) {
-        return res.status(400).json({
-          message: "Price and quantity are required for each variation",
-        });
-      } else {
-        // const requestedFiles = variation.images || [];
-        // const validImage = imageValidationHelper(requestedFiles);
-        // if (!validImage.valid)
-        //   return res.status(400).json({ message: validImage.message });
-        // else console.log("validImage", validImage);
-      }
+    // validate requestedFiles
+    const validImage = imageValidationHelper(requestedFiles);
+    console.log("validImage", validImage);
+    if (!validImage.valid) {
+      return res.status(400).json({ message: validImage.message });
     }
+
+    // Process variations and upload images
+    const processedVariations = await Promise.all(
+      variations.map(async (variation, index) => {
+        // Check required fields
+        if (
+          !variation.price ||
+          !variation.quantity ||
+          !variation.color ||
+          !variation.size
+        ) {
+          res.status(404).json({
+            message:
+              "Price, quantity, color, and size are required for each variation",
+          });
+        }
+
+        // Filter files for the current variation
+        const variationImages = requestedFiles.filter((file) =>
+          file.fieldname.startsWith(`variations[${index}].images`)
+        );
+
+        // Upload images to Cloudinary
+
+        const uploadedImages = await uploadToCloudinary(
+          variationImages,
+          "create-products"
+        );
+
+        // Attach Cloudinary URLs to the variation
+        return {
+          ...variation,
+          images: uploadedImages, // Store URLs from Cloudinary
+        };
+      })
+    );
+
+    console.log("processedVariations", processedVariations);
 
     const newProduct = {
       name,
       description,
       category,
       subCategory,
-      variations: variations,
+      variations: processedVariations,
     };
+    console.log("newProduct", newProduct);
 
-    console.log("requestedFiles", requestedFiles);
+    // Create the product
+    const product = await Product.create([newProduct], { session });
 
-    res.status(201).json({ message: "Product created successfully!" });
+    console.log("product", product);
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({ message: "Product created successfully!", product });
   } catch (error) {
     console.log("Error in createProduct controller:", error);
   }

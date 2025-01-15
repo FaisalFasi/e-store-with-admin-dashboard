@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, Upload, Loader } from "lucide-react";
 import { useProductStore } from "../../../stores/useProductStore";
@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { validateImages } from "../../../utils/imageUtils/imageUtils";
 import InputField from "../../shared/InputField/InputField";
 import Button from "../../shared/Button/Button";
+import { useCategoryStore } from "../../../stores/useCategoryStore";
 
 const categoriesWithSubCategories = {
   Electronics: ["Smartphones", "Laptops", "Headphones"],
@@ -74,6 +75,14 @@ const CreateProductForm = () => {
   });
 
   const { createProduct, loading } = useProductStore();
+  const { parentCategories, subCategories, getAllCategories } =
+    useCategoryStore();
+
+  useEffect(() => {
+    getAllCategories();
+    console.log("Parent Categories ------->>", parentCategories);
+    console.log("Sub Categories ------->>", subCategories);
+  }, [getAllCategories]);
 
   const inputFields = [
     {
@@ -204,10 +213,7 @@ const CreateProductForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // const formData = new FormData(e.target);
     const formData = new FormData();
-
-    console.log("New Product ------->>", newProduct);
 
     // Append the product data to the form data
     for (const key in newProduct) {
@@ -216,7 +222,14 @@ const CreateProductForm = () => {
           newProduct[key].map(async (variation, variationIndex) => {
             const { images, ...variationDetails } = variation;
 
-            // Process images into `File` objects and append them to FormData
+            console.log("Images ------->>", images);
+            // Process images for each variation
+            // const processedImages = await processedImagesFunc(
+            //   images,
+            //   variationIndex,
+            //   formData
+            // );
+
             const processedImages = await Promise.all(
               (images || []).map(async (blobUrl, imageIndex) => {
                 const response = await fetch(blobUrl);
@@ -235,21 +248,20 @@ const CreateProductForm = () => {
               })
             );
 
+            console.log("Processed Images ------->>", processedImages);
             // Return only metadata for variations (no files here)
             return {
               ...variationDetails,
-              images: processedImages.length
-                ? processedImages.map(
-                    (_, idx) => `variations[${variationIndex}].images[${idx}]`
-                  )
-                : [], // Placeholder for image references
+              // images: processedImages.length
+              //   ? processedImages.map(
+              //       (_, idx) => `variations[${variationIndex}].images[${idx}]`
+              //     )
+              //   : [], // Placeholder for image references
             };
           })
         );
 
-        // Append variations metadata (no actual files) as JSON
         formData.append("variations", JSON.stringify(formattedVariations));
-        // formData.append("variations", JSON.stringify(formattedVariations));
       } else {
         formData.append(key, newProduct[key]);
       }
@@ -271,26 +283,32 @@ const CreateProductForm = () => {
     }
   };
 
-  // for (const key in newProduct) {
-  //   if (key === "variations") {
-  //     // First, ensure that your variations are correctly formatted
-  //     const formattedVariations = newProduct[key].map((variation) => {
-  //       // If you want to handle images separately, you can do it here.
-  //       const { images, ...variationDetails } = variation;
+  const processedImagesFunc = async (images, variationIndex, formData) => {
+    const imageReferences = [];
 
-  //       // You can handle image appending separately if needed, or just handle variations
-  //       return {
-  //         ...variationDetails,
-  //         images: images || [], // You can leave it empty if no images are present
-  //       };
-  //     });
+    await Promise.all(
+      (images || []).map(async (blobUrl, imageIndex) => {
+        const response = await fetch(blobUrl);
+        const blob = await response.blob();
 
-  //     // Now append the formatted variations to the FormData as a JSON string
-  //     formData.append("variations", JSON.stringify(formattedVariations));
-  //   } else {
-  //     formData.append(key, newProduct[key]);
-  //   }
-  // }
+        // get the filename with image dynamic name and type
+        const fileName = `variation-${variationIndex}-image-${imageIndex}.${
+          blob.type.split("/")[1]
+        }`;
+        console.log("File Name ------->>", fileName);
+
+        formData.append(
+          `variations[${variationIndex}].images[${imageIndex}]`,
+          new File([blob], fileName, { type: blob.type })
+        );
+        imageReferences.push(
+          `variations[${variationIndex}].images[${imageIndex}]`
+        );
+      })
+    );
+    return imageReferences;
+  };
+
   return (
     <motion.div
       className="bg-gray-800 w-full p-4 rounded-lg md:p-4 mb-8 md:max-w-xl lg:max-w-2xl "
