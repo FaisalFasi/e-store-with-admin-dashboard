@@ -13,6 +13,7 @@ import CreateCategoryForm from "../../components/dashboard/CreateCategoryForm/Cr
 
 import { motion } from "framer-motion";
 import { useProductStore } from "../../stores/useProductStore";
+import { useCategoryStore } from "../../stores/useCategoryStore";
 
 const tabs = [
   { id: "create", label: "Product", icon: PlusCircle },
@@ -25,9 +26,11 @@ const tabs = [
 const AdminDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { fetchAllProducts } = useProductStore();
+  const { getAllCategories } = useCategoryStore(); // Added getAllCategories
 
   useEffect(() => {
     fetchAllProducts();
+    getAllCategories(); // Added getAllCategories
   }, [fetchAllProducts]);
 
   return (

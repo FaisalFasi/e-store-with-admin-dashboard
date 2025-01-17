@@ -7,6 +7,10 @@ import { validateImages } from "../../../utils/imageUtils/imageUtils";
 import InputField from "../../shared/InputField/InputField";
 import Button from "../../shared/Button/Button";
 import { useCategoryStore } from "../../../stores/useCategoryStore";
+import {
+  variationFields,
+  initializeVariation,
+} from "../../../helpers/productHelopers/productHelper.js";
 
 const categoriesWithSubCategories = {
   Electronics: ["Smartphones", "Laptops", "Headphones"],
@@ -15,74 +19,50 @@ const categoriesWithSubCategories = {
   "t-shirts": ["Round Neck", "V-Neck", "Polo"],
   shoes: ["Casual", "Formal", "Sports"],
 };
-const variationFields = [
-  { name: "size", label: "Size", type: "text", required: true },
-  { name: "color", label: "Color", type: "text", required: true },
-  {
-    name: "quantity",
-    label: "Quantity",
-    type: "number",
-    required: true,
-    min: 0,
-
-    step: 1,
-  },
-  {
-    name: "price",
-    label: "Price",
-    type: "number",
-    placeholder: "Enter price for this variation",
-    required: true,
-    min: 0,
-  },
-  {
-    name: "images",
-    label: "Upload Images",
-    type: "file",
-    accept: "image/*",
-    placeholder: "Choose product images",
-    required: true,
-  },
-];
-
-const initializeVariation = {
-  size: "",
-  color: "",
-  quantity: 0,
-  price: "",
-  images: [],
-};
-
-const initailProductState = {
-  name: "",
-  description: "",
-  category: Object.keys(categoriesWithSubCategories)[0],
-  subCategory: Object.values(categoriesWithSubCategories)[0][0],
-  variations: [initializeVariation],
-};
 
 const CreateProductForm = () => {
+  const { createProduct, loading } = useProductStore();
+  const { parentCategories, subCategories } = useCategoryStore();
+
+  const initailProductState = {
+    name: "",
+    description: "",
+    category: parentCategories,
+    subCategory: subCategories,
+    variations: [initializeVariation],
+  };
   const [newProduct, setNewProduct] = useState(initailProductState);
   const fileInputRef = useRef(null); // Create a ref to the file input
-  const [categoryData, setCategoryData] = useState(() => {
-    // Ensure categoriesWithSubCategories is available and not empty
-    const firstCategory = Object.keys(categoriesWithSubCategories)[0];
-
-    return {
-      selectedCategory: firstCategory || "", // Set the first category or empty string if no categories
-      subCategories: categoriesWithSubCategories[firstCategory] || [], // Set the subcategories for the first category
-    };
+  const [categoryData, setCategoryData] = useState({
+    selectedCategory: "", // Initially empty
+    subCategories: [], // Initially an empty array
   });
 
-  const { createProduct, loading } = useProductStore();
-  const { parentCategories, subCategories, getAllCategories } =
-    useCategoryStore();
-
   useEffect(() => {
-    getAllCategories();
-    console.log("Parent Categories ------->>", parentCategories);
+    if (parentCategories.length > 0) {
+      setCategoryData((prev) => ({
+        ...prev,
+        selectedCategory: parentCategories,
+      }));
+    }
+
+    if (subCategories.length > 0) {
+      setCategoryData((prev) => ({
+        ...prev,
+        subCategories: subCategories, // Set the first subcategory list as default
+      }));
+    }
     console.log("Sub Categories ------->>", subCategories);
-  }, [getAllCategories]);
+    console.log("Parent Categories ------->>", parentCategories);
+  }, [parentCategories, subCategories]);
+
+  const subCategoryField =
+    categoryData?.subCategories && Array.isArray(categoryData.subCategories)
+      ? categoryData.subCategories.map((subCategory) => ({
+          value: subCategory,
+          label: subCategory,
+        }))
+      : [];
 
   const inputFields = [
     {
@@ -109,7 +89,7 @@ const CreateProductForm = () => {
       type: "select",
       value: categoryData.selectedCategory,
 
-      options: Object.keys(categoriesWithSubCategories).map((category) => ({
+      options: parentCategories?.map((category) => ({
         value: category,
         label: category,
       })),
@@ -117,17 +97,14 @@ const CreateProductForm = () => {
       placeholder: "Select product category",
       required: true,
     },
-    ...(categoryData.subCategories.length > 0
+    ...(categoryData?.subCategories?.length > 0
       ? [
           {
             name: "subCategory",
             label: "Sub-category",
             type: "select",
-            value: newProduct.subCategory || "", // Default value
-            options: categoryData.subCategories.map((subCategory) => ({
-              value: subCategory,
-              label: subCategory,
-            })),
+            value: newProduct.subCategory[0] || [], // Default value
+            options: subCategoryField,
             onChange: (e) => handleInputChange("subCategory", e.target.value),
           },
         ]
@@ -195,6 +172,7 @@ const CreateProductForm = () => {
     const selectedCategory = e.target.value;
     const subCategories = categoriesWithSubCategories[selectedCategory] || [];
 
+    console.log("Selected Category ------->>", selectedCategory);
     setCategoryData({
       selectedCategory,
       subCategories,
@@ -223,12 +201,6 @@ const CreateProductForm = () => {
             const { images, ...variationDetails } = variation;
 
             console.log("Images ------->>", images);
-            // Process images for each variation
-            // const processedImages = await processedImagesFunc(
-            //   images,
-            //   variationIndex,
-            //   formData
-            // );
 
             const processedImages = await Promise.all(
               (images || []).map(async (blobUrl, imageIndex) => {
@@ -252,11 +224,6 @@ const CreateProductForm = () => {
             // Return only metadata for variations (no files here)
             return {
               ...variationDetails,
-              // images: processedImages.length
-              //   ? processedImages.map(
-              //       (_, idx) => `variations[${variationIndex}].images[${idx}]`
-              //     )
-              //   : [], // Placeholder for image references
             };
           })
         );

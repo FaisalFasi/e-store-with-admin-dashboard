@@ -9,6 +9,33 @@ export const useCategoryStore = create((set) => ({
   loading: false,
   setLoading: (loading) => set({ loading }),
 
+  getAllCategories: async () => {
+    set({ loading: true });
+    try {
+      const response = await axiosBaseURL.get("/category");
+
+      console.log("Get all categories endpoint ", response.data);
+      const parentCategories = response.data
+        .filter((category) => category.parentCategory === null)
+        .map((category) => category.name);
+
+      const subCategories = response.data
+        .filter((category) => category.parentCategory !== null)
+        .map((category) => category.name);
+
+      set({
+        categories: response.data,
+        parentCategories,
+        subCategories,
+        loading: false,
+      });
+
+      return response?.data;
+    } catch (error) {
+      set({ loading: false });
+      console.log("Error getting categories", error.message);
+    }
+  },
   setCategories: (categories) => {
     // Separate parent categories and subcategories
     const parentCategories = categories.filter(
@@ -23,34 +50,6 @@ export const useCategoryStore = create((set) => ({
       subCategories,
       loading: false,
     });
-  },
-  getAllCategories: async () => {
-    set({ loading: true });
-    try {
-      const response = await axiosBaseURL.get("/category");
-      console.log("Categories : ", response.data);
-
-      const parentCategories = response.data.filter(
-        (category) => category.parentCategory === null
-      );
-      const subCategories = response.data.filter(
-        (category) => category.parentCategory !== null
-      );
-
-      set({
-        categories: response.data,
-        parentCategories,
-        subCategories,
-        loading: false,
-      });
-      console.log("parentCategories : ", parentCategories);
-      console.log("subCategories : ", subCategories);
-
-      return response?.data;
-    } catch (error) {
-      set({ loading: false });
-      console.log("Error getting categories", error.message);
-    }
   },
 
   getParentCategories: async () => {

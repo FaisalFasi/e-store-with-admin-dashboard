@@ -105,7 +105,6 @@ export const getParentCategories = async (req, res) => {
 export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find({});
-    console.log("Categoris get endpoint ", categories);
     res.status(200).json(categories);
   } catch (error) {
     res
