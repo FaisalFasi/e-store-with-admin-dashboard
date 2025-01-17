@@ -17,21 +17,21 @@ const createCategoryObject = (category, parentCategoryId) => {
   };
 };
 
-const createSubCategoryObject = (category, parentCategoryId) => {
-  return {
-    _id: new mongoose.Types.ObjectId(),
-    name: category.name,
-    slug: category.slug,
-    image: category.image,
-    description: category.description,
-    parentCategory: parentCategoryId, // Link to the parent category or null if it's a root
-    status: category.status,
-    sortOrder: category.sortOrder,
-    metaTitle: category.metaTitle,
-    metaDescription: category.metaDescription,
-    subCategories: [], // Initialize with an empty subCategories array for nesting
-  };
-};
+// const createSubCategoryObject = (category, parentCategoryId) => {
+//   return {
+//     _id: new mongoose.Types.ObjectId(),
+//     name: category.name,
+//     slug: category.slug,
+//     image: category.image,
+//     description: category.description,
+//     parentCategory: parentCategoryId, // Link to the parent category or null if it's a root
+//     status: category.status,
+//     sortOrder: category.sortOrder,
+//     metaTitle: category.metaTitle,
+//     metaDescription: category.metaDescription,
+//     subCategories: [], // Initialize with an empty subCategories array for nesting
+//   };
+// };
 async function createCategoryWithSubcategories(category, parentId = null) {
   let existingCategory = await Category.findOne({ slug: category.slug });
 
@@ -51,10 +51,10 @@ async function addSubcategories(parentCategory, subCategories) {
     const subCategoryObjects = [];
 
     for (const subCategory of subCategories) {
-      const subCategoryObject = createSubCategoryObject(
-        subCategory,
-        parentCategory._id
-      );
+      const subCategoryObject = {
+        _id: new mongoose.Types.ObjectId(),
+        ...createCategoryObject(subCategory, parentCategory._id),
+      };
 
       if (subCategory.subCategories && subCategory.subCategories.length > 0) {
         subCategoryObject.subCategories = await addSubcategories(
