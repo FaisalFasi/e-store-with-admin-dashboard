@@ -312,36 +312,46 @@ async function createCategoryWithSubcategories(category, parentId = null) {
     existingCategory = await Category.create(
       createCategoryObject(category, parentId)
     );
-  } else {
-    console.log(`Category "${category.slug}" already exists.`);
   }
 
-  if (category.subCategories && category.subCategories?.length > 0) {
-    for (const subCategory of category.subCategories) {
-      console.log("Subcategory ", subCategory);
-      let existingSubCategory = existingCategory.subCategories.find(
-        (subCat) => subCat.slug === subCategory.slug
+  if (category.subCategories && category.subCategories.length > 0) {
+    await addSubcategories(existingCategory, category.subCategories);
+  }
+
+  return existingCategory;
+}
+
+async function addSubcategories(parentCategory, subCategories) {
+  if (subCategories && subCategories.length > 0) {
+    const subCategoryObjects = [];
+
+    for (const subCategory of subCategories) {
+      const subCategoryObject = createSubCategoryObject(
+        subCategory,
+        parentCategory._id
       );
 
-      console.log("Existing subcategory ", existingSubCategory);
-
-      if (!existingSubCategory) {
-        const updatedParentcat = await Category.updateOne(
-          { _id: existingCategory._id },
-          {
-            $push: {
-              subCategories: createSubCategoryObject(
-                subCategory,
-                existingCategory._id
-              ),
-            },
-          }
+      if (subCategory.subCategories && subCategory.subCategories.length > 0) {
+        subCategoryObject.subCategories = await addSubcategories(
+          subCategoryObject,
+          subCategory.subCategories
         );
-        console.log("updatedParentcat :", updatedParentcat);
-      } else {
-        console.log(`Subcategory "${subCategory.slug}" already exists.`);
       }
+
+      subCategoryObjects.push(subCategoryObject);
     }
+
+    await Category.updateOne(
+      { _id: parentCategory._id },
+      {
+        $push: { subCategories: { $each: subCategoryObjects } },
+      }
+    );
+
+    return subCategoryObjects;
+  } else {
+    console.log(`No subcategories to add for ${parentCategory.name}`);
+    return [];
   }
 }
 
