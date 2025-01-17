@@ -317,8 +317,6 @@ async function createCategoryWithSubcategories(category, parentId = null) {
   if (category.subCategories && category.subCategories.length > 0) {
     await addSubcategories(existingCategory, category.subCategories);
   }
-
-  return existingCategory;
 }
 
 async function addSubcategories(parentCategory, subCategories) {
