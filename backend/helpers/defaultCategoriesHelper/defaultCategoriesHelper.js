@@ -1,50 +1,96 @@
 import mongoose from "mongoose";
 import Category from "../../models/category.model.js";
-import { sub } from "date-fns";
 
-// Define parent categories with child categories
 const defaultCategories = [
   {
-    name: "Jeans",
-    slug: "jeans",
-    image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
+    name: "Clothing",
+    slug: "clothing",
+    image: "https://i.ibb.co/Hg94hbs/clothing.jpg",
     description:
-      "Jeans are a type of pants or trousers, typically made from denim or dungaree cloth. Starting in the 1950s, jeans became popular among teenagers.",
+      "Clothing is any item worn on the body. It serves aesthetic, cultural, and practical purposes.",
     parentCategory: null,
     status: "active",
     sortOrder: 0,
-    metaTitle: "Jeans",
-    metaDescription: "Jeans",
+    metaTitle: "Clothing",
+    metaDescription: "Clothing Category",
     subCategories: [
       {
-        name: "Skinny Jeans",
-        slug: "skinny-jeans",
-        description: "Tightly fitting jeans.",
+        name: "Jeans",
+        slug: "jeans",
         image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
+        description:
+          "Jeans are a type of pants or trousers, typically made from denim or dungaree cloth.",
+        parentCategory: "Clothing",
         status: "active",
         sortOrder: 1,
-        metaTitle: "Skinny Jeans",
-        metaDescription: "Skinny Jeans",
+        metaTitle: "Jeans",
+        metaDescription: "Jeans Category",
+        subCategories: [
+          {
+            name: "Skinny Jeans",
+            slug: "skinny-jeans",
+            description: "Tightly fitting jeans.",
+            image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
+            status: "active",
+            sortOrder: 1,
+            metaTitle: "Skinny Jeans",
+            metaDescription: "Skinny Jeans",
+          },
+          {
+            name: "Bootcut Jeans",
+            slug: "bootcut-jeans",
+            description: "Jeans that flare out slightly at the bottom.",
+            image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
+            status: "active",
+            sortOrder: 2,
+            metaTitle: "Bootcut Jeans",
+            metaDescription: "Bootcut Jeans",
+          },
+          {
+            name: "Straight Leg Jeans",
+            slug: "straight-leg-jeans",
+            description: "Jeans with a straight cut from waist to ankle.",
+            image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
+            status: "active",
+            sortOrder: 3,
+            metaTitle: "Straight Leg Jeans",
+            metaDescription: "Straight Leg Jeans",
+          },
+        ],
       },
       {
-        name: "Bootcut Jeans",
-        slug: "bootcut-jeans",
-        description: "Jeans that flare out slightly at the bottom.",
-        image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
+        name: "Shirts",
+        slug: "shirts",
+        image: "https://i.ibb.co/Hg94hbs/shirts.jpg",
+        description:
+          "Shirts are garments for the upper body, often with buttons.",
+        parentCategory: "Clothing",
         status: "active",
         sortOrder: 2,
-        metaTitle: "Bootcut Jeans",
-        metaDescription: "Bootcut Jeans",
-      },
-      {
-        name: "Straight Leg Jeans",
-        slug: "straight-leg-jeans",
-        description: "Jeans with a straight cut from waist to ankle.",
-        image: "https://i.ibb.co/Hg94hbs/jeans.jpg",
-        status: "active",
-        sortOrder: 3,
-        metaTitle: "Straight Leg Jeans",
-        metaDescription: "Straight Leg Jeans",
+        metaTitle: "Shirts",
+        metaDescription: "Shirts Category",
+        subCategories: [
+          {
+            name: "Formal Shirts",
+            slug: "formal-shirts",
+            description: "Shirts suitable for formal occasions.",
+            image: "https://i.ibb.co/Hg94hbs/shirts.jpg",
+            status: "active",
+            sortOrder: 1,
+            metaTitle: "Formal Shirts",
+            metaDescription: "Formal Shirts",
+          },
+          {
+            name: "Casual Shirts",
+            slug: "casual-shirts",
+            description: "Shirts suitable for casual wear.",
+            image: "https://i.ibb.co/Hg94hbs/shirts.jpg",
+            status: "active",
+            sortOrder: 2,
+            metaTitle: "Casual Shirts",
+            metaDescription: "Casual Shirts",
+          },
+        ],
       },
     ],
   },
@@ -229,8 +275,7 @@ const defaultCategories = [
   // },
 ];
 
-const createCategoryObject = (category, parentCategoryId = null) => {
-  console.log("Creating category object for", parentCategoryId, category.name);
+const createCategoryObject = (category, parentCategoryId) => {
   return {
     name: category.name,
     slug: category.slug,
@@ -245,49 +290,56 @@ const createCategoryObject = (category, parentCategoryId = null) => {
   };
 };
 
-async function createCategoryWithSubcategories(category) {
-  // Check if the parent category exists
+const createSubCategoryObject = (category, parentCategoryId) => {
+  return {
+    _id: new mongoose.Types.ObjectId(),
+    name: category.name,
+    slug: category.slug,
+    image: category.image,
+    description: category.description,
+    parentCategory: parentCategoryId, // Link to the parent category or null if it's a root
+    status: category.status,
+    sortOrder: category.sortOrder,
+    metaTitle: category.metaTitle,
+    metaDescription: category.metaDescription,
+    subCategories: [], // Initialize with an empty subCategories array for nesting
+  };
+};
+async function createCategoryWithSubcategories(category, parentId = null) {
   let existingCategory = await Category.findOne({ slug: category.slug });
 
   if (!existingCategory) {
-    console.log("Creating new category ");
-    // Create a new parent category if it doesn't exist
-    existingCategory = await Category.create(createCategoryObject(category));
+    existingCategory = await Category.create(
+      createCategoryObject(category, parentId)
+    );
   } else {
-    console.log("Category already exists ");
+    console.log(`Category "${category.slug}" already exists.`);
   }
-  // Now handle the subcategories (children) recursively
-  if (category.subCategories && category.subCategories.length > 0) {
-    for (const child of category.subCategories) {
-      console.log("Handling child ", child);
-      // Check if the subcategory already exists
-      let existingSubCategory = await Category.findOne({
-        _id: existingCategory._id,
-        // elemMatch is used to find an element in an array that matches all the specified criteria
-        subCategories: { $elemMatch: { slug: child.slug } },
-      });
+
+  if (category.subCategories && category.subCategories?.length > 0) {
+    for (const subCategory of category.subCategories) {
+      console.log("Subcategory ", subCategory);
+      let existingSubCategory = existingCategory.subCategories.find(
+        (subCat) => subCat.slug === subCategory.slug
+      );
 
       console.log("Existing subcategory ", existingSubCategory);
 
       if (!existingSubCategory) {
-        console.log("Creating new subcategory ");
-        // Create the subcategory if it doesn't exist
-        existingSubCategory = await Category.updateOne(
-          {
-            _id: existingCategory._id, // Match the category by its _id
-          },
+        const updatedParentcat = await Category.updateOne(
+          { _id: existingCategory._id },
           {
             $push: {
-              subCategories: createCategoryObject(child, existingCategory._id), // Create the subcategory object
+              subCategories: createSubCategoryObject(
+                subCategory,
+                existingCategory._id
+              ),
             },
           }
         );
-      }
-      console.log("Subcategory created ", existingSubCategory);
-
-      // Recursively handle deeper nesting for subcategories if they have children
-      if (child.subCategories && child.subCategories.length > 0) {
-        await createCategoryWithSubcategories(child); // Recursively create subcategories for deeper nesting
+        console.log("updatedParentcat :", updatedParentcat);
+      } else {
+        console.log(`Subcategory "${subCategory.slug}" already exists.`);
       }
     }
   }

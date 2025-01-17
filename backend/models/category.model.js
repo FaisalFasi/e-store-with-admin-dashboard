@@ -28,7 +28,12 @@ const categorySchema = new mongoose.Schema(
       ref: "Category",
       default: null, // for top-level categories
     },
-
+    subCategories: [
+      // {
+      //   type: mongoose.Schema.Types.ObjectId,
+      //   ref: "Category",
+      // },
+    ],
     status: {
       type: String,
       enum: ["active", "inactive"],
