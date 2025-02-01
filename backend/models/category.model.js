@@ -16,11 +16,12 @@ const categorySchema = new mongoose.Schema(
     },
     description: {
       type: String,
+      default: "",
       required: false,
     },
     image: {
       type: String,
-      required: true,
+      default: "",
     },
     //   When to use: Only provide this if your category is a child of a category. If it's a top-level category, leave it out or set it to null (which is the default).
     parentCategory: {
@@ -28,7 +29,7 @@ const categorySchema = new mongoose.Schema(
       ref: "Category",
       default: null, // for top-level categories
     },
-    subCategories: [],
+
     status: {
       type: String,
       enum: ["active", "inactive"],

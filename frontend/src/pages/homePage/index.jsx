@@ -3,15 +3,26 @@ import { useEffect } from "react";
 import { useProductStore } from "../../stores/useProductStore";
 import FeaturedProducts from "../../components/products/FeaturedProducts/FeaturedProducts";
 import { motion } from "framer-motion";
-import { categories } from "../../utils/homeCategories/categories.js";
+// import { categories } from "../../utils/homeCategories/categories.js";
 import CategoryItem from "../../components/products/CategoryItem/CategoryItem";
+import { useCategoryData } from "../../hooks/useCategoryData";
+import { useCategoryStore } from "../../stores/useCategoryStore";
+import { useUserStore } from "../../stores/useUserStore";
 
 const HomePage = () => {
   const { fetchFeaturedProducts, products, isLoading } = useProductStore();
+  // const { getAllCategories } = useCategoryData();
+  const { getAllCategories } = useCategoryStore();
+  const { user } = useUserStore();
 
   useEffect(() => {
-    fetchFeaturedProducts();
-  }, [fetchFeaturedProducts]);
+    console.log("User: ", user);
+    if (user) getAllCategories();
+  }, [user]);
+
+  // useEffect(() => {
+  //   fetchFeaturedProducts();
+  // }, [fetchFeaturedProducts]);
 
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
@@ -34,14 +45,14 @@ const HomePage = () => {
         </motion.p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((category) => (
+          {/* {categories.map((category) => (
             <CategoryItem category={category} key={category.name} />
-          ))}
+          ))} */}
         </div>
 
-        {!isLoading && products.length > 0 && (
+        {/* {!isLoading && products.length > 0 && (
           <FeaturedProducts featuredProducts={products} />
-        )}
+        )} */}
       </div>
     </div>
   );

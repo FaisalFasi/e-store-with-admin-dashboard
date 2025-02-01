@@ -1,89 +1,49 @@
-import mongoose from "mongoose";
 import Category from "../../models/category.model.js";
-import { defaultCategories } from "./categoriesList.js";
 
-const createCategoryObject = (category, parentCategoryId) => {
-  return {
-    name: category.name,
-    slug: category.slug,
-    image: category.image,
-    description: category.description,
-    parentCategory: parentCategoryId, // Link to the parent category or null if it's a root
-    status: category.status,
-    sortOrder: category.sortOrder,
-    metaTitle: category.metaTitle,
-    metaDescription: category.metaDescription,
-    subCategories: [], // Initialize with an empty subCategories array for nesting
-  };
-};
+// Recursive function to insert categories and subcategories
+export const insertCategoryWithSubcategories = async (category) => {
+  try {
+    const existingCategory = await Category.findOne({
+      $or: [{ slug: category.slug }, { name: category.name }],
+    });
 
-// const createSubCategoryObject = (category, parentCategoryId) => {
-//   return {
-//     _id: new mongoose.Types.ObjectId(),
-//     name: category.name,
-//     slug: category.slug,
-//     image: category.image,
-//     description: category.description,
-//     parentCategory: parentCategoryId, // Link to the parent category or null if it's a root
-//     status: category.status,
-//     sortOrder: category.sortOrder,
-//     metaTitle: category.metaTitle,
-//     metaDescription: category.metaDescription,
-//     subCategories: [], // Initialize with an empty subCategories array for nesting
-//   };
-// };
-async function createCategoryWithSubcategories(category, parentId = null) {
-  let existingCategory = await Category.findOne({ slug: category.slug });
-
-  if (!existingCategory) {
-    existingCategory = await Category.create(
-      createCategoryObject(category, parentId)
-    );
-  }
-
-  if (category.subCategories && category.subCategories.length > 0) {
-    await addSubcategories(existingCategory, category.subCategories);
-  }
-}
-
-async function addSubcategories(parentCategory, subCategories) {
-  if (subCategories && subCategories.length > 0) {
-    const subCategoryObjects = [];
-
-    for (const subCategory of subCategories) {
-      const subCategoryObject = {
-        _id: new mongoose.Types.ObjectId(),
-        ...createCategoryObject(subCategory, parentCategory._id),
-      };
-
-      if (subCategory.subCategories && subCategory.subCategories.length > 0) {
-        subCategoryObject.subCategories = await addSubcategories(
-          subCategoryObject,
-          subCategory.subCategories
-        );
-      }
-
-      subCategoryObjects.push(subCategoryObject);
+    if (existingCategory) {
+      console.log(
+        `Category "${category.name}" already exists, skipping insertion.`
+      );
+      return;
     }
 
-    await Category.updateOne(
-      { _id: parentCategory._id },
-      {
-        $push: { subCategories: { $each: subCategoryObjects } },
-      }
+    // Create the category document
+    const newCategory = new Category({
+      name: category.name,
+      slug: category.slug,
+      parentCategory: category.parentCategory
+        ? category.parentCategory._id
+        : null,
+      status: category.status,
+      sortOrder: category.sortOrder,
+      metaTitle: category.metaTitle,
+      metaDescription: category.metaDescription,
+      image: category.image,
+    });
+
+    // Save the parent category
+    const savedCategory = await newCategory.save();
+
+    // Recursively insert subcategories if any
+    if (category.subCategories && category.subCategories.length > 0) {
+      const subCategoryPromises = category.subCategories.map((subCategory) => {
+        subCategory.parentCategory = savedCategory; // Set parent category for subcategory
+        return insertCategoryWithSubcategories(subCategory, savedCategory); // Recursively insert subcategories
+      });
+      await Promise.all(subCategoryPromises); // Insert subcategories in parallel
+    }
+
+    console.log(
+      `Category "${savedCategory.name}" and its subcategories (if any) inserted successfully!`
     );
-
-    return subCategoryObjects;
-  } else {
-    console.log(`No subcategories to add for ${parentCategory.name}`);
-    return [];
+  } catch (error) {
+    console.error("Error inserting category:", error);
   }
-}
-
-async function initializeCategories() {
-  for (const category of defaultCategories) {
-    await createCategoryWithSubcategories(category);
-  }
-}
-
-export default initializeCategories;
+};

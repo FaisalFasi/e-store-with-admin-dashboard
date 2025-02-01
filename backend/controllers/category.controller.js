@@ -7,6 +7,9 @@ import {
 } from "../helpers/validationHelper/categoryValidationHelper.js";
 import cloudinary from "../lib/cloudinary.js";
 import fs from "fs/promises";
+import { insertCategoryWithSubcategories } from "../helpers/defaultCategoriesHelper/defaultCategoriesHelper.js";
+import { defaultCategories } from "../helpers/defaultCategoriesHelper/categoriesList.js";
+import Settings from "../models/settings.model.js";
 
 export const createCategory = async (req, res) => {
   const {
@@ -20,6 +23,16 @@ export const createCategory = async (req, res) => {
     metaTitle,
     metaDescription,
   } = req.body;
+
+  const existingCategory = await Category.findOne({
+    $or: [{ name }, { slug }],
+  });
+  console.log("Existing category ", existingCategory);
+  if (existingCategory) {
+    return res
+      .status(400)
+      .json({ message: "Category with this slug already exists." });
+  }
 
   const requestedFiles = Array.isArray(req.files) ? req.files : [req.file];
   console.log("Received image ", requestedFiles);
@@ -71,15 +84,15 @@ export const createCategory = async (req, res) => {
     };
     console.log("Category data ", categoryData);
     // add validation for the new category
-    const isValidCategoryData = validateCategoryData(categoryData);
-    if (!isValidCategoryData.valid) {
-      return res.status(400).json({ message: isValidCategoryData.message });
-    }
+    // const isValidCategoryData = validateCategoryData(categoryData);
+    // if (!isValidCategoryData.valid) {
+    //   return res.status(400).json({ message: isValidCategoryData.message });
+    // }
 
-    const isValidCategoyType = validateCategoryType(categoryData);
-    if (!isValidCategoyType.valid) {
-      return res.status(400).json({ message: isValidCategoyType.message });
-    }
+    // const isValidCategoyType = validateCategoryType(categoryData);
+    // if (!isValidCategoyType.valid) {
+    //   return res.status(400).json({ message: isValidCategoyType.message });
+    // }
 
     const category = await Category.create(categoryData);
     category.save();
@@ -104,7 +117,23 @@ export const getParentCategories = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({});
+    const allCategories = await Category.find({});
+
+    const buildCategoryTree = (categories, parentId = null) => {
+      return categories
+        .filter(
+          (category) =>
+            category.parentCategory?.toString() === parentId?.toString()
+        )
+        .map((category) => ({
+          ...category.toObject(), // Convert Mongoose document to a plain object
+          subCategories: buildCategoryTree(categories, category._id), // Recursively find subcategories
+        }));
+    };
+
+    // Build the tree starting with top-level categories (parentCategory = null)
+    const categories = buildCategoryTree(allCategories, null);
+
     res.status(200).json(categories);
   } catch (error) {
     res
@@ -177,5 +206,84 @@ export const deleteCategory = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error deleting category", error: error.message });
+  }
+};
+
+export const deleteCategoryTable = async (req, res) => {
+  console.log(req, res); // Log the req and res to verify they are defined
+
+  try {
+    const response = await Category.collection.drop();
+    console.log("Category Table is deleted", response);
+
+    res.status(200).json({ message: "All categories deleted" });
+  } catch (error) {
+    console.log("Error deleting categories", error.message);
+
+    if (res) {
+      res
+        .status(500)
+        .json({ message: "Error deleting categories", error: error.message });
+    } else {
+      console.error("Response object is undefined");
+    }
+  }
+};
+// deleteCategoryTable();
+
+// Function to initialize and insert the default categories
+export const setDefaultCategories = async () => {
+  try {
+    // Check the settings to see if default categories are already set
+    let settings = await Settings.findOne();
+    if (settings?.isDefaultCategoriesSet) {
+      console.log("Default categories are already set.");
+      return;
+    }
+
+    // Fetch all existing categories from the database
+    const existingCategories = await Category.find({});
+
+    for (const defaultCategory of defaultCategories) {
+      // Check if the category already exists by name
+      const existingCategory = existingCategories.find(
+        (category) => category.name === defaultCategory.name
+      );
+
+      if (existingCategory) {
+        // Update the category if its fields differ from the default category
+        const isDifferent = Object.keys(defaultCategory).some(
+          (key) =>
+            JSON.stringify(existingCategory[key]) !==
+            JSON.stringify(defaultCategory[key])
+        );
+
+        if (isDifferent) {
+          await Category.updateOne(
+            { _id: existingCategory._id }, // Use the category ID to update
+            { $set: defaultCategory }
+          );
+          console.log(`Updated category: ${defaultCategory.name}`);
+        }
+      } else {
+        // Insert the new category if it doesn't exist
+        await insertCategoryWithSubcategories(defaultCategory);
+        console.log(`Inserted new category: ${defaultCategory.name}`);
+      }
+    }
+
+    // Set the flag in the settings collection to indicate default categories are initialized
+    if (!settings) {
+      settings = new Settings({ isDefaultCategoriesSet: true });
+    } else {
+      settings.isDefaultCategoriesSet = true;
+    }
+    await settings.save();
+
+    console.log("Default categories set successfully.");
+  } catch (error) {
+    // Improved error handling
+    console.error("Error setting default categories:", error.message);
+    throw new Error(error.message);
   }
 };

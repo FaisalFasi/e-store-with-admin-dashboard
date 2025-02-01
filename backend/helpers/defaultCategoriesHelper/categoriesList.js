@@ -291,7 +291,6 @@ export const defaultCategories = [
       },
     ],
   },
-
   {
     name: "Beauty & Personal Care",
     slug: "beauty-personal-care",

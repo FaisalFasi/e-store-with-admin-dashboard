@@ -2,54 +2,29 @@ import { create } from "zustand";
 import axiosBaseURL from "../lib/axios";
 
 export const useCategoryStore = create((set) => ({
-  parentCategories: [],
-  subCategories: [],
   categories: [],
 
   loading: false,
   setLoading: (loading) => set({ loading }),
 
+  setCategories: (categories) => {
+    set({ categories, loading: false });
+  },
+
   getAllCategories: async () => {
-    set({ loading: true });
     try {
+      set({ loading: true });
       const response = await axiosBaseURL.get("/category");
 
-      console.log("Get all categories endpoint ", response.data);
-      const parentCategories = response.data
-        .filter((category) => category.parentCategory === null)
-        .map((category) => category.name);
-
-      const subCategories = response.data
-        .filter((category) => category.parentCategory !== null)
-        .map((category) => category.name);
-
-      set({
-        categories: response.data,
-        parentCategories,
-        subCategories,
-        loading: false,
-      });
-
-      return response?.data;
+      console.log("Get all categories endpoint", response?.data);
+      set({ categories: response?.data, loading: false });
     } catch (error) {
       set({ loading: false });
-      console.log("Error getting categories", error.message);
+      console.log("Error getting categories", error);
+      if (error.response) {
+        console.error("Error Response:", error.response.data);
+      }
     }
-  },
-  setCategories: (categories) => {
-    // Separate parent categories and subcategories
-    const parentCategories = categories.filter(
-      (category) => category.parentCategory === null
-    );
-    const subCategories = categories.filter(
-      (category) => category.parentCategory !== null
-    );
-
-    set({
-      parentCategories,
-      subCategories,
-      loading: false,
-    });
   },
 
   getParentCategories: async () => {

@@ -1,15 +1,3 @@
-// helpers/productHelpers.js
-// import fetcher from "../fetcher";
-
-// export const fetchProductsHelper = async (endpoint) => {
-//   const { data, error } = await fetcher(endpoint); // Use your custom fetcher
-//   if (error) {
-//     throw new Error(error.message || "Failed to fetch products");
-//   }
-//   return data.products;
-// };
-
-// create product variation fields
 export const variationFields = [
   { name: "size", label: "Size", type: "text", required: true },
   { name: "color", label: "Color", type: "text", required: true },

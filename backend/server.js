@@ -16,7 +16,10 @@ import newsLetterRoutes from "./routes/newsLetter.route.js";
 import ordersRoutes from "./routes/orders.route.js";
 import addressRoutes from "./routes/address.route.js";
 import categoryRoutes from "./routes/category.route.js";
-import initializeCategories from "./helpers/defaultCategoriesHelper/defaultCategoriesHelper.js";
+import {
+  getAllCategories,
+  setDefaultCategories,
+} from "./controllers/category.controller.js";
 
 dotenv.config();
 
@@ -64,7 +67,9 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
   });
 }
-initializeCategories();
+
+setDefaultCategories();
+
 // Connect to the database and 0.0.0.0 means it will listen on all the network interfaces available on the server
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server is running on http://:" + PORT);

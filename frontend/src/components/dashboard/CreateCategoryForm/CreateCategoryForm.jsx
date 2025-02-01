@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import {
   validateImages,
   removeImageFromList,
-} from "../../../utils/imageUtils/imageUtils";
+} from "../../../utils/imageValidation/imageValidation.js";
 
 const initialCategoryState = {
   name: "",
@@ -24,8 +24,7 @@ const initialCategoryState = {
 };
 
 const CreateCategoryForm = () => {
-  const { createCategory, loading, getParentCategories, categories } =
-    useCategoryStore(); // Assuming categories are available
+  const { createCategory, loading, categories } = useCategoryStore(); // Assuming categories are available
   const [newCategory, setNewCategory] = useState(initialCategoryState);
   const fileInputRef = useRef(null);
 
@@ -99,9 +98,7 @@ const CreateCategoryForm = () => {
     },
   ];
 
-  useEffect(() => {
-    getParentCategories();
-  }, []);
+  useEffect(() => {}, []);
 
   // UseMemo for constant data
   const selctCategory = useMemo(
