@@ -30,7 +30,7 @@ export const variationFields = [
 export const initializeVariation = {
   size: "",
   color: "",
-  quantity: 0,
+  quantity: 1,
   price: "",
   images: [],
 };

@@ -8,8 +8,16 @@ const productSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: true,
+      required: false,
       maxLength: 2000,
+      // Custom error message for exceeding max length
+      validate: {
+        validator: function (v) {
+          return v.length <= 2000;
+        },
+        message: (props) =>
+          `${props.value} exceeds the limit of 2000 characters!`,
+      },
     },
     category: {
       type: mongoose.Schema.Types.ObjectId,

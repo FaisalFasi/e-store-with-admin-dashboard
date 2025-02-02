@@ -17,23 +17,22 @@ export const createProduct = async (req, res) => {
 
     const variations = JSON.parse(req.body.variations);
 
-    console.log(
-      "received data --",
-      name,
-      description,
-      category,
-      subCategory,
-      variations
-    );
+    console.log("received data --", name, description, category, subCategory);
 
     // Assuming `req.files` contains uploaded files (images)
     const requestedFiles = req.files || [];
     console.log("requestedFiles", requestedFiles);
 
+    if (!name || !description || !category) {
+      return res
+        .status(400)
+        .json({ message: "Name, description, and category are required." });
+    }
+
     // validate requestedFiles
     const validImage = imageValidationHelper(requestedFiles);
-    console.log("validImage", validImage);
     if (!validImage.valid) {
+      console.log("image is not valid", validImage);
       return res.status(400).json({ message: validImage.message });
     }
 
@@ -47,6 +46,8 @@ export const createProduct = async (req, res) => {
           !variation.color ||
           !variation.size
         ) {
+          console.log(" variations all fields are required ", variation);
+
           res.status(404).json({
             message:
               "Price, quantity, color, and size are required for each variation",
@@ -59,7 +60,6 @@ export const createProduct = async (req, res) => {
         );
 
         // Upload images to Cloudinary
-
         const uploadedImages = await uploadToCloudinary(
           variationImages,
           "create-products"
@@ -68,33 +68,69 @@ export const createProduct = async (req, res) => {
         // Attach Cloudinary URLs to the variation
         return {
           ...variation,
+          price: Number(variation.price),
+          quantity: Number(variation.quantity),
           images: uploadedImages, // Store URLs from Cloudinary
+          isDefault: index === 0, // Ensure first variation is default
         };
       })
     );
 
     console.log("processedVariations", processedVariations);
 
-    const newProduct = {
+    const product = {
       name,
       description,
       category,
       subCategory,
-      variations: processedVariations,
+      // tags: tags || [],
+      // additionalDetails: additionalDetails || {},
+      // isFeatured: isFeatured || false,
+      // discount: discount ? Number(discount) : undefined,
+      // discountExpiry: discountExpiry || undefined,
+      // status: status || "draft",
     };
-    console.log("newProduct", newProduct);
+    console.log("newProduct", product);
+    await product.save({ session });
 
-    // Create the product
-    const product = await Product.create([newProduct], { session });
+    let defaultVariationId = null;
+    for (const variationData of processedVariations) {
+      const variation = new ProductVariation({
+        productId: product._id,
+        color: variationData.color,
+        size: variationData.size,
+        quantity: variationData.quantity,
+        price: variationData.price,
+        images: variationData.images,
+        isDefault: variationData.isDefault,
+        barcode: variationData?.barcode || undefined,
+      });
+      await variation.save({ session });
 
-    console.log("product", product);
-    // Commit transaction
+      if (variation.isDefault) {
+        defaultVariationId = variation._id;
+      }
+    }
+    if (defaultVariationId) {
+      product.defaultVariation = defaultVariationId;
+      await product.save({ session });
+    }
+
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({ message: "Product created successfully!", product });
+    res.status(201).json({
+      message: "Product created successfully!",
+      product: await Product.findById(product._id)
+        .populate("category")
+        .populate("subCategory")
+        .populate("defaultVariation"),
+    });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     console.log("Error in createProduct controller:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 // export const createProduct = async (req, res) => {

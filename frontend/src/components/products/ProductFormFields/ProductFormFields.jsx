@@ -11,7 +11,7 @@ export const ProductFormFields = ({
 }) => {
   return (
     <>
-      {inputFields.map((field) => (
+      {inputFields?.map((field) => (
         <InputField
           key={field.name}
           placeholder={field.placeholder}
