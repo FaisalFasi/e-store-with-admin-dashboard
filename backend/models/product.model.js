@@ -20,9 +20,21 @@ const productSchema = new mongoose.Schema(
       },
     },
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category", // Reference to the Category model
-      required: true,
+      parent: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: true,
+      },
+      child: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: false,
+      },
+      grandchild: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+        required: false,
+      },
     },
     defaultVariation: {
       type: mongoose.Schema.Types.ObjectId,
@@ -56,15 +68,33 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.pre("remove", async function (next) {
-  await mongoose.model("ProductVariation").deleteMany({ productId: this._id });
-  next();
-});
+// Middleware to delete variations when a product is deleted
+productSchema.pre(
+  "deleteOne",
+  { document: true, query: false },
+  async function (next) {
+    try {
+      console.log(`Deleting variations for product: ${this._id}`);
+      await ProductVariation.deleteMany({ productId: this._id });
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// productSchema.pre("remove", async function (next) {
+//   await mongoose.model("ProductVariation").deleteMany({ productId: this._id });
+//   next();
+// });
 
 productSchema.index({ name: "text", description: "text" });
 productSchema.index({ category: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ tags: 1 });
+productSchema.index({ "category.parent": 1 });
+productSchema.index({ "category.child": 1 });
+productSchema.index({ "category.grandchild": 1 });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

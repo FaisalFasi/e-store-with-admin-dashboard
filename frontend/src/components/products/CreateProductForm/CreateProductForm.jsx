@@ -91,8 +91,20 @@ const CreateProductForm = () => {
           },
         ]
       : []),
+    {
+      name: "isFeatured",
+      label: "Featured", // Add asterisk for required field
+      type: "select",
+      value: newProduct.isFeatured,
+      options: [
+        { value: true, label: "Yes" },
+        { value: false, label: "No" },
+      ],
 
-    //add status field
+      onChange: (e) => handleInputChange("isFeatured", e.target.value),
+      placeholder: "Select product featured status",
+      required: true,
+    },
     {
       name: "status",
       label: "Status", // Add asterisk for required field
@@ -105,20 +117,6 @@ const CreateProductForm = () => {
       ],
       onChange: (e) => handleInputChange("status", e.target.value),
       placeholder: "Select product status",
-      required: true,
-    },
-    // add isFeatured field with default value to false it should be options to select true or false
-    {
-      name: "isFeatured",
-      label: "Featured", // Add asterisk for required field
-      type: "select",
-      value: newProduct.isFeatured,
-      options: [
-        { value: true, label: "Yes" },
-        { value: false, label: "No" },
-      ],
-      onChange: (e) => handleInputChange("isFeatured", e.target.value),
-      placeholder: "Select product featured status",
       required: true,
     },
   ];

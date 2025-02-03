@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { validateImages } from "../utils/imageValidation/imageValidation.js";
 import { useCategoryStore } from "../stores/useCategoryStore.js";
 import { initializeVariation } from "../helpers/productHelopers/productHelper.js";
+import { Construction } from "lucide-react";
 
 export const useProductForm = () => {
   const { categories } = useCategoryStore();
@@ -13,6 +14,8 @@ export const useProductForm = () => {
     category: "",
     subCategory: "",
     grandChildCategory: "",
+    status: "draft",
+    isFeatured: false,
     variations: [initializeVariation],
   };
 
@@ -50,10 +53,10 @@ export const useProductForm = () => {
 
   const handleCategoryChange = (e) => {
     const selectedCategoryId = e.target.value;
+
     const selectedCategory = categories.find(
       (cat) => cat._id === selectedCategoryId
     );
-
     setCategoryData({
       selectedCategory: selectedCategoryId,
       subCategories: selectedCategory ? selectedCategory.subCategories : [],

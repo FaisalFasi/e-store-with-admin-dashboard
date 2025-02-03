@@ -13,11 +13,19 @@ export const createProduct = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { name, description, category, subCategory } = req.body;
+    const {
+      name,
+      description,
+      isFeatured,
+      status,
+      category,
+      subCategory,
+      grandChildCategory,
+    } = req.body;
 
     const variations = JSON.parse(req.body.variations);
 
-    console.log("received data --", name, description, category, subCategory);
+    console.log("received data --", req.body);
 
     // Assuming `req.files` contains uploaded files (images)
     const requestedFiles = req.files || [];
@@ -78,19 +86,24 @@ export const createProduct = async (req, res) => {
 
     console.log("processedVariations", processedVariations);
 
-    const product = {
+    const categories_ = {
+      parent: category, // Required
+      child: subCategory || null, // Optional
+      grandchild: grandChildCategory || null, // Optional
+    };
+
+    const product = new Product({
       name,
       description,
-      category,
-      subCategory,
+      category: categories_,
+      isFeatured: isFeatured === "true",
+      status: status || "draft",
       // tags: tags || [],
       // additionalDetails: additionalDetails || {},
-      // isFeatured: isFeatured || false,
       // discount: discount ? Number(discount) : undefined,
       // discountExpiry: discountExpiry || undefined,
-      // status: status || "draft",
-    };
-    console.log("newProduct", product);
+    });
+
     await product.save({ session });
 
     let defaultVariationId = null;
@@ -104,6 +117,7 @@ export const createProduct = async (req, res) => {
         images: variationData.images,
         isDefault: variationData.isDefault,
         barcode: variationData?.barcode || undefined,
+        sku: `${product._id}-${get_uuid()}`, // Unique SKU
       });
       await variation.save({ session });
 
@@ -116,127 +130,19 @@ export const createProduct = async (req, res) => {
       await product.save({ session });
     }
 
-    await session.commitTransaction();
-    session.endSession();
-
     res.status(201).json({
       message: "Product created successfully!",
-      product: await Product.findById(product._id)
-        .populate("category")
-        .populate("subCategory")
-        .populate("defaultVariation"),
+      product: await Product.findById(product._id),
     });
+    await session.commitTransaction();
+    session.endSession();
   } catch (error) {
+    console.log("Error in createProduct controller:", error);
     await session.abortTransaction();
     session.endSession();
-    console.log("Error in createProduct controller:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-// export const createProduct = async (req, res) => {
-//   const session = await mongoose.startSession(); // Start a transaction
-//   session.startTransaction();
-
-//   try {
-//     const {
-//       name,
-//       description,
-//       basePrice,
-//       category,
-//       subCategory,
-//       isFeatured = false,
-//       discount = 0,
-//       tags = [],
-//       additionalDetails = {},
-//       variations = [], // Array of variation objects (e.g., [{ color, size, quantity, price }])
-//     } = req.body;
-
-//     console.log("name", name);
-//     // Assuming `req.files` contains uploaded files
-//     const requestedFiles = req.files || [];
-//     const validImage = imageValidationHelper(requestedFiles);
-//     if (!validImage.valid) {
-//       return res.status(400).json({ message: validImage.message });
-//     }
-
-//     // Upload images to Cloudinary
-//     const uploadedImages = await Promise.all(
-//       requestedFiles.map(async (file) => {
-//         const result = await cloudinary.uploader.upload(file.path, {
-//           folder: "products",
-//         });
-//         // Clean up temporary file
-//         await fs.unlink(file.path);
-
-//         return result.secure_url; // Return the URL of the uploaded image
-//       })
-//     );
-
-//     // Validate and process variations
-//     if (variations?.length > 0) {
-//       variations?.forEach((variation) => {
-//         if (!variation.price || !variation.quantity) {
-//           return res.status(400).json({
-//             message: "Price and quantity are required for each variation",
-//           });
-//         }
-//       });
-//     }
-
-//     const product = await Product.create(
-//       {
-//         name,
-//         description,
-//         basePrice,
-//         category,
-//         subCategory,
-//         isFeatured,
-//         discount,
-//         tags,
-//         additionalDetails,
-//         images: uploadedImages,
-//       },
-//       { session }
-//     );
-//     console.log("default product", product);
-
-//     let createdVariations = [];
-//     if (variations && variations.length > 0) {
-//       const variationData = variations.map((variation) => ({
-//         ...variation,
-//         productId: product[0]._id, // Associate the variation with the created product
-//         sku: get_uuid(), // Generate a unique SKU for the variation
-//       }));
-
-//       createdVariations = await ProductVariation.create(variationData, {
-//         session,
-//       });
-//       console.log("default createdVariations", createdVariations);
-
-//       product.defauldVariation = createdVariations[0]._id;
-//     }
-
-//     await product.save({ session });
-
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     res.status(201).json({
-//       product: product[0],
-//       variations: createdVariations,
-//       message: "Product and variations created successfully!",
-//     });
-//   } catch (error) {
-//     await session.abortTransaction();
-//     session.endSession();
-
-//     console.log("Error in createProduct controller:", error);
-//     res.status(500).json({
-//       message: "Internal Server Error while creating product",
-//       error: error.message,
-//     });
-//   }
-// };
 
 export const getAllProducts = async (req, res) => {
   try {

@@ -15,8 +15,6 @@ export const useCategoryStore = create((set) => ({
     try {
       set({ loading: true });
       const response = await axiosBaseURL.get("/category");
-
-      console.log("Get all categories endpoint", response?.data);
       set({ categories: response?.data, loading: false });
     } catch (error) {
       set({ loading: false });
