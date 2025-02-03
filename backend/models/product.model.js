@@ -40,6 +40,13 @@ const productSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "ProductVariation", // Reference to the Variation model
     },
+    variations: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ProductVariation",
+      },
+    ],
+
     tags: {
       type: [String], // Example: ["electronics", "smartphone", "gaming"]
     },
@@ -83,11 +90,7 @@ productSchema.pre(
   }
 );
 
-// productSchema.pre("remove", async function (next) {
-//   await mongoose.model("ProductVariation").deleteMany({ productId: this._id });
-//   next();
-// });
-
+productSchema.index({ createdAt: -1 });
 productSchema.index({ name: "text", description: "text" });
 productSchema.index({ category: 1 });
 productSchema.index({ isFeatured: 1 });

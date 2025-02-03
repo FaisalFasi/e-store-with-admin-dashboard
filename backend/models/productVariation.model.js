@@ -30,7 +30,7 @@ const variationSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    images: {
+    imageUrls: {
       type: [String], // Array of image URLs
       required: true,
     },

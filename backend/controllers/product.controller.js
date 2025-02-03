@@ -29,7 +29,6 @@ export const createProduct = async (req, res) => {
 
     // Assuming `req.files` contains uploaded files (images)
     const requestedFiles = req.files || [];
-    console.log("requestedFiles", requestedFiles);
 
     if (!name || !description || !category) {
       return res
@@ -46,7 +45,7 @@ export const createProduct = async (req, res) => {
 
     // Process variations and upload images
     const processedVariations = await Promise.all(
-      variations.map(async (variation, index) => {
+      variations?.map(async (variation, index) => {
         // Check required fields
         if (
           !variation.price ||
@@ -68,7 +67,7 @@ export const createProduct = async (req, res) => {
         );
 
         // Upload images to Cloudinary
-        const uploadedImages = await uploadToCloudinary(
+        const uploadedImagesUrls = await uploadToCloudinary(
           variationImages,
           "create-products"
         );
@@ -78,7 +77,7 @@ export const createProduct = async (req, res) => {
           ...variation,
           price: Number(variation.price),
           quantity: Number(variation.quantity),
-          images: uploadedImages, // Store URLs from Cloudinary
+          imageUrls: uploadedImagesUrls, // Store URLs from Cloudinary
           isDefault: index === 0, // Ensure first variation is default
         };
       })
@@ -107,6 +106,8 @@ export const createProduct = async (req, res) => {
     await product.save({ session });
 
     let defaultVariationId = null;
+    let variationIds = [];
+
     for (const variationData of processedVariations) {
       const variation = new ProductVariation({
         productId: product._id,
@@ -120,27 +121,107 @@ export const createProduct = async (req, res) => {
         sku: `${product._id}-${get_uuid()}`, // Unique SKU
       });
       await variation.save({ session });
+      variationIds.push(variation._id);
 
       if (variation.isDefault) {
         defaultVariationId = variation._id;
       }
     }
+
+    product.variations = variationIds;
     if (defaultVariationId) {
       product.defaultVariation = defaultVariationId;
-      await product.save({ session });
     }
+
+    await product.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({
       message: "Product created successfully!",
       product: await Product.findById(product._id),
     });
-    await session.commitTransaction();
-    session.endSession();
   } catch (error) {
     console.log("Error in createProduct controller:", error);
     await session.abortTransaction();
     session.endSession();
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getHomepageProducts = async (req, res) => {
+  try {
+    console.log("req.query", req.query);
+
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Base query for active products
+    const baseQuery = {
+      status: "active",
+      // isFeatured: false, // Remove if you want all active products
+    };
+
+    // how name: 1,  and likewise works in projection ?
+    // name: 1,  means that i will get the name of the product
+    const projection = {
+      name: 1,
+      defaultVariation: 1,
+      variations: 1,
+      category: 1,
+      tags: 1,
+      discount: 1,
+      isFeatured: 1,
+      createdAt: 1,
+    };
+
+    // Sorting (example: newest first)
+    const sort = { createdAt: -1 };
+
+    // what im getting in products and total
+    // im getting all the products from the database with the baseQuery
+    // im selecting only the fields that are in the projection
+    // im sorting the products by createdAt in descending order
+    // im skipping the first (page - 1) * limit products
+    // im limiting the number of products to the limit
+    // im populating the defaultVariation field with the fields price, stock, and imageUrls
+    // im converting the Mongoose document into a plain JavaScript object
+    // im counting the total number of products
+    // im returning the products and total in an array
+
+    const [products, total] = await Promise.all([
+      Product.find(baseQuery)
+        .select(projection)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .populate("defaultVariation", "price quantity stock imageUrls") // Only needed fields
+        .populate("variations", "price quantity stock imageUrls color size")
+        .lean(),
+      Product.countDocuments(baseQuery),
+    ]);
+    console.log("products", products);
+    console.log("total", total);
+
+    res.status(200).json({
+      success: true,
+      products,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+        limit,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getHomepageProducts:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 
