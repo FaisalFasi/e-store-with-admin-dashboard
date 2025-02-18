@@ -48,14 +48,15 @@ const SingleProductPage = () => {
 
   useEffect(() => {
     fetchProductById(productId);
+    console.log("Product product: ", product);
   }, [productId, fetchProductById]);
 
   useEffect(() => {
-    if (product?.images?.length > 0) {
-      setSelectedImage(product.images[0]);
+    if (product?.variations?.length > 0) {
+      setSelectedImage(product.variations[0].imageUrls[0]);
     }
-    if (product?.sizes?.length > 0) {
-      setSelectedSize(product.sizes[0]); // Default size
+    if (product?.defaultVariation?.size) {
+      setSelectedSize(product.defaultVariation.size); // Default size
     }
   }, [product]);
 
@@ -74,36 +75,44 @@ const SingleProductPage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 lg:gap-8"
         >
           {/* Left Section - Images */}
-          <div className="flex flex-col items-center">
-            <div className="w-full h-full flex items-center justify-center">
-              <ZoomImage
-                src={selectedImage}
-                className="object-cover w-[300px] h-[400px] md:w-[400px] md:h-[500px] lg:w-[500px] lg:h-[600px] rounded-lg overflow-hidden shadow-lg"
-              />
-            </div>
-            <div className="max-w-full h-full flex items-center justify-start py-6 overflow-x-scroll">
-              <div className="min-w-max flex gap-4">
-                {product?.varaitions?.map((variation, index) => (
-                  <button
+          <div className="flex flex-col-reverse md:flex-row gap-4 items-center">
+            <div className="max-w-full h-full flex items-center justify-start py-2 md:py-6 overflow-x-scroll">
+              <div className="w-fit flex gap-4">
+                {product?.variations?.map((variation, index) => (
+                  // Loop through imageUrls in each variation
+                  <div
                     key={index}
-                    onClick={() => setSelectedImage(variation.imageUrls[0])}
-                    className={`w-full h-full border-4 transition rounded-sm ${
-                      selectedImage === variation
-                        ? "border-emerald-400"
-                        : "border-gray-600"
-                    }`}
+                    className=" md:h-[400px] flex flex-row md:flex-col gap-4 overflow-hidden overflow-x-auto md:overflow-y-auto"
                   >
-                    <img
-                      src={variation.imageUrls[0]}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="w-16 h-16 object-cover rounded-sm"
-                    />
-                  </button>
+                    {variation.imageUrls.map((imageUrl, imgIndex) => (
+                      <button
+                        key={imgIndex}
+                        onClick={() => setSelectedImage(imageUrl)}
+                        className={`flex w-fit border-4 transition rounded-sm ${
+                          selectedImage === imageUrl
+                            ? "border-emerald-400"
+                            : "border-gray-600"
+                        }`}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Thumbnail ${index + 1}-${imgIndex + 1}`}
+                          className="w-16 h-16 object-cover rounded-sm"
+                        />
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
+            </div>
+            <div className="w-fit h-full flex items-center justify-center">
+              <ZoomImage
+                src={selectedImage}
+                className=" object-cover w-[320px] h-[400px] md:min-w-fit md:h-[400px] lg:min-w-fit lg:h-[550px] rounded-lg overflow-hidden shadow-lg"
+              />
             </div>
           </div>
 
@@ -133,32 +142,32 @@ const SingleProductPage = () => {
               transition={{ duration: 0.8 }}
               className="text-emerald-400 text-2xl lg:text-3xl font-bold mb-6"
             >
-              ${product.price}
+              ${product?.defaultVariation?.price}
             </motion.div>
 
             {/* Stock Availability */}
             <p className="text-gray-300 mb-6">
-              {product.quantity > 0
-                ? `In Stock: ${product.quantity}`
+              {product?.defaultVariation?.quantity > 0
+                ? `In Stock: ${product.defaultVariation.quantity}`
                 : "Out of Stock"}
             </p>
 
             {/* Size Selection */}
-            {product.sizes && (
+            {product.variations && (
               <div className="mb-6">
                 <p className="text-gray-300 font-semibold mb-2">Select Size:</p>
                 <div className="flex gap-2">
-                  {product.sizes.map((size, index) => (
+                  {product.variations.map((variation, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => setSelectedSize(variation.size)}
                       className={`px-4 py-2 border rounded-md text-sm ${
-                        selectedSize === size
+                        selectedSize === variation.size
                           ? "bg-emerald-400 text-gray-900"
                           : "bg-gray-800 text-gray-300 border-gray-600"
                       }`}
                     >
-                      {size}
+                      {variation.size}
                     </button>
                   ))}
                 </div>
@@ -184,22 +193,23 @@ const SingleProductPage = () => {
                 </button>
               </div>
             </div>
-
-            {/* Add to Cart and Wishlist Buttons */}
-            <Button
-              isBG={true}
-              className="self-start mb-4"
-              onClick={handleAddToCart}
-            >
-              Add to Cart
-            </Button>
-            <Button
-              isBG={false}
-              className="self-start"
-              onClick={handleAddToWishlist}
-            >
-              Add to Wishlist
-            </Button>
+            <div className="flex items-center gap-4">
+              {/* Add to Cart and Wishlist Buttons */}
+              <Button
+                isBG={true}
+                className="self-start mb-4"
+                onClick={handleAddToCart}
+              >
+                Add to Cart
+              </Button>
+              <Button
+                isBG={true}
+                className="self-start bg-gray-700"
+                onClick={handleAddToWishlist}
+              >
+                Add to Wishlist
+              </Button>
+            </div>
           </div>
         </motion.div>
 
@@ -221,7 +231,7 @@ const SingleProductPage = () => {
             {/* Related Products Placeholder */}
             <div className="w-1/4 bg-gray-800 p-4 rounded-lg">
               <img
-                src="https://via.placeholder.com/300x400"
+                src="https://placehold.co/300x400"
                 alt="Related Product"
                 className="w-full h-[200px] object-cover mb-4 rounded-lg"
               />

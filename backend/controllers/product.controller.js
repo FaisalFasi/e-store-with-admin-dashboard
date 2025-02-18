@@ -257,12 +257,21 @@ export const getProductById = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "Invalid product ID" });
     }
-    const product = await Product.findById(id);
+
+    const product = await Product.findById(id)
+      .populate({
+        path: "variations", // Field to populate
+        model: "ProductVariation", // Name of the model you want to populate with
+      })
+      .populate({
+        path: "defaultVariation",
+        model: "ProductVariation",
+      });
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
-
+    console.log("product", product);
     res.status(201).json({ product });
   } catch (error) {
     console.log("Error in getProductById controller:", error);
