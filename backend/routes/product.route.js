@@ -8,6 +8,7 @@ import {
   createProduct,
   deleteProduct,
   getProductById,
+  getHomepageProducts,
 } from "../controllers/product.controller.js";
 import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
 import multer from "multer";
@@ -16,8 +17,9 @@ const router = express.Router();
 
 const upload = multer({ dest: "uploads/" });
 
+router.get("/", getAllProducts);
 router.post("/", protectRoute, adminRoute, upload.any(), createProduct);
-router.get("/", protectRoute, adminRoute, getAllProducts);
+router.get("/getHomeProducts", getHomepageProducts);
 router.get("/featured", getFeaturedProducts);
 router.get("/recommendations", getRecommendedProducts);
 router.get("/category/:category", getProductByCategory);

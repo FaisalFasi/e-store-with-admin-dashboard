@@ -86,18 +86,18 @@ const SingleProductPage = () => {
             </div>
             <div className="max-w-full h-full flex items-center justify-start py-6 overflow-x-scroll">
               <div className="min-w-max flex gap-4">
-                {product?.images?.map((image, index) => (
+                {product?.varaitions?.map((variation, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => setSelectedImage(variation.imageUrls[0])}
                     className={`w-full h-full border-4 transition rounded-sm ${
-                      selectedImage === image
+                      selectedImage === variation
                         ? "border-emerald-400"
                         : "border-gray-600"
                     }`}
                   >
                     <img
-                      src={image}
+                      src={variation.imageUrls[0]}
                       alt={`Thumbnail ${index + 1}`}
                       className="w-16 h-16 object-cover rounded-sm"
                     />

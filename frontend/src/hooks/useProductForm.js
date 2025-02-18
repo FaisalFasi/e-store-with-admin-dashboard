@@ -164,6 +164,7 @@ export const useProductForm = () => {
   return {
     newProduct,
     setNewProduct,
+    initialProductState,
     fileInputRef,
     categoryData,
     handleCategoryChange,

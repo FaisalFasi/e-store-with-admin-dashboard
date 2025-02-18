@@ -24,6 +24,7 @@ const CreateProductForm = () => {
     addVariation,
     removeVariation,
     removeImage,
+    initailProductState,
   } = useProductForm();
 
   const inputFields = [
@@ -156,7 +157,12 @@ const CreateProductForm = () => {
     }
 
     const data = await createProduct(formData);
-    if (data.message) {
+    if (data) {
+      setNewProduct(initailProductState);
+      if (fileInputRef?.current) {
+        fileInputRef.current.value = "";
+      }
+
       toast.success("Product created successfully!");
     }
   };

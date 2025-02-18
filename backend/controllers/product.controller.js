@@ -115,7 +115,7 @@ export const createProduct = async (req, res) => {
         size: variationData.size,
         quantity: variationData.quantity,
         price: variationData.price,
-        images: variationData.images,
+        imageUrls: variationData.imageUrls,
         isDefault: variationData.isDefault,
         barcode: variationData?.barcode || undefined,
         sku: `${product._id}-${get_uuid()}`, // Unique SKU
@@ -226,9 +226,19 @@ export const getHomepageProducts = async (req, res) => {
 };
 
 export const getAllProducts = async (req, res) => {
+  console.log("Fetching all products ---------");
   try {
-    const products = await Product.find({}); // Fetch all products from the database and {} means fetch all products
+    const products = await Product.find({})
+      .populate({
+        path: "variations", // Field to populate
+        model: "ProductVariation", // Name of the model you want to populate with
+      })
+      .populate({
+        path: "defaultVariation",
+        model: "ProductVariation",
+      });
 
+    console.log("products with variations", products);
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.log("Error in getAllProducts controller:", error);
@@ -238,6 +248,7 @@ export const getAllProducts = async (req, res) => {
     });
   }
 };
+
 export const getProductById = async (req, res) => {
   const { id } = req.params;
 

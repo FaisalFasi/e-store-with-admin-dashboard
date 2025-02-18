@@ -5,10 +5,11 @@ import { useUserStore } from "../../../stores/useUserStore";
 import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, index }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
 
+  console.log("Single Product ------: ", product);
   const handleAddToCart = () => {
     console.log("Add to cart");
     if (!user) {
@@ -27,7 +28,7 @@ const ProductCard = ({ product }) => {
       >
         <img
           className="object-cover w-full "
-          src={product.images[0]}
+          src={product?.variations[index]?.imageUrls[0]}
           alt="product image"
         />
         <div className="absolute inset-0 bg-black bg-opacity-20" />
@@ -40,10 +41,12 @@ const ProductCard = ({ product }) => {
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-emerald-400">
-              ${product.price}
+              ${product.variations[index].price}
             </span>
           </p>
-          <p className="text-sm text-gray-400">In Stock: {product?.quantity}</p>
+          <p className="text-sm text-gray-400">
+            In Stock: {product?.variations[index].quantity}
+          </p>
         </div>
 
         <button

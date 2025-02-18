@@ -1,6 +1,5 @@
 import React from "react";
 import { useEffect } from "react";
-import { useProductStore } from "../../stores/useProductStore";
 import FeaturedProducts from "../../components/products/FeaturedProducts/FeaturedProducts";
 import { motion } from "framer-motion";
 // import { categories } from "../../utils/homeCategories/categories.js";
@@ -8,9 +7,18 @@ import CategoryItem from "../../components/products/CategoryItem/CategoryItem";
 import { useCategoryData } from "../../hooks/useCategoryData";
 import { useCategoryStore } from "../../stores/useCategoryStore";
 import { useUserStore } from "../../stores/useUserStore";
+import { useProductStoreData } from "../../hooks/useProductStoreData.js";
+import ProductCard from "../../components/products/ProductCard/ProductCard.jsx";
 
 const HomePage = () => {
-  const { fetchFeaturedProducts, products, isLoading } = useProductStore();
+  const {
+    fetchAllProducts,
+    products,
+    isLoading,
+    currentPage,
+    productsPerPage,
+    setCurrentPage,
+  } = useProductStoreData();
   // const { getAllCategories } = useCategoryData();
   const { getAllCategories } = useCategoryStore();
   const { user } = useUserStore();
@@ -20,10 +28,20 @@ const HomePage = () => {
     if (user) getAllCategories();
   }, [user]);
 
-  // useEffect(() => {
-  //   fetchFeaturedProducts();
-  // }, [fetchFeaturedProducts]);
+  useEffect(() => {
+    fetchAllProducts();
+  }, []);
 
+  // Calculate pagination
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = products.slice(
+    indexOfFirstProduct,
+    indexOfLastProduct
+  );
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  console.log("Products: ", products);
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
@@ -44,6 +62,11 @@ const HomePage = () => {
           Discover the latest trends in eco-friendly fashion
         </motion.p>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {products?.map((product, index) => (
+            <ProductCard product={product} key={product._id} index={index} />
+          ))}
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* {categories.map((category) => (
             <CategoryItem category={category} key={category.name} />

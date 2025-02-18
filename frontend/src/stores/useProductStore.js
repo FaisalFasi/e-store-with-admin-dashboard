@@ -7,6 +7,8 @@ export const useProductStore = create((set, get) => ({
   products: [],
   loading: false,
   cacheTimestamp: null,
+  currentPage: 1,
+  productsPerPage: 20,
 
   setProducts: (products) => set({ products }),
 
@@ -47,11 +49,15 @@ export const useProductStore = create((set, get) => ({
         cacheTimestamp: Date.now(),
         loading: false,
       });
+      console.log("Products fetched successfully", response);
+      return response?.data?.products;
     } catch (error) {
       set({ loading: false });
       toast.error(error?.response?.data.error || "Failed to fetch product");
     }
   },
+  setCurrentPage: (page) => set({ currentPage: page }),
+
   fetchProductById: async (productId) => {
     set({ loading: true });
 
