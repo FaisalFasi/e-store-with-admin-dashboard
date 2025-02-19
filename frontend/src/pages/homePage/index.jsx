@@ -34,7 +34,7 @@ const HomePage = () => {
     console.log("Products in store after fetch:", products); // Check if this logs an array
   }, []);
 
-  console.log("Products: ", products);
+  console.log("Products in home page: ", products);
   return (
     <div className="relative min-h-screen text-white overflow-hidden">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
@@ -57,9 +57,16 @@ const HomePage = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.isArray(products) &&
-            products.map((product, index) => (
-              <ProductCard product={product} key={product._id} index={index} />
-            ))}
+            products.map((product, index) => {
+              console.log("Product in map:", product);
+              return (
+                <ProductCard
+                  product={product}
+                  key={product._id}
+                  index={index}
+                />
+              );
+            })}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* {categories.map((category) => (

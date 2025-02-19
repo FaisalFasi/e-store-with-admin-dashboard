@@ -52,8 +52,11 @@ export const useCartStore = create((set, get) => ({
       toast.error("Error in getCartItems");
     }
   },
+
   addToCart: async (product, selectedVariation) => {
     console.log("Product:", product);
+
+    console.log("Selected variation:", selectedVariation);
     try {
       if (!selectedVariation) {
         toast.error("Please select a variation before adding to the cart.");
@@ -83,7 +86,6 @@ export const useCartStore = create((set, get) => ({
 
       toast.success("Product added to cart");
 
-      // Update cart state
       // Updated frontend addToCart
       set((prevState) => {
         const newCart = existingItem
@@ -96,15 +98,16 @@ export const useCartStore = create((set, get) => ({
           : [
               ...prevState.cart,
               {
+                ...product,
                 productId: product._id, // Store ID instead of full product
                 variationId: selectedVariation._id, // Store variation ID
                 quantity: 1,
                 // Optional: Add snapshot data for immediate UI display
-                productSnapshot: {
-                  name: product.name,
-                  price: selectedVariation.price,
-                  image: selectedVariation.imageUrls[0],
-                },
+                // productSnapshot: {
+                //   name: product.name,
+                //   price: selectedVariation.price,
+                //   image: selectedVariation.imageUrls[0],
+                // },
               },
             ];
         return { cart: newCart };
@@ -152,6 +155,23 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
+  calculate_Total_AmountInCart: () => {
+    const { cart, coupon } = get();
+    // reduce the cart items to get the total amount
+    // reduce initial value as arguments and returns a single value like sum of all the items in the array
+    const subTotal = cart.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    let total = subTotal;
+
+    if (coupon) {
+      const discount = subTotal * (coupon.discountPercentage / 100);
+      total = subTotal - discount;
+    }
+    set({ subTotal, total });
+  },
+
   calculate_Total_AmountInCart: async () => {
     const { cart, coupon } = get();
 
@@ -164,7 +184,7 @@ export const useCartStore = create((set, get) => ({
               `/products/${item.productId}`
             );
             const product = response.data;
-
+            console.log("Product in calculate total amount:", product);
             if (!product || !product.variations) {
               console.warn(
                 `Product or variations not found for productId: ${item.productId}`
@@ -207,7 +227,7 @@ export const useCartStore = create((set, get) => ({
     }
 
     // Update state with new totals and detailed cart
-    set({ subTotal, total, cart: cartWithDetails });
+    set({ subTotal, total });
   },
 
   // enter shipping address
