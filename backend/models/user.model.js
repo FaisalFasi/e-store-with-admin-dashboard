@@ -27,16 +27,33 @@ const userSchema = new mongoose.Schema(
     },
     cartItems: [
       {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        variationId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+        },
         quantity: {
           type: Number,
           default: 1,
         },
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product",
-        },
       },
     ],
+    // cartItems: [
+    //   {
+    //     quantity: {
+    //       type: Number,
+    //       default: 1,
+    //     },
+    //     product: {
+    //       type: mongoose.Schema.Types.ObjectId,
+    //       ref: "Product",
+    //     },
+    //   },
+    // ],
     role: {
       type: String,
       enum: ["customer", "admin", "guest"],

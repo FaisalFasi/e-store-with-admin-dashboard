@@ -5,13 +5,14 @@ import { useCartStore } from "../../../stores/useCartStore";
 const CartItem = ({ item }) => {
   const { removeFromCart, updateQuantity } = useCartStore();
 
+  console.log("Single Cart Item ------: ", item);
   return (
     <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">
       <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
         <div className="shrink-0 md:order-1">
           <img
             className="h-20 md:h-32 rounded object-cover"
-            src={item.images[0]}
+            src={item?.variations[0]?.imageUrls[0]}
           />
         </div>
         <label className="sr-only">Choose quantity:</label>
@@ -26,7 +27,7 @@ const CartItem = ({ item }) => {
             >
               <Minus className="text-gray-300" />
             </button>
-            <p>{item.quantity}</p>
+            <p>{item?.quantity}</p>
             <button
               className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border
 							 border-gray-600 bg-gray-700 hover:bg-gray-600 focus:outline-none 

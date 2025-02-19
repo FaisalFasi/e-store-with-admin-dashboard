@@ -21,19 +21,61 @@ const SingleProductPage = () => {
 
   const [selectedImage, setSelectedImage] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariation, setSelectedVariation] = useState(null);
 
   const handleAddToCart = () => {
     if (!user) {
       toast.error("Please login to add products to cart", { id: "login" });
       return;
     }
-    if (!selectedSize) {
-      toast.error("Please select a size", { id: "size" });
+    if (!selectedSize || !selectedColor) {
+      toast.error("Please select both size and color", { id: "selection" });
       return;
     }
-    addToCart({ ...product, size: selectedSize, quantity });
+    if (quantity > selectedVariation?.quantity) {
+      toast.error(`Only ${selectedVariation?.quantity} items available`, {
+        id: "quantity",
+      });
+      return;
+    }
+
+    addToCart(product, selectedVariation);
+    // addToCart({
+    //   ...product,
+    //   size: selectedSize,
+    //   color: selectedColor,
+    //   quantity,
+    // });
     toast.success("Product added to cart!");
+  };
+
+  const handleSizeSelection = (size) => {
+    setSelectedSize(size);
+    updateSelectedVariation(size, selectedColor);
+  };
+
+  const handleColorSelection = (color) => {
+    setSelectedColor(color);
+    updateSelectedVariation(selectedSize, color);
+  };
+
+  const updateSelectedVariation = (size, color) => {
+    const variation = product.variations.find(
+      (v) => v.size === size && v.color === color
+    );
+    setSelectedVariation(variation);
+    // Reset quantity when variation changes
+    setQuantity(1);
+  };
+
+  const handleQuantityChange = (type) => {
+    if (type === "increment" && quantity < selectedVariation?.quantity) {
+      setQuantity(quantity + 1);
+    } else if (type === "decrement" && quantity > 1) {
+      setQuantity(quantity - 1);
+    }
   };
 
   const handleAddToWishlist = () => {
@@ -54,9 +96,13 @@ const SingleProductPage = () => {
   useEffect(() => {
     if (product?.variations?.length > 0) {
       setSelectedImage(product.variations[0].imageUrls[0]);
-    }
-    if (product?.defaultVariation?.size) {
-      setSelectedSize(product.defaultVariation.size); // Default size
+      // Set initial selected variation
+      const initialVariation =
+        product.defaultVariation || product.variations[0];
+      setSelectedSize(initialVariation.size);
+      setSelectedColor(initialVariation.color);
+
+      setSelectedVariation(initialVariation);
     }
   }, [product]);
 
@@ -136,19 +182,20 @@ const SingleProductPage = () => {
             <p className="text-gray-300 mb-6 leading-relaxed">
               {product.description}
             </p>
+            {/* Price Display */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
               className="text-emerald-400 text-2xl lg:text-3xl font-bold mb-6"
             >
-              ${product?.defaultVariation?.price}
+              ${selectedVariation?.price || product?.defaultVariation?.price}
             </motion.div>
 
             {/* Stock Availability */}
             <p className="text-gray-300 mb-6">
-              {product?.defaultVariation?.quantity > 0
-                ? `In Stock: ${product.defaultVariation.quantity}`
+              {selectedVariation?.quantity > 0
+                ? `In Stock: ${selectedVariation?.quantity}`
                 : "Out of Stock"}
             </p>
 
@@ -156,16 +203,21 @@ const SingleProductPage = () => {
             {product.variations && (
               <div className="mb-6">
                 <p className="text-gray-300 font-semibold mb-2">Select Size:</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {product.variations.map((variation, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedSize(variation.size)}
-                      className={`px-4 py-2 border rounded-md text-sm ${
+                      onClick={() => handleSizeSelection(variation.size)}
+                      className={`px-4 py-2 rounded-md text-sm transition-colors ${
                         selectedSize === variation.size
-                          ? "bg-emerald-400 text-gray-900"
-                          : "bg-gray-800 text-gray-300 border-gray-600"
+                          ? "bg-emerald-400 text-gray-900 font-bold"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      } ${
+                        variation.quantity === 0
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
                       }`}
+                      disabled={variation.quantity === 0}
                     >
                       {variation.size}
                     </button>
@@ -173,25 +225,54 @@ const SingleProductPage = () => {
                 </div>
               </div>
             )}
-
+            {/* Color Selection */}
+            <div className="bg-gray-800 p-6 rounded-lg">
+              <p className="text-gray-300 font-semibold mb-4">Select Color:</p>
+              <div className="flex flex-wrap gap-3">
+                {product?.variations &&
+                  [...new Set(product.variations.map((v) => v.color))].map(
+                    (color, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleColorSelection(color)}
+                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                          selectedColor === color
+                            ? "border-emerald-400 scale-110"
+                            : "border-gray-600 hover:border-gray-500"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    )
+                  )}
+              </div>
+            </div>
             {/* Quantity Selection */}
             <div className="mb-6">
               <p className="text-gray-300 font-semibold mb-2">Quantity:</p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md"
+                  onClick={() => handleQuantityChange("decrement")}
+                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
+                  disabled={quantity <= 1}
                 >
                   -
                 </button>
-                <span className="text-lg font-semibold">{quantity}</span>
+                <span className="text-lg font-semibold w-8 text-center">
+                  {quantity}
+                </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md"
+                  onClick={() => handleQuantityChange("increment")}
+                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
+                  disabled={quantity >= selectedVariation?.quantity}
                 >
                   +
                 </button>
               </div>
+              {selectedVariation?.quantity > 0 && (
+                <p className="text-sm text-gray-400 mt-2">
+                  Max quantity: {selectedVariation?.quantity}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-4">
               {/* Add to Cart and Wishlist Buttons */}

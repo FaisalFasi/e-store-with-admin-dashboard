@@ -44,15 +44,24 @@ export const useProductStore = create((set, get) => ({
 
     try {
       const response = await axiosBaseURL.get("/products");
-      set({
-        products: response?.data?.products,
-        cacheTimestamp: Date.now(),
-        loading: false,
-      });
+
+      console.log("Data from fetchAllProducts: ", response.data);
+
+      if (Array.isArray(response.data.products)) {
+        set({
+          products: response.data.products,
+          cacheTimestamp: Date.now(),
+          loading: false,
+        });
+      } else {
+        console.error("Products data is not an array", response.data);
+        set({ products: [], loading: false });
+      }
+
       console.log("Products fetched successfully", response);
-      return response?.data?.products;
     } catch (error) {
-      set({ loading: false });
+      set({ loading: false, products: [] });
+      console.log("Error fetching products:", error);
       toast.error(error?.response?.data.error || "Failed to fetch product");
     }
   },

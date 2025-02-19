@@ -239,7 +239,7 @@ export const getAllProducts = async (req, res) => {
       });
 
     console.log("products with variations", products);
-    res.status(200).json({ success: true, products });
+    res.status(200).json({ success: true, products: [...products] });
   } catch (error) {
     console.log("Error in getAllProducts controller:", error);
     res.status(500).json({

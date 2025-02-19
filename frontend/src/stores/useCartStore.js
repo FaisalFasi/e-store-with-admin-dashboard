@@ -52,11 +52,16 @@ export const useCartStore = create((set, get) => ({
       toast.error("Error in getCartItems");
     }
   },
-  addToCart: async (product) => {
+  addToCart: async (product, selectedVariation) => {
+    console.log("Product:", product);
     try {
-      const availableStock = product.quantity; // Assuming the product has a `stock` property
-      console.log("Product:", product);
-      console.log("Available stock:", availableStock);
+      if (!selectedVariation) {
+        toast.error("Please select a variation before adding to the cart.");
+        return;
+      }
+
+      const availableStock = selectedVariation.quantity;
+
       // Find the existing item in the cart
       const existingItem = get().cart.find((item) => item._id === product._id);
       const cartQuantity = existingItem ? existingItem.quantity : 0;
@@ -69,23 +74,42 @@ export const useCartStore = create((set, get) => ({
         );
         return;
       }
-      await axiosBaseURL.post("/cart", { productId: product._id });
+
+      console.log("Selected variation:", selectedVariation);
+      await axiosBaseURL.post("/cart", {
+        productId: product._id,
+        variationId: selectedVariation._id,
+      });
 
       toast.success("Product added to cart");
 
+      // Update cart state
+      // Updated frontend addToCart
       set((prevState) => {
-        const existingItem = prevState.cart.find(
-          (item) => item._id === product._id
-        );
         const newCart = existingItem
           ? prevState.cart.map((item) =>
-              item._id === product._id
+              item.productId === product._id &&
+              item.variationId === selectedVariation._id
                 ? { ...item, quantity: item.quantity + 1 }
                 : item
             )
-          : [...prevState.cart, { ...product, quantity: 1 }];
+          : [
+              ...prevState.cart,
+              {
+                productId: product._id, // Store ID instead of full product
+                variationId: selectedVariation._id, // Store variation ID
+                quantity: 1,
+                // Optional: Add snapshot data for immediate UI display
+                productSnapshot: {
+                  name: product.name,
+                  price: selectedVariation.price,
+                  image: selectedVariation.imageUrls[0],
+                },
+              },
+            ];
         return { cart: newCart };
       });
+
       get().calculate_Total_AmountInCart();
     } catch (error) {
       console.log("Error in addToCart:", error);
@@ -128,21 +152,62 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
-  calculate_Total_AmountInCart: () => {
+  calculate_Total_AmountInCart: async () => {
     const { cart, coupon } = get();
-    // reduce the cart items to get the total amount
-    // reduce initial value as arguments and returns a single value like sum of all the items in the array
-    const subTotal = cart.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+
+    // Fetch detailed product/variation info if it's not already in the cart
+    const cartWithDetails = await Promise.all(
+      cart.map(async (item) => {
+        if (!item.price) {
+          try {
+            const response = await axiosBaseURL.get(
+              `/products/${item.productId}`
+            );
+            const product = response.data;
+
+            if (!product || !product.variations) {
+              console.warn(
+                `Product or variations not found for productId: ${item.productId}`
+              );
+              return { ...item, price: 0 }; // Fallback if product/variations are missing
+            }
+
+            const variation = product.variations.find(
+              (v) => v._id === item.variationId
+            );
+
+            return {
+              ...item,
+              price: variation ? variation.price : product.price,
+            };
+          } catch (error) {
+            console.error(
+              `Error fetching product details for productId: ${item.productId}`,
+              error
+            );
+            return { ...item, price: 0 };
+          }
+        }
+        return item;
+      })
+    );
+
+    // Calculate subtotal
+    const subTotal = cartWithDetails.reduce(
+      (sum, item) => sum + (item.price || 0) * item.quantity,
       0
     );
+
     let total = subTotal;
 
+    // Apply coupon discount if available
     if (coupon) {
       const discount = subTotal * (coupon.discountPercentage / 100);
       total = subTotal - discount;
     }
-    set({ subTotal, total });
+
+    // Update state with new totals and detailed cart
+    set({ subTotal, total, cart: cartWithDetails });
   },
 
   // enter shipping address

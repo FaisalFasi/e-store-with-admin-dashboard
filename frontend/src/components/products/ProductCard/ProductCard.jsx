@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
@@ -8,15 +8,63 @@ import Navigation from "../../shared/Navigation/Navigation";
 const ProductCard = ({ product, index }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [quantity, setQuantity] = useState(1);
 
-  console.log("Single Product ------: ", product);
   const handleAddToCart = () => {
-    console.log("Add to cart");
     if (!user) {
       toast.error("Please login to add products to cart", { id: "login" });
       return;
-    } else {
-      addToCart(product);
+    }
+
+    if (!selectedSize || !selectedColor) {
+      toast.error("Please select both size and color before adding to cart", {
+        id: "variation",
+      });
+      return;
+    }
+
+    const selectedVariation = product.variations.find(
+      (variation) =>
+        variation.size === selectedSize && variation.color === selectedColor
+    );
+
+    if (!selectedVariation) {
+      toast.error("Selected variation is not available", { id: "variation" });
+      return;
+    }
+
+    if (quantity > selectedVariation.quantity) {
+      toast.error(
+        `Only ${selectedVariation.quantity} items available in stock`,
+        { id: "quantity" }
+      );
+      return;
+    }
+
+    // Add the selected variation and quantity to the cart
+    addToCart({
+      ...product,
+      selectedVariation,
+      quantity,
+    });
+
+    toast.success("Product added to cart!");
+  };
+
+  const handleSizeChange = (event) => {
+    setSelectedSize(event.target.value);
+  };
+
+  const handleColorChange = (event) => {
+    setSelectedColor(event.target.value);
+  };
+
+  const handleQuantityChange = (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (value > 0) {
+      setQuantity(value);
     }
   };
 
@@ -27,7 +75,7 @@ const ProductCard = ({ product, index }) => {
         className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl hover:scale-105 transition-transform duration-300"
       >
         <img
-          className="object-cover w-full "
+          className="object-cover w-full"
           src={product?.variations[index]?.imageUrls[0]}
           alt="product image"
         />
@@ -49,10 +97,76 @@ const ProductCard = ({ product, index }) => {
           </p>
         </div>
 
+        {/* Size Selection Dropdown */}
+        <div className="mb-4">
+          <label
+            htmlFor="size"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Select Size
+          </label>
+          <select
+            id="size"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+            onChange={handleSizeChange}
+            value={selectedSize}
+          >
+            <option value="">Choose a size</option>
+            {product?.variations?.map((variation, i) => (
+              <option key={i} value={variation.size}>
+                {variation.size}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Color Selection Dropdown */}
+        <div className="mb-4">
+          <label
+            htmlFor="color"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Select Color
+          </label>
+          <select
+            id="color"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+            onChange={handleColorChange}
+            value={selectedColor}
+          >
+            <option value="">Choose a color</option>
+            {product?.variations?.map((variation, i) => (
+              <option key={i} value={variation.color}>
+                {variation.color}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Quantity Input */}
+        <div className="mb-4">
+          <label
+            htmlFor="quantity"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Quantity
+          </label>
+          <input
+            type="number"
+            id="quantity"
+            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+            value={quantity}
+            min="1"
+            onChange={handleQuantityChange}
+          />
+        </div>
+
+        {/* Add to Cart Button */}
         <button
           className="flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium
-       text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
+       text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleAddToCart}
+          disabled={!selectedSize || !selectedColor}
         >
           <ShoppingCart size={22} className="mr-2" />
           Add to cart

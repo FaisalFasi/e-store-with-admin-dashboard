@@ -13,7 +13,7 @@ import { Link } from "react-router-dom";
 const CartPage = () => {
   const { cart } = useCartStore();
   const { currentStep, isAddressModalOpen } = useCheckoutStore();
-
+  console.log("Cart Items: ", cart);
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (
@@ -38,14 +38,14 @@ const CartPage = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        {cart.length === 0 ? (
-          <EmptyCartUI />
-        ) : (
+        {Array.isArray(cart) && cart.length > 0 ? (
           <div className="space-y-6">
-            {cart.map((item) => (
-              <CartItem key={item._id} item={item} />
-            ))}
+            {cart.map((item, index) =>
+              item ? <CartItem key={item._id || index} item={item} /> : null
+            )}
           </div>
+        ) : (
+          <EmptyCartUI />
         )}
       </motion.div>
       {/* Cart View */}

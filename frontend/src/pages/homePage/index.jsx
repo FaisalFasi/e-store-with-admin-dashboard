@@ -9,6 +9,7 @@ import { useCategoryStore } from "../../stores/useCategoryStore";
 import { useUserStore } from "../../stores/useUserStore";
 import { useProductStoreData } from "../../hooks/useProductStoreData.js";
 import ProductCard from "../../components/products/ProductCard/ProductCard.jsx";
+import { useProductStore } from "../../stores/useProductStore.js";
 
 const HomePage = () => {
   const {
@@ -18,7 +19,7 @@ const HomePage = () => {
     currentPage,
     productsPerPage,
     setCurrentPage,
-  } = useProductStoreData();
+  } = useProductStore();
   // const { getAllCategories } = useCategoryData();
   const { getAllCategories } = useCategoryStore();
   const { user } = useUserStore();
@@ -30,16 +31,8 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchAllProducts();
+    console.log("Products in store after fetch:", products); // Check if this logs an array
   }, []);
-
-  // Calculate pagination
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(
-    indexOfFirstProduct,
-    indexOfLastProduct
-  );
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   console.log("Products: ", products);
   return (
@@ -63,9 +56,10 @@ const HomePage = () => {
         </motion.p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {products?.map((product, index) => (
-            <ProductCard product={product} key={product._id} index={index} />
-          ))}
+          {Array.isArray(products) &&
+            products.map((product, index) => (
+              <ProductCard product={product} key={product._id} index={index} />
+            ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* {categories.map((category) => (
