@@ -4,9 +4,15 @@ export const getCartProducts = async (req, res) => {
   try {
     const user = req.user;
 
-    const prodducts = await Product.find({
+    if (!user || !user.cartItems || user.cartItems.length === 0) {
+      return res.status(200).json({ cartItems: [] });
+    }
+
+    const productIds = user.cartItems.map((item) => item.productId);
+
+    const products = await Product.find({
       // $in is a MongoDB operator that selects the documents where the value of a field equals any value in the specified array
-      _id: { $in: user.cartItems },
+      _id: { $in: productIds },
     })
       .populate({
         path: "variations", // Field to populate
@@ -17,11 +23,17 @@ export const getCartProducts = async (req, res) => {
         model: "ProductVariation",
       });
 
-    const cartProducts = prodducts.map((product) => {
-      const cartItem = user.cartItems.find((item) => item.id === product.id);
+    // Map products to include cart quantities
+    const cartProducts = products.map((product) => {
+      // Find the matching cart item for this product
+      const cartItem = user.cartItems.find(
+        (item) => item.productId.toString() === product._id.toString()
+      );
+
       return {
         ...product.toJSON(),
-        quantity: cartItem.quantity,
+        quantity: cartItem ? cartItem.quantity : 1, // Default to 1 if somehow not found
+        selectedVariation: cartItem ? cartItem.variationId : null, // Optional: return variation info
       };
     });
 
@@ -92,13 +104,20 @@ export const updateQuantity = async (req, res) => {
     const { quantity } = req.body;
     const user = req.user;
 
+    console.log("User in updateQuantity: ", user);
+    console.log("Product ID in updateQuantity: ", productId);
+    console.log("Quantity in updateQuantity: ", quantity);
+
     const existingProduct = user.cartItems.find(
-      (item) => item.id === productId
+      (item) => item.productId.toString() === productId
     );
+    console.log("productId in productId: ", productId);
 
     if (existingProduct) {
       if (quantity === 0) {
-        user.cartItems = user.cartItems.filter((item) => item.id !== productId);
+        user.cartItems = user.cartItems.filter(
+          (item) => item.productId.toString() !== productId
+        );
         await user.save();
         return res.status(200).json(user.cartItems);
       } else {

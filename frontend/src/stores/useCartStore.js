@@ -69,9 +69,9 @@ export const useCartStore = create((set, get) => ({
       const existingItem = get().cart.find((item) => item._id === product._id);
       const cartQuantity = existingItem ? existingItem.quantity : 0;
 
-      console.log("Existing item:", existingItem);
+      console.log("cartQuantity  :", cartQuantity);
       // Check if the cart quantity exceeds the available stock
-      if (cartQuantity >= availableStock) {
+      if (cartQuantity > availableStock) {
         toast.error(
           `You can't add more of this product. Only ${availableStock} left in stock.`
         );
@@ -102,12 +102,6 @@ export const useCartStore = create((set, get) => ({
                 productId: product._id, // Store ID instead of full product
                 variationId: selectedVariation._id, // Store variation ID
                 quantity: 1,
-                // Optional: Add snapshot data for immediate UI display
-                // productSnapshot: {
-                //   name: product.name,
-                //   price: selectedVariation.price,
-                //   image: selectedVariation.imageUrls[0],
-                // },
               },
             ];
         return { cart: newCart };
@@ -134,6 +128,7 @@ export const useCartStore = create((set, get) => ({
     }
 
     await axiosBaseURL.put(`/cart/${productId}`, { quantity });
+
     set((prevState) => ({
       cart: prevState.cart.map((item) =>
         item._id === productId ? { ...item, quantity } : item
@@ -155,59 +150,56 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
-  calculate_Total_AmountInCart: () => {
-    const { cart, coupon } = get();
-    // reduce the cart items to get the total amount
-    // reduce initial value as arguments and returns a single value like sum of all the items in the array
-    const subTotal = cart.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
-    let total = subTotal;
-
-    if (coupon) {
-      const discount = subTotal * (coupon.discountPercentage / 100);
-      total = subTotal - discount;
-    }
-    set({ subTotal, total });
-  },
-
   calculate_Total_AmountInCart: async () => {
     const { cart, coupon } = get();
+    console.log("Cart in calculate total amount:", cart);
 
     // Fetch detailed product/variation info if it's not already in the cart
     const cartWithDetails = await Promise.all(
       cart.map(async (item) => {
-        if (!item.price) {
+        const variation = item.variations.find(
+          (v) => v._id === item.selectedVariation
+        );
+
+        if (!variation || !variation.productId) {
+          console.log("Missing productId for variation:", variation);
+          return { ...item, price: 0 }; // Avoid making a request with undefined productId
+        }
+
+        if (!variation.price) {
           try {
             const response = await axiosBaseURL.get(
-              `/products/${item.productId}`
+              `/products/${variation.productId}`
             );
             const product = response.data;
             console.log("Product in calculate total amount:", product);
+
             if (!product || !product.variations) {
               console.warn(
-                `Product or variations not found for productId: ${item.productId}`
+                `Product or variations not found for productId: ${variation.productId}`
               );
-              return { ...item, price: 0 }; // Fallback if product/variations are missing
+              return { ...item, price: 0 };
             }
 
-            const variation = product.variations.find(
-              (v) => v._id === item.variationId
+            const selectedVariation = product.variations.find(
+              (v) => v._id === item.selectedVariation
             );
 
             return {
               ...item,
-              price: variation ? variation.price : product.price,
+              price: selectedVariation
+                ? selectedVariation.price
+                : product.price,
             };
           } catch (error) {
             console.error(
-              `Error fetching product details for productId: ${item.productId}`,
+              `Error fetching product details for productId: ${variation.productId}`,
               error
             );
             return { ...item, price: 0 };
           }
         }
+
         return item;
       })
     );

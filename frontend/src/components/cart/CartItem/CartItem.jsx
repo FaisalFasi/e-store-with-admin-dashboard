@@ -2,17 +2,16 @@ import React from "react";
 import { Minus, Plus, Trash } from "lucide-react";
 import { useCartStore } from "../../../stores/useCartStore";
 
-const CartItem = ({ item }) => {
+const CartItem = ({ item, index }) => {
   const { removeFromCart, updateQuantity } = useCartStore();
 
-  console.log("Single Cart Item ------: ", item);
   return (
     <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">
       <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
         <div className="shrink-0 md:order-1">
           <img
             className="h-20 md:h-32 rounded object-cover"
-            src={item?.variations[0]?.imageUrls[0]}
+            src={item?.variations[index]?.imageUrls[index]}
           />
         </div>
         <label className="sr-only">Choose quantity:</label>
@@ -40,7 +39,7 @@ const CartItem = ({ item }) => {
 
           <div className="text-end md:order-4 md:w-32">
             <p className="text-base font-bold text-emerald-400">
-              ${item.price}
+              ${item?.variations[index]?.price}
             </p>
           </div>
         </div>
