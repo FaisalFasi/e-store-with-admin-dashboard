@@ -1,4 +1,5 @@
 import Product from "../models/product.model.js";
+import ProductVariation from "../models/productVariation.model.js";
 
 export const getCartProducts = async (req, res) => {
   try {
@@ -62,6 +63,15 @@ export const addToCart = async (req, res) => {
     }
     console.log("User:", user);
 
+    const productVariation = await ProductVariation.findOne({
+      _id: variationId,
+      productId,
+    });
+
+    if (!productVariation) {
+      return res.status(404).json({ message: "Product variation not found." });
+    }
+
     // Find existing item in the cart based on both productId and variationId
     const existingItem = user.cartItems.find(
       (item) =>
@@ -69,6 +79,19 @@ export const addToCart = async (req, res) => {
         item.variationId.toString() === variationId
     );
 
+    console.log("Product variation in addToCart:", productVariation.quantity);
+    // check total quantity to be added to cart and available stock
+    const totalQuantity = existingItem.quantity + quantity;
+    console.log("Total quantity in addToCart:", totalQuantity);
+
+    // Check if the requested quantity is greater than the available stock
+    if (totalQuantity > productVariation.quantity) {
+      return res.status(400).json({
+        success: false,
+        message: `You can only add up to ${productVariation.quantity} of this variation to your cart.`,
+      });
+    }
+    console.log("Existing item in addToCart:", existingItem);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {

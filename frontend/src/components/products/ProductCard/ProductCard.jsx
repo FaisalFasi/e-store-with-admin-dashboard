@@ -56,8 +56,6 @@ const ProductCard = ({ product, index }) => {
       quantity: selectedVariation.quantity,
       price: _selectedVariation.price,
     });
-
-    toast.success("Product added to cart!");
   };
 
   const handleSizeChange = (event) => {

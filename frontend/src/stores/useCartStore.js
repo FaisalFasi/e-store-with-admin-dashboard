@@ -52,17 +52,8 @@ export const useCartStore = create((set, get) => ({
       toast.error("Error in getCartItems");
     }
   },
-  //  Selected variation
-  //   _id: '67b483900cd42ea8f075559f',
-  //   productId: '67b483900cd42ea8f075559d',
-  //   color: 'red',
-  //   size: '30',
-  //   quantity: 3,
-  //   price: 45,
 
   addToCart: async (product, selectedVariation) => {
-    console.log("Product in addToCart:", product);
-    console.log("Selected variation in addToCart:", selectedVariation);
     try {
       if (!selectedVariation) {
         toast.error("Please select a variation before adding to the cart.");
@@ -86,34 +77,40 @@ export const useCartStore = create((set, get) => ({
             (variation) => variation._id === selectedVariation._id
           )
       );
-      console.log("Existing cart item:", existingCartItem);
+
       const cartVariationQuantity = existingCartItem
         ? existingCartItem.quantity
         : 0;
-      console.log("Cart variation quantity:", cartVariationQuantity);
+
       // Get the actual available stock from the product variation
       const availableStock = productVariation.quantity;
 
       // Calculate remaining available quantity
       const remainingAvailable = availableStock - cartVariationQuantity;
-      if (remainingAvailable < 1) {
-        const errorMessage =
+
+      if (selectedVariation.quantity > remainingAvailable) {
+        toast.error(
           remainingAvailable === 0
             ? "This variation is out of stock."
-            : `You can't add more of this variation. Only ${remainingAvailable} left in stock.`;
-        toast.error(errorMessage);
-        return;
-      }
-      const res = await axiosBaseURL.post("/cart", {
-        productId: product._id,
-        variationId: selectedVariation._id,
-        quantity: selectedVariation.quantity,
-      });
-      if (res.status === 200) {
-        toast.success("Product added to cart!");
+            : `You can't add more of this variation. Only ${remainingAvailable} left in stock.`
+        );
+        return; // Exit here to prevent the else block from executing
       } else {
-        console.error("Failed to add product to cart");
-        return;
+        console.log("Product in addToCart:", product);
+        console.log("selectedVariation.quantity :", selectedVariation.quantity);
+        console.log("selectedVariation._id :", selectedVariation._id);
+        const res = await axiosBaseURL.post("/cart", {
+          productId: product._id,
+          variationId: selectedVariation._id,
+          quantity: selectedVariation.quantity,
+        });
+        console.log("Response in addToCart:", res);
+        if (res.data.success === true) {
+          toast.success("Product added to cart!");
+        } else {
+          console.error("Failed to add product to cart");
+          return;
+        }
       }
 
       // Update the frontend cart state
