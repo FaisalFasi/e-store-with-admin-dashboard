@@ -152,7 +152,7 @@ const SingleProductPage = () => {
         _id: initialVariation._id,
         size: initialVariation.size,
         color: initialVariation.color,
-        quantity: initialVariation.quantity,
+        quantity: 1,
         price: initialVariation.price,
         imageUrls: initialVariation.imageUrls,
       });
@@ -261,10 +261,7 @@ const SingleProductPage = () => {
                     <button
                       key={index}
                       onClick={() => handleSizeSelection(variation.size)}
-                      className={`mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white ${
-                        variation.quantity === 0
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
+                      className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-400 
                       }`}
                       disabled={variation.quantity === 0}
                     >
@@ -312,13 +309,13 @@ const SingleProductPage = () => {
                 <button
                   onClick={() => handleQuantityChange("increment")}
                   className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
-                  disabled={
-                    product.variations.find(
-                      (variation) =>
-                        variation.size === selectedVariation.size &&
-                        variation.color === selectedVariation.color
-                    )?.quantity <= selectedVariation?.quantity
-                  }
+                  // disabled={
+                  //   product.variations.find(
+                  //     (variation) =>
+                  //       variation.size === selectedVariation.size &&
+                  //       variation.color === selectedVariation.color
+                  //   )?.quantity <= selectedVariation?.quantity
+                  // }
                 >
                   +
                 </button>
