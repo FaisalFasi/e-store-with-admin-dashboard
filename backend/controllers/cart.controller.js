@@ -48,9 +48,12 @@ export const getCartProducts = async (req, res) => {
 
 export const addToCart = async (req, res) => {
   try {
-    const { productId, variationId } = req.body; // Get variationId from request
+    const { productId, variationId, quantity } = req.body; // Get variationId from request
 
     const user = req.user;
+
+    console.log("productId in addToCart: ", productId);
+    console.log("variationId in addToCart: ", variationId);
 
     if (!productId || !variationId) {
       return res
@@ -67,17 +70,17 @@ export const addToCart = async (req, res) => {
     );
 
     if (existingItem) {
-      existingItem.quantity += 1;
+      existingItem.quantity += quantity;
     } else {
       user.cartItems.push({
         productId,
         variationId,
-        quantity: 1,
+        quantity: quantity,
       });
     }
 
     await user.save();
-    res.status(200).json(user.cartItems);
+    res.status(200).json({ success: true, cartItem: user.cartItems });
   } catch (error) {
     console.log("Error in addToCart controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });

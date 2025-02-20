@@ -52,43 +52,73 @@ export const useCartStore = create((set, get) => ({
       toast.error("Error in getCartItems");
     }
   },
+  //  Selected variation
+  //   _id: '67b483900cd42ea8f075559f',
+  //   productId: '67b483900cd42ea8f075559d',
+  //   color: 'red',
+  //   size: '30',
+  //   quantity: 3,
+  //   price: 45,
 
   addToCart: async (product, selectedVariation) => {
-    console.log("Product:", product);
-
-    console.log("Selected variation:", selectedVariation);
+    console.log("Product in addToCart:", product);
+    console.log("Selected variation in addToCart:", selectedVariation);
     try {
       if (!selectedVariation) {
         toast.error("Please select a variation before adding to the cart.");
         return;
       }
 
-      const availableStock = selectedVariation.quantity;
+      const productVariation = product.variations.find(
+        (variation) => variation._id === selectedVariation._id
+      );
 
-      // Find the existing item in the cart
-      const existingItem = get().cart.find((item) => item._id === product._id);
-      const cartQuantity = existingItem ? existingItem.quantity : 0;
-
-      console.log("cartQuantity  :", cartQuantity);
-      // Check if the cart quantity exceeds the available stock
-      if (cartQuantity > availableStock) {
-        toast.error(
-          `You can't add more of this product. Only ${availableStock} left in stock.`
-        );
+      if (!productVariation) {
+        toast.error("Selected variation not found in the product.");
         return;
       }
 
-      console.log("Selected variation:", selectedVariation);
-      await axiosBaseURL.post("/cart", {
+      // Find the existing item in the cart based on productId and variationId
+      const existingCartItem = get().cart.find(
+        (item) =>
+          item._id === product._id &&
+          item.variations.some(
+            (variation) => variation._id === selectedVariation._id
+          )
+      );
+      console.log("Existing cart item:", existingCartItem);
+      const cartVariationQuantity = existingCartItem
+        ? existingCartItem.quantity
+        : 0;
+      console.log("Cart variation quantity:", cartVariationQuantity);
+      // Get the actual available stock from the product variation
+      const availableStock = productVariation.quantity;
+
+      // Calculate remaining available quantity
+      const remainingAvailable = availableStock - cartVariationQuantity;
+      if (remainingAvailable < 1) {
+        const errorMessage =
+          remainingAvailable === 0
+            ? "This variation is out of stock."
+            : `You can't add more of this variation. Only ${remainingAvailable} left in stock.`;
+        toast.error(errorMessage);
+        return;
+      }
+      const res = await axiosBaseURL.post("/cart", {
         productId: product._id,
         variationId: selectedVariation._id,
+        quantity: selectedVariation.quantity,
       });
+      if (res.status === 200) {
+        toast.success("Product added to cart!");
+      } else {
+        console.error("Failed to add product to cart");
+        return;
+      }
 
-      toast.success("Product added to cart");
-
-      // Updated frontend addToCart
+      // Update the frontend cart state
       set((prevState) => {
-        const newCart = existingItem
+        const newCart = existingCartItem
           ? prevState.cart.map((item) =>
               item.productId === product._id &&
               item.variationId === selectedVariation._id
@@ -99,8 +129,8 @@ export const useCartStore = create((set, get) => ({
               ...prevState.cart,
               {
                 ...product,
-                productId: product._id, // Store ID instead of full product
-                variationId: selectedVariation._id, // Store variation ID
+                productId: product._id,
+                variationId: selectedVariation._id,
                 quantity: 1,
               },
             ];
@@ -110,7 +140,7 @@ export const useCartStore = create((set, get) => ({
       get().calculate_Total_AmountInCart();
     } catch (error) {
       console.log("Error in addToCart:", error);
-      toast.error(error.response || "An error occurred");
+      toast.error(error.response?.data?.message || "An error occurred");
     }
   },
   removeFromCart: async (productId) => {

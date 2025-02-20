@@ -60,7 +60,6 @@ const ProductCard = ({ product, index }) => {
     toast.success("Product added to cart!");
   };
 
-  console.log("Selected Variation:", selectedVariation);
   const handleSizeChange = (event) => {
     setSelectedVariation({
       ...selectedVariation,
@@ -80,15 +79,15 @@ const ProductCard = ({ product, index }) => {
 
   const handleQuantityChange = (event) => {
     const value = parseInt(event.target.value, 10);
+    console.log("Quantity value:", value);
+
     if (value > 0) {
       setSelectedVariation({
         ...selectedVariation,
         quantity: value,
       });
-      // setQuantity(value);
     }
   };
-  console.log("Product card---:", product);
 
   return (
     <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
@@ -179,6 +178,7 @@ const ProductCard = ({ product, index }) => {
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
             value={selectedVariation?.quantity}
             min="1"
+            max={product?.selectedVariation?.quantity}
             onChange={handleQuantityChange}
           />
         </div>

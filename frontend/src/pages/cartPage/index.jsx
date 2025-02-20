@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useCartStore } from "../../stores/useCartStore";
 import AddressForm from "../../components/checkout/AddressForm/AddressForm";
 import CartView from "../../components/cart/CartView/CartView";
@@ -11,8 +11,12 @@ import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const CartPage = () => {
-  const { cart } = useCartStore();
+  const { cart, getCartItems } = useCartStore();
   const { currentStep, isAddressModalOpen } = useCheckoutStore();
+
+  useEffect(() => {
+    getCartItems();
+  }, []);
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (
