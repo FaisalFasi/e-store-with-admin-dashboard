@@ -20,109 +20,97 @@ const SingleProductPage = () => {
   const { user } = getUserData();
 
   const [selectedImage, setSelectedImage] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
 
-  const [selectedVariation, setSelectedVariation] = useState({
-    _id: "",
-    size: "",
-    color: "",
-    quantity: 1,
-    price: 0,
-    imageUrls: [],
-  });
+  // Extract unique colors from variations
+  const uniqueColors = [...new Set(product?.variations?.map((v) => v.color))];
 
-  console.log("Product: ", product);
+  // Filter sizes based on the selected color
+  const sizesForSelectedColor = selectedColor
+    ? [
+        ...new Set(
+          product?.variations
+            ?.filter((v) => v.color === selectedColor)
+            .map((v) => v.size)
+        ),
+      ]
+    : [];
+
+  // Find the selected variation based on color and size
+  const selectedVariationDetails = product?.variations?.find(
+    (variation) =>
+      variation.color === selectedColor && variation.size === selectedSize
+  );
+
   const handleAddToCart = () => {
     if (!user) {
       toast.error("Please login to add products to cart", { id: "login" });
       return;
     }
-    if (!selectedVariation.size || !selectedVariation.color) {
-      toast.error("Please select both size and color before adding to cart", {
+
+    if (!selectedColor || !selectedSize) {
+      toast.error("Please select both color and size before adding to cart", {
         id: "variation",
       });
       return;
     }
 
-    const _selectedVariation = product.variations.find(
-      (variation) =>
-        variation.size === selectedVariation.size &&
-        variation.color === selectedVariation.color
-    );
-
-    if (!_selectedVariation) {
+    if (!selectedVariationDetails) {
       toast.error("Selected variation is not available", { id: "variation" });
       return;
     }
 
-    if (selectedVariation.quantity > _selectedVariation.quantity) {
+    if (selectedQuantity > selectedVariationDetails.quantity) {
       toast.error(
-        `Only ${_selectedVariation.quantity} items available in stock`,
+        `Only ${selectedVariationDetails.quantity} items available in stock`,
         { id: "quantity" }
       );
       return;
     }
 
+    // Add the selected variation and quantity to the cart
     addToCart(product, {
-      ...selectedVariation,
-      _id: _selectedVariation._id,
-      quantity: selectedVariation.quantity,
-      price: _selectedVariation.price,
+      ...selectedVariationDetails,
+      quantity: selectedQuantity,
     });
   };
 
-  const handleSizeSelection = (size) => {
-    const variation = product.variations.find(
-      (v) => v.size === size && v.color === selectedVariation.color
-    );
+  const handleColorChange = (color) => {
+    setSelectedColor(color);
+    setSelectedSize(""); // Reset size when color changes
+    setSelectedQuantity(1); // Reset quantity when color changes
 
-    if (variation) {
-      setSelectedVariation({
-        _id: variation._id,
-        size: variation.size,
-        color: variation.color,
-        quantity: 1,
-        price: variation.price,
-        imageUrls: variation.imageUrls,
-      });
-      setSelectedImage(variation.imageUrls[0]);
+    // Update images to the first variation of the selected color
+    const firstVariationForColor = product?.variations?.find(
+      (v) => v.color === color
+    );
+    if (firstVariationForColor) {
+      setSelectedImage(firstVariationForColor.imageUrls[0]);
     }
   };
 
-  const handleColorSelection = (color) => {
-    const variation = product.variations.find(
-      (v) => v.color === color && v.size === selectedVariation.size
-    );
+  const handleSizeChange = (size) => {
+    setSelectedSize(size);
 
-    if (variation) {
-      setSelectedVariation({
-        _id: variation._id,
-        size: variation.size,
-        color: variation.color,
-        quantity: 1,
-        price: variation.price,
-        imageUrls: variation.imageUrls,
-      });
-      setSelectedImage(variation.imageUrls[0]);
+    // Update images to the selected variation
+    const selectedVariation = product?.variations?.find(
+      (v) => v.color === selectedColor && v.size === size
+    );
+    if (selectedVariation) {
+      setSelectedImage(selectedVariation.imageUrls[0]);
     }
   };
+
   const handleQuantityChange = (type) => {
-    const variationStock =
-      product.variations.find(
-        (variation) =>
-          variation.size === selectedVariation.size &&
-          variation.color === selectedVariation.color
-      )?.quantity || 0;
-
-    if (type === "increment" && selectedVariation.quantity < variationStock) {
-      setSelectedVariation((prev) => ({
-        ...prev,
-        quantity: prev.quantity + 1,
-      }));
-    } else if (type === "decrement" && selectedVariation.quantity > 1) {
-      setSelectedVariation((prev) => ({
-        ...prev,
-        quantity: prev.quantity - 1,
-      }));
+    if (
+      type === "increment" &&
+      selectedQuantity < selectedVariationDetails.quantity
+    ) {
+      setSelectedQuantity((prev) => prev + 1);
+    } else if (type === "decrement" && selectedQuantity > 1) {
+      setSelectedQuantity((prev) => prev - 1);
     }
   };
 
@@ -138,7 +126,6 @@ const SingleProductPage = () => {
 
   useEffect(() => {
     fetchProductById(productId);
-    console.log("Product product: ", product);
   }, [productId, fetchProductById]);
 
   useEffect(() => {
@@ -147,15 +134,10 @@ const SingleProductPage = () => {
       const initialVariation =
         product.defaultVariation || product.variations[0];
 
-      setSelectedVariation({
-        ...selectedVariation,
-        _id: initialVariation._id,
-        size: initialVariation.size,
-        color: initialVariation.color,
-        quantity: 1,
-        price: initialVariation.price,
-        imageUrls: initialVariation.imageUrls,
-      });
+      setSelectedColor(initialVariation.color);
+      setSelectedSize(initialVariation.size);
+      setSelectedQuantity(1);
+      setSelectedImage(initialVariation.imageUrls[0]);
     }
   }, [product]);
 
@@ -179,31 +161,23 @@ const SingleProductPage = () => {
           {/* Left Section - Images */}
           <div className="flex flex-col-reverse md:flex-row gap-4 items-center">
             <div className="max-w-full h-full flex items-center justify-start py-2 md:py-6 overflow-x-scroll">
-              <div className="w-fit flex gap-4">
-                {product?.variations?.map((variation, index) => (
-                  // Loop through imageUrls in each variation
-                  <div
+              <div className="w-fit flex md:flex-col gap-4">
+                {selectedVariationDetails?.imageUrls?.map((imageUrl, index) => (
+                  <button
                     key={index}
-                    className=" md:h-[400px] flex flex-row md:flex-col gap-4 overflow-hidden overflow-x-auto md:overflow-y-auto"
+                    onClick={() => setSelectedImage(imageUrl)}
+                    className={`flex w-fit border-4 transition rounded-sm ${
+                      selectedImage === imageUrl
+                        ? "border-emerald-400"
+                        : "border-gray-600"
+                    }`}
                   >
-                    {variation?.imageUrls?.map((imageUrl, imgIndex) => (
-                      <button
-                        key={imgIndex}
-                        onClick={() => setSelectedImage(imageUrl)}
-                        className={`flex w-fit border-4 transition rounded-sm ${
-                          selectedImage === imageUrl
-                            ? "border-emerald-400"
-                            : "border-gray-600"
-                        }`}
-                      >
-                        <img
-                          src={imageUrl}
-                          alt={`Thumbnail ${index + 1}-${imgIndex + 1}`}
-                          className="w-16 h-16 object-cover rounded-sm"
-                        />
-                      </button>
-                    ))}
-                  </div>
+                    <img
+                      src={imageUrl}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-16 h-16 object-cover rounded-sm"
+                    />
+                  </button>
                 ))}
               </div>
             </div>
@@ -242,96 +216,102 @@ const SingleProductPage = () => {
               transition={{ duration: 0.8 }}
               className="text-emerald-400 text-2xl lg:text-3xl font-bold mb-6"
             >
-              ${selectedVariation?.price || product?.defaultVariation?.price}
+              $
+              {selectedVariationDetails?.price ||
+                product?.defaultVariation?.price}
             </motion.div>
 
             {/* Stock Availability */}
             <p className="text-gray-300 mb-6">
-              {selectedVariation?.quantity > 0
-                ? `In Stock: ${selectedVariation?.quantity}`
+              {selectedVariationDetails?.quantity > 0
+                ? `In Stock: ${selectedVariationDetails?.quantity}`
                 : "Out of Stock"}
             </p>
 
-            {/* Size Selection */}
-            {product.variations && (
+            {/* Color Selection */}
+            <div className="bg-gray-800 p-6 rounded-lg mb-6">
+              <p className="text-gray-300 font-semibold mb-4">Select Color:</p>
+              <div className="flex flex-wrap gap-3">
+                {uniqueColors.map((color, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleColorChange(color)}
+                    className={`w-10 h-10 rounded-full border-2 transition-all ${
+                      color === selectedColor
+                        ? "border-emerald-400 scale-110"
+                        : "border-gray-600 hover:border-gray-500"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Size Selection (only shown if a color is selected) */}
+            {selectedColor && (
               <div className="mb-6">
                 <p className="text-gray-300 font-semibold mb-2">Select Size:</p>
                 <div className="flex flex-wrap gap-2">
-                  {product.variations.map((variation, index) => (
+                  {sizesForSelectedColor.map((size, index) => (
                     <button
                       key={index}
-                      onClick={() => handleSizeSelection(variation.size)}
-                      className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-400 
+                      onClick={() => handleSizeChange(size)}
+                      className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-400 ${
+                        size === selectedSize ? "bg-emerald-400 text-white" : ""
                       }`}
-                      disabled={variation.quantity === 0}
+                      disabled={
+                        product.variations.find(
+                          (v) => v.color === selectedColor && v.size === size
+                        )?.quantity === 0
+                      }
                     >
-                      {variation.size}
+                      {size}
                     </button>
                   ))}
                 </div>
               </div>
             )}
-            {/* Color Selection */}
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <p className="text-gray-300 font-semibold mb-4">Select Color:</p>
-              <div className="flex flex-wrap gap-3">
-                {product?.variations &&
-                  [...new Set(product.variations.map((v) => v.color))].map(
-                    (color, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleColorSelection(color)}
-                        className={`w-10 h-10 rounded-full border-2 transition-all ${
-                          color === selectedVariation.color
-                            ? "border-emerald-400 scale-110"
-                            : "border-gray-600 hover:border-gray-500"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    )
-                  )}
+
+            {/* Quantity Selection (only shown if a size is selected) */}
+            {selectedSize && (
+              <div className="mb-6">
+                <p className="text-gray-300 font-semibold mb-2">Quantity:</p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleQuantityChange("decrement")}
+                    className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
+                    disabled={selectedQuantity <= 1}
+                  >
+                    -
+                  </button>
+                  <span className="text-lg font-semibold w-8 text-center">
+                    {selectedQuantity}
+                  </span>
+                  <button
+                    onClick={() => handleQuantityChange("increment")}
+                    className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
+                    disabled={
+                      selectedQuantity >= selectedVariationDetails?.quantity
+                    }
+                  >
+                    +
+                  </button>
+                </div>
+                {selectedVariationDetails?.quantity > 0 && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    Max quantity: {selectedVariationDetails?.quantity}
+                  </p>
+                )}
               </div>
-            </div>
-            {/* Quantity Selection */}
-            <div className="mb-6">
-              <p className="text-gray-300 font-semibold mb-2">Quantity:</p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleQuantityChange("decrement")}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
-                  disabled={selectedVariation.quantity <= 1}
-                >
-                  -
-                </button>
-                <span className="text-lg font-semibold w-8 text-center">
-                  {selectedVariation.quantity}
-                </span>
-                <button
-                  onClick={() => handleQuantityChange("increment")}
-                  className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
-                  // disabled={
-                  //   product.variations.find(
-                  //     (variation) =>
-                  //       variation.size === selectedVariation.size &&
-                  //       variation.color === selectedVariation.color
-                  //   )?.quantity <= selectedVariation?.quantity
-                  // }
-                >
-                  +
-                </button>
-              </div>
-              {selectedVariation?.quantity > 0 && (
-                <p className="text-sm text-gray-400 mt-2">
-                  Max quantity: {selectedVariation?.quantity}
-                </p>
-              )}
-            </div>
+            )}
+
+            {/* Add to Cart and Wishlist Buttons */}
             <div className="flex items-center gap-4">
-              {/* Add to Cart and Wishlist Buttons */}
               <Button
                 isBG={true}
                 className="self-start mb-4"
                 onClick={handleAddToCart}
+                disabled={!selectedColor || !selectedSize}
               >
                 Add to Cart
               </Button>

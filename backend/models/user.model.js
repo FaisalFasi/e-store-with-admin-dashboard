@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
         },
         variationId: {
           type: mongoose.Schema.Types.ObjectId,
+          ref: "ProductVariation",
           required: true,
         },
         quantity: {

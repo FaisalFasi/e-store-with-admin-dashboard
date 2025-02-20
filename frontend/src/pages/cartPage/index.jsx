@@ -17,6 +17,7 @@ const CartPage = () => {
   useEffect(() => {
     getCartItems();
   }, []);
+  console.log("Cart items in CartPage:", cart);
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (
@@ -43,11 +44,20 @@ const CartPage = () => {
       >
         {Array.isArray(cart) && cart.length > 0 ? (
           <div className="space-y-6">
-            {cart.map((item, index) =>
-              item ? (
-                <CartItem key={item._id || index} item={item} index={index} />
-              ) : null
-            )}
+            {cart.map((item, index) => {
+              if (!item) return null;
+
+              // Generate a unique key using product ID and variation ID
+              const uniqueKey = `${item._id}-${item.variations[0]._id}`;
+
+              return (
+                <CartItem
+                  key={uniqueKey} // Unique key
+                  item={item}
+                  index={index}
+                />
+              );
+            })}
           </div>
         ) : (
           <EmptyCartUI />

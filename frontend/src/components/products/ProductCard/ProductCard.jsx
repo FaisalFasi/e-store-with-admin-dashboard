@@ -9,13 +9,31 @@ const ProductCard = ({ product, index }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
 
-  const [selectedVariation, setSelectedVariation] = useState({
-    _id: "",
-    size: "",
-    color: "",
-    quantity: 1,
-    price: 0,
-  });
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+
+  // Extract unique colors from variations
+  const uniqueColors = [
+    ...new Set(product?.variations?.map((v) => v.color) || []),
+  ];
+
+  // Filter sizes based on the selected color
+  const sizesForSelectedColor = selectedColor
+    ? [
+        ...new Set(
+          product.variations
+            .filter((v) => v.color === selectedColor)
+            .map((v) => v.size)
+        ),
+      ]
+    : [];
+
+  // Find the selected variation based on color and size
+  const selectedVariationDetails = product?.variations?.find(
+    (variation) =>
+      variation.color === selectedColor && variation.size === selectedSize
+  );
 
   const handleAddToCart = () => {
     if (!user) {
@@ -23,27 +41,21 @@ const ProductCard = ({ product, index }) => {
       return;
     }
 
-    if (!selectedVariation.size || !selectedVariation.color) {
-      toast.error("Please select both size and color before adding to cart", {
+    if (!selectedColor || !selectedSize) {
+      toast.error("Please select both color and size before adding to cart", {
         id: "variation",
       });
       return;
     }
 
-    const _selectedVariation = product.variations.find(
-      (variation) =>
-        variation.size === selectedVariation.size &&
-        variation.color === selectedVariation.color
-    );
-
-    if (!_selectedVariation) {
+    if (!selectedVariationDetails) {
       toast.error("Selected variation is not available", { id: "variation" });
       return;
     }
 
-    if (selectedVariation.quantity > _selectedVariation.quantity) {
+    if (selectedQuantity > selectedVariationDetails.quantity) {
       toast.error(
-        `Only ${_selectedVariation.quantity} items available in stock`,
+        `Only ${selectedVariationDetails.quantity} items available in stock`,
         { id: "quantity" }
       );
       return;
@@ -51,39 +63,27 @@ const ProductCard = ({ product, index }) => {
 
     // Add the selected variation and quantity to the cart
     addToCart(product, {
-      ..._selectedVariation,
-      _id: _selectedVariation._id,
-      quantity: selectedVariation.quantity,
-      price: _selectedVariation.price,
+      ...selectedVariationDetails,
+      quantity: selectedQuantity,
     });
-  };
-
-  const handleSizeChange = (event) => {
-    setSelectedVariation({
-      ...selectedVariation,
-      size: event.target.value,
-    });
-
-    // setSelectedSize(event.target.value);
   };
 
   const handleColorChange = (event) => {
-    setSelectedVariation({
-      ...selectedVariation,
-      color: event.target.value,
-    });
-    // setSelectedColor(event.target.value);
+    const color = event.target.value;
+    setSelectedColor(color);
+    setSelectedSize(""); // Reset size when color changes
+    setSelectedQuantity(1); // Reset quantity when color changes
+  };
+
+  const handleSizeChange = (event) => {
+    const size = event.target.value;
+    setSelectedSize(size);
   };
 
   const handleQuantityChange = (event) => {
     const value = parseInt(event.target.value, 10);
-    console.log("Quantity value:", value);
-
     if (value > 0) {
-      setSelectedVariation({
-        ...selectedVariation,
-        quantity: value,
-      });
+      setSelectedQuantity(value);
     }
   };
 
@@ -108,35 +108,16 @@ const ProductCard = ({ product, index }) => {
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-emerald-400">
-              ${product?.defaultVariation?.price}
+              $
+              {selectedVariationDetails?.price ||
+                product?.defaultVariation?.price}
             </span>
           </p>
           <p className="text-sm text-gray-400">
-            In Stock: {product?.defaultVariation?.quantity}
+            In Stock:{" "}
+            {selectedVariationDetails?.quantity ||
+              product?.defaultVariation?.quantity}
           </p>
-        </div>
-
-        {/* Size Selection Dropdown */}
-        <div className="mb-4">
-          <label
-            htmlFor="size"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Select Size
-          </label>
-          <select
-            id="size"
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
-            onChange={handleSizeChange}
-            value={selectedVariation.size}
-          >
-            <option value="">Choose a size</option>
-            {product?.variations?.map((variation, i) => (
-              <option key={i} value={variation?.size}>
-                {variation?.size}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Color Selection Dropdown */}
@@ -151,42 +132,69 @@ const ProductCard = ({ product, index }) => {
             id="color"
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
             onChange={handleColorChange}
-            value={selectedVariation.color}
+            value={selectedColor}
           >
             <option value="">Choose a color</option>
-            {product?.variations?.map((variation, i) => (
-              <option key={i} value={variation?.color}>
-                {variation?.color}
+            {uniqueColors.map((color, i) => (
+              <option key={i} value={color}>
+                {color}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Quantity Input */}
-        <div className="mb-4">
-          <label
-            htmlFor="quantity"
-            className="block text-sm font-medium text-gray-300"
-          >
-            Quantity
-          </label>
-          <input
-            type="number"
-            id="quantity"
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
-            value={selectedVariation?.quantity}
-            min="1"
-            max={product?.selectedVariation?.quantity}
-            onChange={handleQuantityChange}
-          />
-        </div>
+        {/* Size Selection Dropdown (only shown if a color is selected) */}
+        {selectedColor && (
+          <div className="mb-4">
+            <label
+              htmlFor="size"
+              className="block text-sm font-medium text-gray-300"
+            >
+              Select Size
+            </label>
+            <select
+              id="size"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+              onChange={handleSizeChange}
+              value={selectedSize}
+            >
+              <option value="">Choose a size</option>
+              {sizesForSelectedColor.map((size, i) => (
+                <option key={i} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Quantity Input (only shown if a size is selected) */}
+        {selectedSize && (
+          <div className="mb-4">
+            <label
+              htmlFor="quantity"
+              className="block text-sm font-medium text-gray-300"
+            >
+              Quantity
+            </label>
+            <input
+              type="number"
+              id="quantity"
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+              value={selectedQuantity}
+              min="1"
+              max={selectedVariationDetails?.quantity}
+              onChange={handleQuantityChange}
+            />
+          </div>
+        )}
 
         {/* Add to Cart Button */}
         <button
           className="flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium
        text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleAddToCart}
-          disabled={!selectedVariation.size || !selectedVariation.color}
+          disabled={!selectedColor || !selectedSize}
         >
           <ShoppingCart size={22} className="mr-2" />
           Add to cart

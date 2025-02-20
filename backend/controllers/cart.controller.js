@@ -9,34 +9,47 @@ export const getCartProducts = async (req, res) => {
       return res.status(200).json({ cartItems: [] });
     }
 
-    const productIds = user.cartItems.map((item) => item.productId);
-
+    // Fetch all products referenced in the cart
     const products = await Product.find({
-      // $in is a MongoDB operator that selects the documents where the value of a field equals any value in the specified array
-      _id: { $in: productIds },
+      _id: { $in: user.cartItems.map((item) => item.productId) },
     })
       .populate({
-        path: "variations", // Field to populate
-        model: "ProductVariation", // Name of the model you want to populate with
+        path: "variations", // Populate the variations array
+        model: "ProductVariation",
       })
       .populate({
-        path: "defaultVariation",
+        path: "defaultVariation", // Populate the default variation
         model: "ProductVariation",
       });
 
-    // Map products to include cart quantities
-    const cartProducts = products.map((product) => {
-      // Find the matching cart item for this product
-      const cartItem = user.cartItems.find(
-        (item) => item.productId.toString() === product._id.toString()
-      );
+    // Map each cart item to include product and variation details
+    const cartProducts = user.cartItems
+      .map((cartItem) => {
+        // Find the product associated with this cart item
+        const product = products.find((p) => p._id.equals(cartItem.productId));
 
-      return {
-        ...product.toJSON(),
-        quantity: cartItem ? cartItem.quantity : 1, // Default to 1 if somehow not found
-        selectedVariation: cartItem ? cartItem.variationId : null, // Optional: return variation info
-      };
-    });
+        if (!product) {
+          return null; // Skip if product not found
+        }
+
+        // Find the selected variation for this cart item
+        const variation = product.variations.find((v) =>
+          v._id.equals(cartItem.variationId)
+        );
+
+        if (!variation) {
+          return null; // Skip if variation not found
+        }
+
+        // Return the product with only the selected variation
+        return {
+          ...product.toJSON(), // Include product details
+          variations: [variation], // Include only the selected variation
+          quantity: cartItem.quantity, // Include the quantity from the cart
+          selectedVariation: variation._id, // Include the selected variation ID
+        };
+      })
+      .filter(Boolean); // Remove null values
 
     res.status(200).json({ cartItems: cartProducts });
   } catch (err) {
@@ -46,7 +59,6 @@ export const getCartProducts = async (req, res) => {
       .json({ message: "Internal Server Error", err: err.message });
   }
 };
-
 export const addToCart = async (req, res) => {
   try {
     const { productId, variationId, quantity } = req.body; // Get variationId from request
@@ -55,6 +67,7 @@ export const addToCart = async (req, res) => {
 
     console.log("productId in addToCart: ", productId);
     console.log("variationId in addToCart: ", variationId);
+    console.log("quantity in addToCart: ", quantity);
 
     if (!productId || !variationId) {
       return res
@@ -78,10 +91,12 @@ export const addToCart = async (req, res) => {
         item.productId.toString() === productId &&
         item.variationId.toString() === variationId
     );
-
+    console.log("Existing item in addToCart:", existingItem);
     console.log("Product variation in addToCart:", productVariation.quantity);
     // check total quantity to be added to cart and available stock
-    const totalQuantity = existingItem.quantity + quantity;
+    const totalQuantity = existingItem
+      ? existingItem?.quantity + quantity
+      : quantity;
     console.log("Total quantity in addToCart:", totalQuantity);
 
     // Check if the requested quantity is greater than the available stock
@@ -105,18 +120,37 @@ export const addToCart = async (req, res) => {
     await user.save();
     res.status(200).json({ success: true, cartItem: user.cartItems });
   } catch (error) {
-    console.log("Error in addToCart controller", error.message);
+    console.log("Error in addToCart controller", error.message, error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 export const removeAllFromCart = async (req, res) => {
   try {
-    const { productId } = req.body;
+    const { productId, variationId } = req.body; // Include variationId
     const user = req.user;
 
-    if (!productId) user.cartItems = [];
-    else
-      user.cartItems = user.cartItems.filter((item) => item.id !== productId);
+    console.log("User in removeAllFromCart: ", user);
+    console.log("Product ID in removeAllFromCart: ", productId);
+    console.log("Variation ID in removeAllFromCart: ", variationId);
+
+    if (!productId) {
+      // If no productId is provided, clear the entire cart
+      user.cartItems = [];
+    } else if (!variationId) {
+      // If no variationId is provided, remove all items with the given productId
+      user.cartItems = user.cartItems.filter(
+        (item) => item.productId.toString() !== productId
+      );
+    } else {
+      // Remove the specific variation of the product
+      user.cartItems = user.cartItems.filter(
+        (item) =>
+          !(
+            item.productId.toString() === productId &&
+            item.variationId.toString() === variationId
+          )
+      );
+    }
 
     await user.save();
     res.status(200).json(user.cartItems);
@@ -124,33 +158,42 @@ export const removeAllFromCart = async (req, res) => {
     res.status(500).json(err);
   }
 };
+
 export const updateQuantity = async (req, res) => {
   try {
     const { id: productId } = req.params;
-    const { quantity } = req.body;
+    const { variationId, quantity } = req.body; // Include variationId
     const user = req.user;
 
     console.log("User in updateQuantity: ", user);
     console.log("Product ID in updateQuantity: ", productId);
+    console.log("Variation ID in updateQuantity: ", variationId);
     console.log("Quantity in updateQuantity: ", quantity);
 
+    // Find the specific variation of the product in the cart
     const existingProduct = user.cartItems.find(
-      (item) => item.productId.toString() === productId
+      (item) =>
+        item.productId.toString() === productId &&
+        item.variationId.toString() === variationId
     );
-    console.log("productId in productId: ", productId);
 
     if (existingProduct) {
       if (quantity === 0) {
+        // If quantity is 0, remove the item from the cart
         user.cartItems = user.cartItems.filter(
-          (item) => item.productId.toString() !== productId
+          (item) =>
+            !(
+              item.productId.toString() === productId &&
+              item.variationId.toString() === variationId
+            )
         );
-        await user.save();
-        return res.status(200).json(user.cartItems);
       } else {
+        // Update the quantity of the specific variation
         existingProduct.quantity = quantity;
-        await user.save();
-        return res.status(200).json(user.cartItems);
       }
+
+      await user.save();
+      return res.status(200).json(user.cartItems);
     } else {
       return res.status(404).json({ message: "Product not found in cart" });
     }
