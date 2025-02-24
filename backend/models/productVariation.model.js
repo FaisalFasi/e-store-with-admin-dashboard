@@ -1,5 +1,29 @@
 import mongoose from "mongoose";
 
+const sizeSchema = new mongoose.Schema({
+  value: { type: String, required: true }, // Can be "S", "M", "L", "XL", or "30", "34", "36", etc.
+  quantity: { type: Number, required: true, min: 0 },
+  price: { type: Number, required: true }, // Price for this specific size
+  sku: { type: String, required: true, unique: true }, // Unique SKU for this size
+  barcode: { type: String, unique: true, sparse: true }, // Unique barcode for this size
+  isInStock: {
+    type: Boolean,
+    default: function () {
+      return this.quantity > 0;
+    },
+  },
+  imageUrls: { type: [String] }, // Optional: Images specific to this size
+});
+
+// Schema for color variations
+const colorSchema = new mongoose.Schema({
+  name: { type: String, required: true }, // Example: "Red", "Blue"
+  sizes: [sizeSchema], // Array of sizes for this color
+  imageUrls: { type: [String], required: true }, // Images specific to this color
+  isDefault: { type: Boolean, default: false }, // Is this the default color?
+});
+
+// Schema for product variations
 const variationSchema = new mongoose.Schema(
   {
     productId: {
@@ -7,55 +31,24 @@ const variationSchema = new mongoose.Schema(
       ref: "Product", // Reference to the Product model
       required: true,
     },
-    color: {
-      type: String, // Example: "Red", "Blue"
-      required: true,
-    },
-    size: {
-      type: String, // Example: "S", "M", "L", "XL"
-      required: true,
-    },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    price: {
-      type: Number, // Price for this specific variation
-      required: true,
-    },
-    // stock keeping unit is used to uniquely identify each variation
-    sku: {
-      type: String, // Unique identifier for this variation
-      required: true,
-      unique: true,
-    },
-    imageUrls: {
-      type: [String], // Array of image URLs
-      required: true,
-    },
-    isInStock: {
-      type: Boolean,
-      default: function () {
-        return this.quantity > 0;
-      },
-    },
-    barcode: {
-      type: String, // Unique barcode for this variation
-      unique: true,
-      sparse: true, // Allow null values if not all variations have barcodes
-    },
-    isDefault: {
-      type: Boolean,
-      default: false,
+    colors: [colorSchema], // Array of colors for this product
+    metadata: {
+      type: Map, // Flexible key-value pairs for additional attributes (e.g., material, weight)
+      of: String,
     },
   },
   { timestamps: true }
 );
+
+// Middleware to generate SKUs for sizes
 variationSchema.pre("save", function (next) {
-  if (!this.sku) {
-    this.sku = `${this.productId}-${this._id}`;
-  }
+  this.colors.forEach((color) => {
+    color.sizes.forEach((size) => {
+      if (!size.sku) {
+        size.sku = `${this.productId}-${color.name}-${size.value}`;
+      }
+    });
+  });
   next();
 });
 

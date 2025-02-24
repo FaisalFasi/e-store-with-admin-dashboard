@@ -5,12 +5,18 @@ const productSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
+      trim: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
     description: {
       type: String,
       required: false,
       maxLength: 2000,
-      // Custom error message for exceeding max length
       validate: {
         validator: function (v) {
           return v.length <= 2000;
@@ -38,7 +44,7 @@ const productSchema = new mongoose.Schema(
     },
     defaultVariation: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ProductVariation", // Reference to the Variation model
+      ref: "ProductVariation",
     },
     variations: [
       {
@@ -46,30 +52,65 @@ const productSchema = new mongoose.Schema(
         ref: "ProductVariation",
       },
     ],
-
     tags: {
-      type: [String], // Example: ["electronics", "smartphone", "gaming"]
+      type: [String],
+      validate: {
+        validator: function (v) {
+          return v.length <= 10; // Limit the number of tags to 10
+        },
+        message: "Cannot have more than 10 tags!",
+      },
     },
     additionalDetails: {
       type: Map,
-      of: String, // Flexible key-value pair for additional product info like brand, material
+      of: String, // Flexible key-value pairs for additional product info
     },
     isFeatured: {
       type: Boolean,
       default: false,
     },
-    discount: {
-      type: Number, // Discount percentage (e.g., 10 for 10%)
-      min: 0,
-      max: 100,
-    },
-    discountExpiry: {
-      type: Date, // Optional expiry date for the discount
-    },
+    discounts: [
+      {
+        type: {
+          type: String,
+          enum: ["percentage", "fixed"], // Discount type (percentage or fixed amount)
+          required: true,
+        },
+        value: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        expiry: {
+          type: Date, // Optional expiry date for the discount
+        },
+      },
+    ],
     status: {
       type: String,
-      enum: ["draft", "active", "inactive"],
+      enum: ["draft", "active", "inactive", "archived"], // Added "archived" status
       default: "draft",
+    },
+    metaTitle: {
+      type: String,
+      trim: true,
+    },
+    metaDescription: {
+      type: String,
+      trim: true,
+    },
+    ratings: {
+      average: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5,
+      },
+      count: {
+        type: Number,
+        default: 0,
+        min: 0,
+      },
     },
   },
   { timestamps: true }
@@ -90,14 +131,16 @@ productSchema.pre(
   }
 );
 
+// Indexes for common queries
 productSchema.index({ createdAt: -1 });
 productSchema.index({ name: "text", description: "text" });
 productSchema.index({ category: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ tags: 1 });
-productSchema.index({ "category.parent": 1 });
-productSchema.index({ "category.child": 1 });
-productSchema.index({ "category.grandchild": 1 });
+productSchema.index({ slug: 1 }, { unique: true });
+productSchema.index({ "discounts.expiry": 1 });
+productSchema.index({ status: 1 });
+productSchema.index({ "ratings.average": -1 });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;
