@@ -112,12 +112,6 @@ const productSchema = new mongoose.Schema(
         min: 0,
       },
     },
-    reviews: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Review", // Reference to the Review model
-      },
-    ],
   },
   { timestamps: true }
 );
@@ -128,9 +122,8 @@ productSchema.pre(
   { document: true, query: false },
   async function (next) {
     try {
-      console.log(`Deleting variations and reviews for product: ${this._id}`);
+      console.log(`Deleting variations for product: ${this._id}`);
       await ProductVariation.deleteMany({ productId: this._id });
-      await Review.deleteMany({ productId: this._id });
       next();
     } catch (error) {
       next(error);
@@ -147,7 +140,6 @@ productSchema.index({ tags: 1 });
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ "discounts.expiry": 1 });
 productSchema.index({ status: 1 });
-productSchema.index({ "ratings.average": -1 });
 productSchema.index({ "ratings.average": -1 });
 
 const Product = mongoose.model("Product", productSchema);
