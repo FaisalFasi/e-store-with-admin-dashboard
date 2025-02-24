@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
+    // Basic Product Information
     name: {
       type: String,
       required: true,
@@ -25,6 +26,7 @@ const productSchema = new mongoose.Schema(
           `${props.value} exceeds the limit of 2000 characters!`,
       },
     },
+
     category: {
       parent: {
         type: mongoose.Schema.Types.ObjectId,
@@ -42,6 +44,8 @@ const productSchema = new mongoose.Schema(
         required: false,
       },
     },
+
+    // Variations (Sizes, Colors, etc.)
     defaultVariation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ProductVariation",
@@ -52,6 +56,8 @@ const productSchema = new mongoose.Schema(
         ref: "ProductVariation",
       },
     ],
+
+    // Tags and Metadata
     tags: {
       type: [String],
       validate: {
@@ -63,11 +69,14 @@ const productSchema = new mongoose.Schema(
     },
     additionalDetails: {
       type: Map,
-      of: String, // Flexible key-value pairs for additional product info
+      of: mongoose.Schema.Types.Mixed, // Flexible key-value pairs for additional product info
     },
-    isFeatured: {
-      type: Boolean,
-      default: false,
+
+    // Pricing and Discounts
+    basePrice: {
+      type: Number,
+      required: true,
+      min: 0,
     },
     discounts: [
       {
@@ -86,10 +95,23 @@ const productSchema = new mongoose.Schema(
         },
       },
     ],
+
+    // Inventory and Status
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
     status: {
       type: String,
       enum: ["draft", "active", "inactive", "archived"], // Added "archived" status
       default: "draft",
+    },
+
+    // SEO and Marketing
+    isFeatured: {
+      type: Boolean,
+      default: false,
     },
     metaTitle: {
       type: String,
@@ -99,6 +121,14 @@ const productSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+
+    // Reviews and Ratings
+    reviews: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Review",
+      },
+    ],
     ratings: {
       average: {
         type: Number,
@@ -112,17 +142,21 @@ const productSchema = new mongoose.Schema(
         min: 0,
       },
     },
-    reviews: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Review", // Reference to the Review model
-      },
-    ],
+
+    // Timestamps
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
 
-// Middleware to delete variations when a product is deleted
+// Middleware to delete variations and reviews when a product is deleted
 productSchema.pre(
   "deleteOne",
   { document: true, query: false },
@@ -141,13 +175,12 @@ productSchema.pre(
 // Indexes for common queries
 productSchema.index({ createdAt: -1 });
 productSchema.index({ name: "text", description: "text" });
-productSchema.index({ category: 1 });
+productSchema.index({ categories: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ tags: 1 });
 productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ "discounts.expiry": 1 });
 productSchema.index({ status: 1 });
-productSchema.index({ "ratings.average": -1 });
 productSchema.index({ "ratings.average": -1 });
 
 const Product = mongoose.model("Product", productSchema);

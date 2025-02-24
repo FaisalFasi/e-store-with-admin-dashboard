@@ -51,6 +51,9 @@ variationSchema.pre("save", function (next) {
   });
   next();
 });
+variationSchema.index({ productId: 1 });
+variationSchema.index({ "colors.name": 1 });
+variationSchema.index({ "colors.sizes.sku": 1 }, { unique: true });
 
 const ProductVariation = mongoose.model("ProductVariation", variationSchema);
 export default ProductVariation;
