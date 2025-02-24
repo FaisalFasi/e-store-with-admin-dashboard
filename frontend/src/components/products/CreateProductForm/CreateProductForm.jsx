@@ -25,6 +25,11 @@ const CreateProductForm = () => {
     removeVariation,
     removeImage,
     initailProductState,
+    handleSizeChange,
+    addSizeToColor,
+    removeSizeFromColor,
+    handleSizeImageChange,
+    removeSizeImage,
   } = useProductForm();
 
   const inputFields = [
@@ -45,6 +50,34 @@ const CreateProductForm = () => {
       rows: 3,
       required: false,
     },
+    {
+      name: "basePrice",
+      label: "Base Price",
+      type: "number",
+      value: newProduct.basePrice,
+      placeholder: "Enter base price",
+      required: true,
+    },
+    {
+      name: "stock",
+      label: "Initial Stock",
+      type: "number",
+      value: newProduct.stock,
+      placeholder: "Enter initial stock",
+      required: true,
+    },
+    {
+      name: "tags",
+      label: "Tags (comma separated)",
+      type: "text",
+      value: newProduct.tags?.join(", ") || "", // Keep it as a string
+      placeholder: "tag1, tag2, tag3",
+      required: false,
+      onChange: (e) => {
+        handleInputChange("tags", e.target.value); // Store as raw string while typing
+      },
+    },
+
     {
       name: "category",
       label: "Category", // Add asterisk for required field
@@ -124,46 +157,75 @@ const CreateProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    console.log("----New product --- :", newProduct);
-    for (const key in newProduct) {
-      if (key === "variations") {
-        const formattedVariations = await Promise.all(
-          newProduct[key].map(async (variation, variationIndex) => {
-            const { images, ...variationDetails } = variation;
 
-            await Promise.all(
-              (images || []).map(async (blobUrl, imageIndex) => {
-                const response = await fetch(blobUrl);
-                const blob = await response.blob();
-                const fileName = `variation-${variationIndex}-image-${imageIndex}.${
-                  blob.type.split("/")[1]
-                }`;
-                formData.append(
-                  `variations[${variationIndex}].images[${imageIndex}]`,
-                  new File([blob], fileName, { type: blob.type })
-                );
-              })
-            );
-
-            return { ...variationDetails };
-          })
-        );
-
-        formData.append("variations", JSON.stringify(formattedVariations));
-      } else {
-        formData.append(key, newProduct[key]);
-      }
+    const firstVariation = newProduct.variations[0];
+    if (
+      !firstVariation.colorName ||
+      firstVariation.colorImages.length === 0 ||
+      firstVariation.sizes.some(
+        (size) => !size.value || size.price <= 0 || size.quantity < 0
+      )
+    ) {
+      toast.error("First variation must be completely filled");
+      return;
     }
 
-    const data = await createProduct(formData);
-    if (data) {
-      setNewProduct(initailProductState);
-      if (fileInputRef?.current) {
-        fileInputRef.current.value = "";
-      }
+    const formData = new FormData();
 
-      toast.success("Product created successfully!");
+    // Append main product fields
+    formData.append("name", newProduct.name);
+    formData.append("description", newProduct.description);
+    formData.append("basePrice", newProduct.basePrice);
+    formData.append("stock", newProduct.stock);
+    formData.append("tags", JSON.stringify(newProduct.tags));
+    formData.append(
+      "category",
+      JSON.stringify({
+        parent: newProduct.category.parent,
+        child: newProduct.category.child,
+        grandchild: newProduct.category.grandchild,
+      })
+    );
+
+    // Process variations
+    newProduct.variations.forEach((variation, vIndex) => {
+      // Color images
+      variation.colorImages.forEach((file, fIndex) => {
+        formData.append(`variations[${vIndex}].colorImages`, file);
+      });
+
+      // Size images and data
+      variation.sizes.forEach((size, sIndex) => {
+        formData.append(
+          `variations[${vIndex}].sizes[${sIndex}].value`,
+          size.value
+        );
+        formData.append(
+          `variations[${vIndex}].sizes[${sIndex}].price`,
+          size.price
+        );
+        formData.append(
+          `variations[${vIndex}].sizes[${sIndex}].quantity`,
+          size.quantity
+        );
+
+        size.images.forEach((file, fIndex) => {
+          formData.append(
+            `variations[${vIndex}].sizes[${sIndex}].images`,
+            file
+          );
+        });
+      });
+    });
+
+    try {
+      const data = await createProduct(formData);
+      if (data) {
+        setNewProduct(initailProductState);
+        toast.success("Product created successfully!");
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -190,11 +252,16 @@ const CreateProductForm = () => {
 
         <ProductVariations
           variations={newProduct.variations}
-          fileInputRef={fileInputRef}
           handleVariationChange={handleVariationChange}
           removeVariation={removeVariation}
           removeImage={removeImage}
           addVariation={addVariation}
+          fileInputRef={fileInputRef}
+          addSizeToColor={addSizeToColor}
+          removeSizeFromColor={removeSizeFromColor}
+          handleSizeChange={handleSizeChange}
+          handleSizeImageChange={handleSizeImageChange}
+          removeSizeImage={removeSizeImage}
         />
 
         <Button type="submit" isBG={true} disabled={loading} className="w-full">

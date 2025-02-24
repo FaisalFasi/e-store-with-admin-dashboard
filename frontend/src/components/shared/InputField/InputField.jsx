@@ -74,6 +74,7 @@ const InputField = ({
           </select>
         );
 
+      // In InputField.js - Update the file input rendering
       case "file":
         return (
           <div>
@@ -88,28 +89,31 @@ const InputField = ({
               required={required}
               className={baseClass}
             />
-            {/* Display selected images */}
+            {/* Preview images with delete buttons */}
             <div className="mt-3 flex flex-wrap gap-4">
               {selectedImages?.map((image, imageIndex) => (
-                <div key={imageIndex} className="relative">
+                <div key={imageIndex} className="relative group">
                   <img
-                    src={image}
-                    alt={`Uploaded ${imageIndex}`}
-                    className="h-20 w-20 object-cover rounded-md"
+                    src={
+                      typeof image === "object"
+                        ? URL.createObjectURL(image)
+                        : image
+                    }
+                    alt={`Preview ${imageIndex + 1}`}
+                    className="h-20 w-20 object-cover rounded-md border-2 border-gray-600"
                   />
                   <button
                     type="button"
                     onClick={() => handleImageRemove(imageIndex)}
-                    className="absolute top-0 right-0 bg-red-600 text-white rounded-full p-1 text-xs"
+                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    X
+                    ✕
                   </button>
                 </div>
               ))}
             </div>
           </div>
         );
-
       default:
         return (
           <input
@@ -117,7 +121,14 @@ const InputField = ({
             id={id || name}
             name={name}
             value={value}
-            onChange={onChange}
+            onChange={(e) => {
+              // For tags field, we need to pass the event up
+              if (name === "tags") {
+                onChange(e); // Pass entire event for tags handling
+              } else {
+                onChange(e.target.value);
+              }
+            }}
             required={required}
             placeholder={placeholder}
             disabled={disabled}

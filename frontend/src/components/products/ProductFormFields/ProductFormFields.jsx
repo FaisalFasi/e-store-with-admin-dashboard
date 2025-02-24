@@ -19,11 +19,15 @@ export const ProductFormFields = ({
           fileInputRef={fileInputRef}
           disabled={field.disabled}
           {...field}
-          onChange={(e) =>
-            field.onChange
-              ? field.onChange(e)
-              : handleInputChange(field.name, e.target.value)
-          }
+          onChange={(e) => {
+            if (field.onChange) {
+              // For tags field, pass the entire event
+              field.onChange(e);
+            } else {
+              // For other fields, pass the value
+              handleInputChange(field.name, e.target.value);
+            }
+          }}
         />
       ))}
     </>

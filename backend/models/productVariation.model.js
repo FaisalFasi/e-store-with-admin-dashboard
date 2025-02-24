@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const sizeSchema = new mongoose.Schema({
   value: { type: String, required: true }, // Can be "S", "M", "L", "XL", or "30", "34", "36", etc.
   quantity: { type: Number, required: true, min: 0 },
-  price: { type: Number, required: true }, // Price for this specific size
+  price: { type: Number, required: true, min: 0 }, // Price for this specific size
   sku: { type: String, required: true, unique: true }, // Unique SKU for this size
   barcode: { type: String, unique: true, sparse: true }, // Unique barcode for this size
   isInStock: {
@@ -12,7 +12,7 @@ const sizeSchema = new mongoose.Schema({
       return this.quantity > 0;
     },
   },
-  imageUrls: { type: [String] }, // Optional: Images specific to this size
+  // imageUrls: { type: [String] }, // Optional: Images specific to this size
 });
 
 // Schema for color variations

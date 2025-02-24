@@ -8,18 +8,6 @@ import { Construction } from "lucide-react";
 export const useProductForm = () => {
   const { categories } = useCategoryStore();
 
-  const initialProductState = {
-    name: "",
-    description: "",
-    category: "",
-    subCategory: "",
-    grandChildCategory: "",
-    status: "draft",
-    isFeatured: false,
-    variations: [initializeVariation],
-  };
-
-  const [newProduct, setNewProduct] = useState(initialProductState);
   const fileInputRef = useRef(null);
 
   const [categoryData, setCategoryData] = useState({
@@ -27,6 +15,81 @@ export const useProductForm = () => {
     subCategories: [],
     grandChildCategories: [],
   });
+
+  const initialProductState = {
+    name: "",
+    description: "",
+    category: {
+      parent: "",
+      child: null,
+      grandchild: null,
+    },
+    basePrice: 0,
+    stock: 0,
+    tags: [],
+    status: "draft",
+    isFeatured: false,
+    variations: [
+      {
+        colorName: "",
+        colorImages: [],
+        sizes: [
+          {
+            value: "",
+            price: 0,
+            quantity: 0,
+            images: [],
+          },
+        ],
+      },
+    ],
+  };
+  const [newProduct, setNewProduct] = useState(initialProductState);
+
+  const handleInputChange = (key, value) => {
+    setNewProduct((prev) => ({
+      ...prev,
+      [key]: key === "tags" ? (Array.isArray(value) ? value : [value]) : value,
+    }));
+  };
+
+  const handleSizeChange = (vIndex, sIndex, field, value) => {
+    const updatedVariations = [...newProduct.variations];
+    updatedVariations[vIndex].sizes[sIndex][field] = value;
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
+  const addSizeToColor = (vIndex) => {
+    const updatedVariations = [...newProduct.variations];
+    updatedVariations[vIndex].sizes.push({
+      value: "",
+      price: 0,
+      quantity: 0,
+      images: [],
+    });
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
+
+  const removeSizeFromColor = (vIndex, sIndex) => {
+    const updatedVariations = [...newProduct.variations];
+    updatedVariations[vIndex].sizes = updatedVariations[vIndex].sizes.filter(
+      (_, i) => i !== sIndex
+    );
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
+  const handleVariationChange = (vIndex, type, files) => {
+    const updatedVariations = [...newProduct.variations];
+
+    if (type === "colorImages") {
+      updatedVariations[vIndex].colorImages = [
+        ...updatedVariations[vIndex].colorImages,
+        ...validateImages(files),
+      ];
+    } else {
+      updatedVariations[vIndex][type] = files;
+    }
+
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
 
   useEffect(() => {
     if (categories.length > 0) {
@@ -101,28 +164,6 @@ export const useProductForm = () => {
     }));
   };
 
-  const handleInputChange = (key, value) => {
-    setNewProduct((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleVariationChange = (index, e) => {
-    const { name, value, files } = e.target;
-
-    if (files) {
-      const validatedImages = validateImages(files);
-      const updatedVariations = [...newProduct.variations];
-      updatedVariations[index] = {
-        ...updatedVariations[index],
-        images: [...validatedImages],
-      };
-      setNewProduct({ ...newProduct, variations: updatedVariations });
-    } else {
-      const updatedVariations = [...newProduct.variations];
-      updatedVariations[index] = { ...updatedVariations[index], [name]: value };
-      setNewProduct({ ...newProduct, variations: updatedVariations });
-    }
-  };
-
   const addVariation = (e) => {
     e.preventDefault();
     setNewProduct({
@@ -130,17 +171,23 @@ export const useProductForm = () => {
       variations: [
         ...newProduct.variations,
         {
-          size: "",
-          color: "",
-          quantity: 0,
-          price: "",
-          images: [],
+          colorName: "",
+          colorImages: [],
+          sizes: [
+            {
+              value: "",
+              price: 0,
+              quantity: 0,
+              images: [],
+            },
+          ],
         },
       ],
     });
   };
 
   const removeVariation = (index) => {
+    if (index === 0) return; // Prevent removing first variation
     const updatedVariations = newProduct.variations.filter(
       (_, i) => i !== index
     );
@@ -150,15 +197,31 @@ export const useProductForm = () => {
     });
   };
 
-  const removeImage = (index, imageIndex) => {
+  const handleSizeImageChange = (vIndex, sIndex, files) => {
     const updatedVariations = [...newProduct.variations];
-    updatedVariations[index].images = updatedVariations[index].images.filter(
-      (_, i) => i !== imageIndex
-    );
+    const validatedImages = validateImages(files);
+    updatedVariations[vIndex].sizes[sIndex].images = [
+      ...updatedVariations[vIndex].sizes[sIndex].images,
+      ...validatedImages,
+    ];
     setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
 
-    if (updatedVariations[index].images.length <= 0)
-      fileInputRef.current.value = "";
+  // In useProductForm.js - Update image removal functions
+  const removeImage = (vIndex, imageIndex) => {
+    const updatedVariations = [...newProduct.variations];
+    updatedVariations[vIndex].colorImages = updatedVariations[
+      vIndex
+    ].colorImages.filter((_, i) => i !== imageIndex);
+    setNewProduct({ ...newProduct, variations: updatedVariations });
+  };
+
+  const removeSizeImage = (vIndex, sIndex, imageIndex) => {
+    const updatedVariations = [...newProduct.variations];
+    updatedVariations[vIndex].sizes[sIndex].images = updatedVariations[
+      vIndex
+    ].sizes[sIndex].images.filter((_, i) => i !== imageIndex);
+    setNewProduct({ ...newProduct, variations: updatedVariations });
   };
 
   return {
@@ -176,5 +239,10 @@ export const useProductForm = () => {
     removeVariation,
     removeImage,
     categories,
+    handleSizeChange,
+    addSizeToColor,
+    removeSizeFromColor,
+    handleSizeImageChange,
+    removeSizeImage,
   };
 };

@@ -1,66 +1,154 @@
-// components/ProductVariations.js
 import InputField from "../../shared/InputField/InputField";
-import { variationFields } from "../../../helpers/productHelopers/productHelper.js";
 
-export const ProductVariations = ({
-  variations,
-  fileInputRef,
-  handleVariationChange,
-  removeVariation,
-  removeImage,
-  addVariation,
-}) => {
+// components/ProductVariations.js
+export const ProductVariations = (props) => {
   return (
-    <>
-      {variations.map((variation, variationsIndex) => (
-        <div key={variationsIndex} className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-emerald-300">
-              {variationsIndex === 0
-                ? "Required"
-                : `Variant ${variationsIndex}`}
+    <div className="space-y-6">
+      {props.variations.map((variation, vIndex) => (
+        <div key={vIndex} className="bg-gray-800 border p-4 rounded-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium">
+              Color Variation #{vIndex + 1}{" "}
+              <span className="text-red-500 ">*</span>
             </h3>
-            {variationsIndex !== 0 && (
+            {vIndex != 0 && (
               <button
                 type="button"
-                onClick={() => removeVariation(variationsIndex)}
-                className="text-red-500 hover:text-red-700 mt-2"
+                onClick={() => props.removeVariation(vIndex)}
+                className="text-red-500 hover:text-red-700"
               >
-                Remove Variant
+                Remove Color
               </button>
             )}
           </div>
-          <div className="">
-            {variationFields?.map((field) => (
-              <InputField
-                key={field.name}
-                name={field.name}
-                label={field.label}
-                type={field.type}
-                accept="image/*"
-                placeholder={field.placeholder}
-                multiple={true}
-                handleImageRemove={(imageIndex) =>
-                  removeImage(variationsIndex, imageIndex)
-                }
-                fileInputRef={fileInputRef}
-                selectedImages={variations[variationsIndex]?.images}
-                disabled={field.disabled}
-                value={variation[field.name]}
-                {...field}
-                onChange={(e) => handleVariationChange(variationsIndex, e)}
-              />
+
+          {/* Color Name */}
+          <input
+            value={variation.colorName}
+            onChange={(e) =>
+              props.handleVariationChange(vIndex, "colorName", e.target.value)
+            }
+            placeholder="Color name"
+            className="w-full p-2 mb-4 border rounded text-black"
+          />
+
+          {/* Color Images */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Color Images
+            </label>
+            <InputField
+              type="file"
+              multiple
+              onChange={(e) =>
+                props.handleVariationChange(
+                  vIndex,
+                  "colorImages",
+                  e.target.files
+                )
+              }
+              selectedImages={variation.colorImages}
+              handleImageRemove={(imgIndex) =>
+                props.removeImage(vIndex, imgIndex)
+              }
+            />
+          </div>
+
+          {/* Size Variations */}
+          <div className="ml-4 space-y-4">
+            {variation?.sizes?.map((size, sIndex) => (
+              <div
+                key={sIndex}
+                className="text-gray-400 bg-gray-800 border p-4 rounded"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">
+                    Size #{sIndex + 1} <span className="text-red-500 ">*</span>
+                  </h4>
+                  {sIndex !== 0 && (
+                    <button
+                      type="button"
+                      onClick={() => props.removeSizeFromColor(vIndex, sIndex)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Remove Size
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  value={size.value}
+                  onChange={(e) =>
+                    props.handleSizeChange(
+                      vIndex,
+                      sIndex,
+                      "value",
+                      e.target.value
+                    )
+                  }
+                  placeholder="Size value"
+                  className="w-full p-2 mb-2 border rounded"
+                />
+
+                <input
+                  type="number"
+                  value={size.price}
+                  onChange={(e) =>
+                    props.handleSizeChange(
+                      vIndex,
+                      sIndex,
+                      "price",
+                      e.target.value
+                    )
+                  }
+                  placeholder="Price"
+                  className="w-full p-2 mb-2 border rounded"
+                />
+
+                <input
+                  type="number"
+                  value={size.quantity}
+                  onChange={(e) =>
+                    props.handleSizeChange(
+                      vIndex,
+                      sIndex,
+                      "quantity",
+                      e.target.value
+                    )
+                  }
+                  placeholder="Quantity"
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <InputField
+                  type="file"
+                  multiple
+                  onChange={(e) =>
+                    props.handleSizeImageChange(vIndex, sIndex, e.target.files)
+                  }
+                  selectedImages={size.images} // Changed to size.images
+                  handleImageRemove={(imgIndex) =>
+                    props.removeSizeImage(vIndex, sIndex, imgIndex)
+                  }
+                />
+              </div>
             ))}
+            <button
+              type="button"
+              onClick={() => props.addSizeToColor(vIndex)}
+              className="text-blue-500 hover:text-blue-700"
+            >
+              + Add Size
+            </button>
           </div>
         </div>
       ))}
       <button
         type="button"
-        onClick={addVariation}
-        className="w-full bg-blue-500 text-white p-2 rounded"
+        onClick={props.addVariation}
+        className="text-green-500 hover:text-green-700"
       >
-        Add Variation
+        + Add Color Variation
       </button>
-    </>
+    </div>
   );
 };

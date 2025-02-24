@@ -1,88 +1,84 @@
-import Product from "../models/productModel.js";
-import Variation from "../models/variationModel.js";
-import cloudinary from "cloudinary";
-import fs from "fs/promises";
+// Helper functions
 
-export const createProduct = async (req, res) => {
-  const {
-    name,
-    basePrice,
-    description,
-    category,
-    isFeatured,
-    additionalDetails = {},
-    variations = [], // Expecting an array of variation objects (e.g., [{ color, size, quantity, price, sku }])
-  } = req.body;
+import ProductVariation from "../../models/productVariation.model.js";
+import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 
-  const requestedFiles = req.files;
+export const processVariations = async (variations, files) => {
+  return Promise.all(
+    variations.map(async (variation, vIndex) => {
+      const colorImages = files.filter((f) =>
+        f.fieldname.startsWith(`variations[${vIndex}].colorImages`)
+      );
 
-  // Validate files
-  if (!requestedFiles || requestedFiles.length === 0) {
-    return res.status(400).json({ message: "No images uploaded." });
-  }
+      const uploadedColorImages = await uploadToCloudinary(
+        colorImages,
+        "products/variations/colors"
+      );
 
-  if (requestedFiles.some((file) => !file.mimetype.startsWith("image"))) {
-    return res.status(400).json({ message: "Please upload only images." });
-  }
-
-  try {
-    // Upload images to Cloudinary
-    const uploadedImages = await Promise.all(
-      requestedFiles.map(async (file) => {
-        try {
-          const result = await cloudinary.uploader.upload(file.path, {
-            folder: "products",
-          });
-          // Clean up temporary file
-          await fs.unlink(file.path);
-
-          return result.secure_url; // Return the URL of the uploaded image
-        } catch (error) {
-          console.error(`Error uploading ${file.filename}:`, error);
-          return res.status(500).json({
-            message: "Internal Server Error while uploading images",
-            error,
-          });
-        }
-      })
-    );
-
-    // Create the product
-    const product = await Product.create({
-      name,
-      basePrice,
-      description,
-      category,
-      isFeatured,
-      additionalDetails,
-      images: uploadedImages,
-    });
-
-    // Create the variations (if provided)
-    if (variations && variations.length > 0) {
-      const variationData = variations.map((variation) => ({
+      return {
         ...variation,
-        productId: product._id, // Associate the variation with the created product
-      }));
+        color: {
+          name: variation.colorName,
+          imageUrls: uploadedColorImages,
+          sizes: await processSizes(variation.sizes, vIndex),
+        },
+      };
+    })
+  );
+};
 
-      const createdVariations = await Variation.insertMany(variationData);
+export const processSizes = async (sizes) => {
+  return Promise.all(
+    sizes.map(async (size) => {
+      return {
+        ...size,
+        value: size.value,
+        price: parseFloat(size.price),
+        quantity: parseInt(size.quantity),
+        sku: size.sku || undefined,
+        barcode: size.barcode || undefined,
+      };
+    })
+  );
+};
 
-      return res.status(201).json({
-        product,
-        variations: createdVariations,
-        message: "Product and variations created successfully!",
-      });
+export const createProductVariations = async (
+  productId,
+  variations,
+  session
+) => {
+  const variationIds = [];
+  let defaultVariationId = null;
+
+  for (const [index, variationData] of variations.entries()) {
+    const variation = new ProductVariation({
+      productId,
+      colors: [
+        {
+          name: variationData.color.name,
+          imageUrls: variationData.color.imageUrls,
+          sizes: variationData.color.sizes,
+          isDefault: index === 0,
+        },
+      ],
+      metadata: variationData.metadata || {},
+    });
+
+    await variation.save({ session });
+    variationIds.push(variation._id);
+
+    if (index === 0) {
+      defaultVariationId = variation._id;
     }
-
-    res.status(201).json({
-      product,
-      message: "Product created successfully without variations!",
-    });
-  } catch (error) {
-    console.log("Error in createProduct controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while creating product",
-      error,
-    });
   }
+
+  return { variationIds, defaultVariationId };
+};
+
+export const generateSlug = (name) => {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 };

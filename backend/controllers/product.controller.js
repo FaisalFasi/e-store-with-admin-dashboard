@@ -7,6 +7,12 @@ import { imageValidationHelper } from "../helpers/validationHelper/imageValidati
 import ProductVariation from "../models/productVariation.model.js";
 import { get_uuid } from "../utils/uuidGenerator.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+import {
+  createProductVariations,
+  generateSlug,
+  processVariations,
+} from "../helpers/productHelpers/createProductHelper.js";
+import { handleError } from "../utils/handleError/handleError.js";
 
 export const createProduct = async (req, res) => {
   const session = await mongoose.startSession(); // Start a transaction
@@ -16,457 +22,409 @@ export const createProduct = async (req, res) => {
     const {
       name,
       description,
-      isFeatured,
-      status,
       category,
-      subCategory,
-      grandChildCategory,
+      basePrice,
+      stock,
+      status = "draft",
+      tags = [],
+      additionalDetails = {},
+      discounts = [],
+      isFeatured = false,
+      metaTitle,
+      metaDescription,
     } = req.body;
+
+    // Validate required fields
+    if (!name || !category?.parent || !basePrice || stock === undefined) {
+      return res.status(400).json({
+        message:
+          "Missing required fields: name, category.parent, basePrice, stock",
+      });
+    }
+    // Validate category structure
+    if (!mongoose.Types.ObjectId.isValid(category.parent)) {
+      return res.status(400).json({ message: "Invalid parent category ID" });
+    }
+
+    // Process files
+    const requestedFiles = req.files || [];
+    const validImage = imageValidationHelper(requestedFiles);
+    if (!validImage.valid) {
+      return res.status(400).json({ message: validImage.message });
+    }
 
     const variations = JSON.parse(req.body.variations);
 
     console.log("received data --", req.body);
 
-    // Assuming `req.files` contains uploaded files (images)
-    const requestedFiles = req.files || [];
-
-    if (!name || !description || !category) {
-      return res
-        .status(400)
-        .json({ message: "Name, description, and category are required." });
-    }
-
-    // validate requestedFiles
-    const validImage = imageValidationHelper(requestedFiles);
-    if (!validImage.valid) {
-      console.log("image is not valid", validImage);
-      return res.status(400).json({ message: validImage.message });
-    }
-
     // Process variations and upload images
-    const processedVariations = await Promise.all(
-      variations?.map(async (variation, index) => {
-        // Check required fields
-        if (
-          !variation.price ||
-          !variation.quantity ||
-          !variation.color ||
-          !variation.size
-        ) {
-          console.log(" variations all fields are required ", variation);
-
-          res.status(404).json({
-            message:
-              "Price, quantity, color, and size are required for each variation",
-          });
-        }
-
-        // Filter files for the current variation
-        const variationImages = requestedFiles.filter((file) =>
-          file.fieldname.startsWith(`variations[${index}].images`)
-        );
-
-        // Upload images to Cloudinary
-        const uploadedImagesUrls = await uploadToCloudinary(
-          variationImages,
-          "create-products"
-        );
-
-        // Attach Cloudinary URLs to the variation
-        return {
-          ...variation,
-          price: Number(variation.price),
-          quantity: Number(variation.quantity),
-          imageUrls: uploadedImagesUrls, // Store URLs from Cloudinary
-          isDefault: index === 0, // Ensure first variation is default
-        };
-      })
+    const processedVariations = await processVariations(
+      variations,
+      requestedFiles
     );
 
     console.log("processedVariations", processedVariations);
 
-    const categories_ = {
-      parent: category, // Required
-      child: subCategory || null, // Optional
-      grandchild: grandChildCategory || null, // Optional
-    };
-
-    const product = new Product({
+    const productData = {
       name,
-      description,
-      category: categories_,
-      isFeatured: isFeatured === "true",
-      status: status || "draft",
-      // tags: tags || [],
-      // additionalDetails: additionalDetails || {},
-      // discount: discount ? Number(discount) : undefined,
-      // discountExpiry: discountExpiry || undefined,
-    });
-
-    await product.save({ session });
-
-    let defaultVariationId = null;
-    let variationIds = [];
-
-    for (const variationData of processedVariations) {
-      const variation = new ProductVariation({
-        productId: product._id,
-        color: variationData.color,
-        size: variationData.size,
-        quantity: variationData.quantity,
-        price: variationData.price,
-        imageUrls: variationData.imageUrls,
-        isDefault: variationData.isDefault,
-        barcode: variationData?.barcode || undefined,
-        sku: `${product._id}-${get_uuid()}`, // Unique SKU
-      });
-      await variation.save({ session });
-      variationIds.push(variation._id);
-
-      if (variation.isDefault) {
-        defaultVariationId = variation._id;
-      }
+      slug: generateSlug(name),
+      description: description || "",
+      category: {
+        parent: category.parent,
+        child: category.child || null,
+        grandchild: category.grandchild || null,
+      },
+      basePrice: parseFloat(basePrice),
+      stock: parseInt(stock),
+      status,
+      tags: tags.slice(0, 10), // Enforce max 10 tags
+      additionalDetails,
+      discounts: discounts.map((d) => ({
+        type: d.type,
+        value: parseFloat(d.value),
+        expiry: d.expiry ? new Date(d.expiry) : null,
+      })),
+      isFeatured,
+      metaTitle: metaTitle || "",
+      metaDescription: metaDescription || "",
+    }; // Handle featured image
+    if (requestedFiles.featuredImage) {
+      const featuredImage = await uploadToCloudinary(
+        [requestedFiles.featuredImage],
+        "products/featured"
+      );
+      productData.featuredImage = featuredImage[0];
     }
 
-    product.variations = variationIds;
-    if (defaultVariationId) {
+    const product = new Product(productData);
+    await product.save({ session });
+
+    // Process and link variations
+    if (variations.length > 0) {
+      const { variationIds, defaultVariationId } =
+        await createProductVariations(
+          product._id,
+          processedVariations,
+          session
+        );
+
+      product.variations = variationIds;
       product.defaultVariation = defaultVariationId;
+      await product.save({ session });
     }
-
-    await product.save({ session });
 
     await session.commitTransaction();
     session.endSession();
 
+    // Return created product with populated fields
+    const createdProduct = await Product.findById(product._id)
+      .populate("variations")
+      .populate("category.parent")
+      .populate("category.child")
+      .populate("category.grandchild");
+
     res.status(201).json({
+      success: true,
       message: "Product created successfully!",
-      product: await Product.findById(product._id),
+      createProduct: product,
+      product: createdProduct,
     });
   } catch (error) {
-    console.log("Error in createProduct controller:", error);
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: "Internal server error" });
+
+    console.error("Product creation error:", error);
+
+    const errorMessage = error.message.includes("validation failed")
+      ? "Product validation failed: " +
+        Object.values(error.errors)
+          .map((e) => e.message)
+          .join(", ")
+      : "Internal server error";
+
+    res.status(500).json({
+      success: false,
+      message: errorMessage,
+    });
   }
 };
 
+// Enhanced getHomepageProducts
 export const getHomepageProducts = async (req, res) => {
   try {
-    console.log("req.query", req.query);
-
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const { page = 1, limit = 20, category, sort = "-createdAt" } = req.query;
     const skip = (page - 1) * limit;
 
-    // Base query for active products
-    const baseQuery = {
-      status: "active",
-      // isFeatured: false, // Remove if you want all active products
-    };
-
-    // how name: 1,  and likewise works in projection ?
-    // name: 1,  means that i will get the name of the product
-    const projection = {
-      name: 1,
-      defaultVariation: 1,
-      variations: 1,
-      category: 1,
-      tags: 1,
-      discount: 1,
-      isFeatured: 1,
-      createdAt: 1,
-    };
-
-    // Sorting (example: newest first)
-    const sort = { createdAt: -1 };
-
-    // what im getting in products and total
-    // im getting all the products from the database with the baseQuery
-    // im selecting only the fields that are in the projection
-    // im sorting the products by createdAt in descending order
-    // im skipping the first (page - 1) * limit products
-    // im limiting the number of products to the limit
-    // im populating the defaultVariation field with the fields price, stock, and imageUrls
-    // im converting the Mongoose document into a plain JavaScript object
-    // im counting the total number of products
-    // im returning the products and total in an array
+    const query = { status: "active" };
+    if (category) {
+      query["category.parent"] = new mongoose.Types.ObjectId(category);
+    }
 
     const [products, total] = await Promise.all([
-      Product.find(baseQuery)
-        .select(projection)
-        .sort(sort)
+      Product.find(query)
         .skip(skip)
-        .limit(limit)
-        .populate("defaultVariation", "price quantity stock imageUrls") // Only needed fields
-        .populate("variations", "price quantity stock imageUrls color size")
+        .limit(Number(limit))
+        .sort(sort)
+        .populate("defaultVariation", "price imageUrls")
+        .populate("category.parent", "name slug")
         .lean(),
-      Product.countDocuments(baseQuery),
+      Product.countDocuments(query),
     ]);
-    console.log("products", products);
-    console.log("total", total);
 
-    res.status(200).json({
+    res.json({
       success: true,
-      products,
+      products: products.map((p) => ({
+        ...p,
+        price: p.basePrice,
+        discount: p.discounts[0] || null,
+      })),
       pagination: {
         total,
-        page,
+        page: Number(page),
         pages: Math.ceil(total / limit),
-        limit,
+        limit: Number(limit),
       },
     });
   } catch (error) {
-    console.error("Error in getHomepageProducts:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    handleError(res, error, "getHomepageProducts");
   }
 };
 
+// Enhanced getAllProducts
 export const getAllProducts = async (req, res) => {
-  console.log("Fetching all products ---------");
   try {
-    const products = await Product.find({})
+    const products = await Product.find()
+      .populate(
+        "category.parent category.child category.grandchild",
+        "name slug"
+      )
       .populate({
-        path: "variations", // Field to populate
-        model: "ProductVariation", // Name of the model you want to populate with
-      })
-      .populate({
-        path: "defaultVariation",
-        model: "ProductVariation",
+        path: "variations",
+        populate: {
+          path: "colors.sizes",
+          model: "ProductVariation",
+        },
       });
 
-    console.log("products with variations", products);
-    res.status(200).json({ success: true, products: [...products] });
+    res.json({ success: true, products });
   } catch (error) {
-    console.log("Error in getAllProducts controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while fetching products",
-      error,
-    });
+    handleError(res, error, "getAllProducts");
   }
 };
 
+// Enhanced getProductById
 export const getProductById = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    // Validate the ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "Invalid product ID" });
-    }
-
-    const product = await Product.findById(id)
+    const product = await Product.findById(req.params.id)
+      .populate("category.parent category.child category.grandchild")
       .populate({
-        path: "variations", // Field to populate
-        model: "ProductVariation", // Name of the model you want to populate with
+        path: "variations",
+        populate: {
+          path: "colors.sizes",
+          model: "ProductVariation",
+        },
       })
-      .populate({
-        path: "defaultVariation",
-        model: "ProductVariation",
-      });
+      .populate("reviews");
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-    console.log("product", product);
-    res.status(201).json({ product });
+    if (!product)
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+
+    res.json({ success: true, product });
   } catch (error) {
-    console.log("Error in getProductById controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while fetching product by ID",
-      error,
-    });
+    handleError(res, error, "getProductById");
   }
 };
 
+// Enhanced getFeaturedProducts
 export const getFeaturedProducts = async (req, res) => {
   try {
-    let featuredProducts = await redis.get("featured_products");
+    const cacheKey = "featured_products";
+    let featuredProducts = await redis.get(cacheKey);
 
-    if (featuredProducts) {
-      return res.json({ products: JSON.parse(featuredProducts) });
+    if (!featuredProducts) {
+      featuredProducts = await Product.find({
+        isFeatured: true,
+        status: "active",
+      })
+        .populate("defaultVariation", "price imageUrls")
+        .lean();
+
+      await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600); // 1 hour cache
+    } else {
+      featuredProducts = JSON.parse(featuredProducts);
     }
 
-    // .lean method is used to convert the Mongoose document into a plain JavaScript object, good for caching and performance
-    featuredProducts = await Product.find({ isFeatured: true }).lean(); // Fetch all featured products from the database
-
-    // If no products are found in the database, return a 404 status
-    if (!featuredProducts || featuredProducts.length === 0) {
-      return (
-        res
-          // .status(404)
-          .json({ products: {}, message: "No featured products found" })
-      );
-    }
-
-    await redis.set("featured_products", JSON.stringify(featuredProducts));
-
-    res.json({ products: featuredProducts });
+    res.json({ success: true, products: featuredProducts });
   } catch (error) {
-    console.log("Error in getFeaturedProducts controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while fetching featured products",
-      error,
-    });
+    handleError(res, error, "getFeaturedProducts");
   }
 };
 
+// Enhanced getRecommendedProducts
 export const getRecommendedProducts = async (req, res) => {
-  // aggregate method is used to perform aggregation operations on the database.it will return a random sample of 3 products
   try {
     const recommendedProducts = await Product.aggregate([
-      { $sample: { size: 4 } },
+      { $match: { status: "active" } },
+      { $sample: { size: 8 } },
       {
         $project: {
-          _id: 1,
           name: 1,
-          description: 1,
-          price: 1,
-          images: 1, // Include all images
-          // image: { $arrayElemAt: ["$images", 0] }, // Select the first image
+          slug: 1,
+          basePrice: 1,
+          defaultVariation: 1,
+          discounts: { $slice: ["$discounts", 1] },
+          images: { $arrayElemAt: ["$variations.colors.imageUrls", 0] },
         },
       },
     ]);
 
-    if (!recommendedProducts) {
-      return res.status(404).json({ message: "No recommended products found" });
-    }
-
-    res.status(200).json({ products: recommendedProducts });
+    res.json({ success: true, products: recommendedProducts });
   } catch (error) {
-    console.log("Error in getRecommendedProducts controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while fetching recommended products",
-      error,
-    });
+    handleError(res, error, "getRecommendedProducts");
   }
 };
 
+// Enhanced getProductByCategory
 export const getProductByCategory = async (req, res) => {
-  const { category } = req.params;
-
   try {
-    const products = await Product.find({ category: category });
+    const { categoryId } = req.params;
+    const products = await Product.find({
+      $or: [
+        { "category.parent": categoryId },
+        { "category.child": categoryId },
+        { "category.grandchild": categoryId },
+      ],
+    }).populate("defaultVariation", "price imageUrls");
 
-    if (!products) {
+    res.json({ success: true, products });
+  } catch (error) {
+    handleError(res, error, "getProductByCategory");
+  }
+};
+
+// Enhanced toggleFeaturedProduct
+export const toggleFeaturedProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product)
       return res
         .status(404)
-        .json({ message: "No products found in this category" });
-    }
+        .json({ success: false, message: "Product not found" });
 
-    res.json({ products });
+    product.isFeatured = !product.isFeatured;
+    await product.save();
+
+    // Update cache
+    const featuredProducts = await Product.find({ isFeatured: true })
+      .populate("defaultVariation", "price imageUrls")
+      .lean();
+    await redis.set("featured_products", JSON.stringify(featuredProducts));
+
+    res.json({ success: true, product });
   } catch (error) {
-    console.log("Error in getProductByCategory controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while fetching products by category",
-      error,
-    });
+    handleError(res, error, "toggleFeaturedProduct");
   }
 };
 
-export const toggleFeaturedProduct = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const product = await Product.findById(id);
-
-    if (product) {
-      product.isFeatured = !product.isFeatured;
-      const updatedProduct = await product.save();
-      await updateFeaturedProductsCache(updatedProduct);
-      res.json({ updatedProduct });
-    } else {
-      res.status(404).json({ message: "Product not found" });
-    }
-  } catch (error) {
-    console.log("Error in toggleFeaturedProduct controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while toggling featured product",
-      error,
-    });
-  }
-};
+// Enhanced updateDiscount
 export const updateDiscount = async (req, res) => {
-  const { productId, discount, discountExpiry } = req.body;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    // Validate the discount (should be a number between 0 and 100)
-    if (discount < 0 || discount > 100) {
-      return res.status(400).json({ message: "Invalid discount value." });
+    const { productId, discountType, value, expiry } = req.body;
+    const product = await Product.findById(productId).session(session);
+
+    if (!product) {
+      await session.abortTransaction();
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
-    // Find the product and update the discount
-    const product = await Product.findByIdAndUpdate(
-      productId,
-      { discount, discountExpiry },
-      { new: true } // Return the updated product
+    const newDiscount = {
+      type: discountType,
+      value: Number(value),
+      expiry: expiry ? new Date(expiry) : null,
+    };
+
+    product.discounts.push(newDiscount);
+    await product.save({ session });
+    await session.commitTransaction();
+
+    res.json({ success: true, product });
+  } catch (error) {
+    await session.abortTransaction();
+    handleError(res, error, "updateDiscount");
+  } finally {
+    session.endSession();
+  }
+};
+
+// Enhanced deleteProduct
+export const deleteProduct = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const product = await Product.findById(req.params.id).session(session);
+    if (!product) {
+      await session.abortTransaction();
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Delete associated images from Cloudinary
+    const deletePromises = [];
+
+    // 1. Delete featured image
+    if (product.featuredImage?.public_id) {
+      deletePromises.push(
+        cloudinary.uploader.destroy(product.featuredImage.public_id)
+      );
+    }
+
+    // 2. Delete variation images
+    const variations = await ProductVariation.find({
+      productId: product._id,
+    }).session(session);
+
+    variations.forEach((variation) => {
+      variation.colors.forEach((color) => {
+        color.imageUrls.forEach((image) => {
+          // Extract public_id from Cloudinary URL
+          const urlParts = image.split("/");
+          const publicId = urlParts.slice(-2).join("/").split(".")[0];
+
+          deletePromises.push(cloudinary.uploader.destroy(publicId));
+        });
+      });
+    });
+
+    // 3. Delete all related variations
+    deletePromises.push(
+      ProductVariation.deleteMany({ productId: product._id }).session(session)
     );
 
-    if (!product) {
-      return res.status(404).json({ message: "Product not found." });
-    }
+    // 4. Delete the product itself
+    deletePromises.push(product.deleteOne({ session }));
 
-    return res.status(200).json({
-      product,
-      message: "Product discount updated successfully!",
+    // Execute all deletions
+    await Promise.all(deletePromises);
+    await session.commitTransaction();
+
+    res.json({
+      success: true,
+      message: "Product and all associated data deleted successfully",
     });
   } catch (error) {
-    console.error("Error updating discount:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-};
-
-const updateFeaturedProductsCache = async (updatedProduct) => {
-  try {
-    // lean method is used to convert the Mongoose document into a plain JavaScript object, good for caching and performance
-    const featuredProducts = await Product.find({ isFeatured: true }).lean();
-
-    await redis.set("featured_products", JSON.stringify(featuredProducts));
-  } catch (error) {
-    console.log("Error in updateFeaturedProductsCache:", error);
-  }
-};
-
-export const deleteProduct = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const product = await Product.findById(id);
-
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-    if (product.imageUrl) {
-      // pop method is used to remove the last element from the array and return that element. example URL: https://res.cloudinary.com/dx3w7xvsv/image/upload/v1633661234/products/abc.jpg , here it will return abc
-      const publicId = product.imageUrl.split("/").pop().split(".")[0]; // Extracting the public ID from the image URL
-      try {
-        await cloudinary.uploader.destroy(publicId);
-      } catch (error) {
-        console.log(
-          "Error in deleteProduct controller while deleting image from Cloudinary:",
-          error
-        );
-        return res.status(500).json({
-          message: "Internal Server Error while deleting image from Cloudinary",
-          error,
-        });
-      }
-    }
-    // Now directly delete the product from the database
-    // await Product.findByIdAndDelete(id);
-
-    // Directly delete the fetched product from the database
-    await product.deleteOne();
-
-    res.json({ message: "Product deleted successfully" });
-  } catch (error) {
-    console.log("Error in deleteProduct controller:", error);
-    res.status(500).json({
-      message: "Internal Server Error while deleting product",
-      error,
-    });
+    await session.abortTransaction();
+    handleError(res, error, "deleteProduct");
+  } finally {
+    session.endSession();
   }
 };
