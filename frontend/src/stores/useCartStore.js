@@ -120,17 +120,44 @@ export const useCartStore = create((set, get) => ({
         return;
       }
 
+      // Check if the product and its nested properties exist
+      if (
+        !product ||
+        !product.variations ||
+        !Array.isArray(product.variations) ||
+        product.variations.length === 0
+      ) {
+        toast.error("Invalid product data. Please try again.");
+        return;
+      }
+
       // Find the matching variation in the product
       const productVariation = product.variations
-        .flatMap((variation) =>
-          variation.colors.flatMap((color) =>
-            color.sizes.map((size) => ({
+        .flatMap((variation) => {
+          if (
+            !variation.colors ||
+            !Array.isArray(variation.colors) ||
+            variation.colors.length === 0
+          ) {
+            return []; // Skip this variation if colors are missing or invalid
+          }
+
+          return variation.colors.flatMap((color) => {
+            if (
+              !color.sizes ||
+              !Array.isArray(color.sizes) ||
+              color.sizes.length === 0
+            ) {
+              return []; // Skip this color if sizes are missing or invalid
+            }
+
+            return color.sizes.map((size) => ({
               ...size,
               color: color.name,
               variationId: variation._id,
-            }))
-          )
-        )
+            }));
+          });
+        })
         .find(
           (size) =>
             size.value === selectedVariation.size &&
@@ -295,11 +322,44 @@ export const useCartStore = create((set, get) => ({
     const { cart, coupon } = get();
     console.log("Cart in calculate total amount:", cart);
 
+    // Check if cart is an array and not empty
+    if (!Array.isArray(cart) || cart.length === 0) {
+      console.warn("Cart is empty or invalid.");
+      set({ subTotal: 0, total: 0 }); // Reset totals if cart is empty
+      return;
+    }
+
     // Calculate subtotal using the price from the selected variation
     const subTotal = cart.reduce((sum, item) => {
-      const selectedVariation = item.variations.find(
-        (v) => v._id === item.selectedVariation
-      );
+      // Check if item and its nested properties exist
+      if (
+        !item ||
+        !item.variations ||
+        !Array.isArray(item.variations) ||
+        item.variations.length === 0 ||
+        !item.variations[0].colors ||
+        !Array.isArray(item.variations[0].colors) ||
+        item.variations[0].colors.length === 0 ||
+        !item.variations[0].colors[0].sizes ||
+        !Array.isArray(item.variations[0].colors[0].sizes) ||
+        item.variations[0].colors[0].sizes.length === 0
+      ) {
+        console.warn("Invalid item structure in cart:", item);
+        return sum; // Skip this item if the structure is invalid
+      }
+
+      // Find the selected variation based on the selectedVariation ID
+      const selectedVariation = item.variations
+        .flatMap((variation) =>
+          variation.colors.flatMap((color) =>
+            color.sizes.map((size) => ({
+              ...size,
+              variationId: variation._id,
+              color: color.name,
+            }))
+          )
+        )
+        .find((size) => size.variationId === item.selectedVariation);
 
       if (!selectedVariation) {
         console.warn("Selected variation not found for item:", item);

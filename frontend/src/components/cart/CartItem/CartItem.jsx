@@ -11,13 +11,7 @@ const CartItem = ({ item, index }) => {
     !item ||
     !item.variations ||
     !Array.isArray(item.variations) ||
-    item.variations.length === 0 ||
-    !item.variations[0].colors ||
-    !Array.isArray(item.variations[0].colors) ||
-    item.variations[0].colors.length === 0 ||
-    !item.variations[0].colors[0].sizes ||
-    !Array.isArray(item.variations[0].colors[0].sizes) ||
-    item.variations[0].colors[0].sizes.length === 0
+    item.variations.length === 0
   ) {
     console.error("Invalid item structure:", item);
     return (
@@ -38,8 +32,6 @@ const CartItem = ({ item, index }) => {
 
   // Extract the selected variation details
   const selectedVariation = item.variations[0];
-  const selectedColor = selectedVariation.colors[0];
-  const selectedSize = selectedColor.sizes[0];
 
   // Handle quantity increase
   const handleIncreaseQuantity = () => {
@@ -65,7 +57,9 @@ const CartItem = ({ item, index }) => {
         <div className="shrink-0 md:order-1">
           <img
             className="h-20 md:h-32 rounded object-cover"
-            src={selectedColor.imageUrls[0]} // Use the selected color's image
+            src={
+              selectedVariation.imageUrls?.[0] || "/placeholder.jpg" // Use local fallback image
+            }
             alt={item.name}
           />
         </div>
@@ -95,7 +89,7 @@ const CartItem = ({ item, index }) => {
           {/* Price */}
           <div className="text-end md:order-4 md:w-32">
             <p className="text-base font-bold text-emerald-400">
-              ${selectedSize.price}
+              ${selectedVariation.price}
             </p>
           </div>
         </div>
@@ -112,8 +106,8 @@ const CartItem = ({ item, index }) => {
 
           {/* Selected Variation Details (Color and Size) */}
           <div className="text-sm text-gray-400">
-            <p>Color: {selectedColor.name}</p>
-            <p>Size: {selectedSize.value}</p>
+            <p>Color: {selectedVariation.color}</p>
+            <p>Size: {selectedVariation.size}</p>
           </div>
 
           {/* Remove Button */}
