@@ -38,7 +38,6 @@ export const useProductForm = () => {
             value: "",
             price: 0,
             quantity: 0,
-            images: [],
           },
         ],
       },
@@ -76,16 +75,17 @@ export const useProductForm = () => {
     );
     setNewProduct({ ...newProduct, variations: updatedVariations });
   };
-  const handleVariationChange = (vIndex, type, files) => {
+  const handleVariationChange = (index, field, value) => {
     const updatedVariations = [...newProduct.variations];
 
-    if (type === "colorImages") {
-      updatedVariations[vIndex].colorImages = [
-        ...updatedVariations[vIndex].colorImages,
-        ...validateImages(files),
+    if (field === "colorImages") {
+      const validatedImages = validateImages(value);
+      updatedVariations[index].colorImages = [
+        ...updatedVariations[index].colorImages,
+        ...validatedImages,
       ];
     } else {
-      updatedVariations[vIndex][type] = files;
+      updatedVariations[index][field] = value;
     }
 
     setNewProduct({ ...newProduct, variations: updatedVariations });
@@ -169,7 +169,7 @@ export const useProductForm = () => {
     setNewProduct({
       ...newProduct,
       variations: [
-        ...newProduct.variations,
+        ...newProduct?.variations,
         {
           colorName: "",
           colorImages: [],

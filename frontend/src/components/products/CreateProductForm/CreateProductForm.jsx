@@ -37,7 +37,7 @@ const CreateProductForm = () => {
       name: "name",
       label: "Product Name", // Add asterisk for required field
       type: "text",
-      value: newProduct.name,
+      value: newProduct?.name,
       placeholder: "Enter product name",
       required: true,
     },
@@ -45,7 +45,7 @@ const CreateProductForm = () => {
       name: "description",
       label: "Description", // Add asterisk for required field
       type: "textarea",
-      value: newProduct.description,
+      value: newProduct?.description,
       placeholder: "Enter product description",
       rows: 3,
       required: false,
@@ -54,7 +54,7 @@ const CreateProductForm = () => {
       name: "basePrice",
       label: "Base Price",
       type: "number",
-      value: newProduct.basePrice,
+      value: newProduct?.basePrice,
       placeholder: "Enter base price",
       required: true,
     },
@@ -62,7 +62,7 @@ const CreateProductForm = () => {
       name: "stock",
       label: "Initial Stock",
       type: "number",
-      value: newProduct.stock,
+      value: newProduct?.stock,
       placeholder: "Enter initial stock",
       required: true,
     },
@@ -70,7 +70,7 @@ const CreateProductForm = () => {
       name: "tags",
       label: "Tags (comma separated)",
       type: "text",
-      value: newProduct.tags?.join(", ") || "", // Keep it as a string
+      value: newProduct?.tags?.join(", ") || "", // Keep it as a string
       placeholder: "tag1, tag2, tag3",
       required: false,
       onChange: (e) => {
@@ -82,7 +82,7 @@ const CreateProductForm = () => {
       name: "category",
       label: "Category", // Add asterisk for required field
       type: "select",
-      value: newProduct.category,
+      value: newProduct?.category,
       options: categories.map((category) => ({
         value: category._id,
         label: category.name,
@@ -97,7 +97,7 @@ const CreateProductForm = () => {
             name: "subCategory",
             label: "Sub-category", // No asterisk if not required
             type: "select",
-            value: newProduct.subCategory,
+            value: newProduct?.subCategory,
             options: categoryData.subCategories.map((subCategory) => ({
               value: subCategory._id,
               label: subCategory.name,
@@ -113,7 +113,7 @@ const CreateProductForm = () => {
             name: "grandChildCategory",
             label: "Grand Sub-category", // No asterisk if not required
             type: "select",
-            value: newProduct.grandChildCategory,
+            value: newProduct?.grandChildCategory,
             options: categoryData.grandChildCategories.map(
               (grandChildCategory) => ({
                 value: grandChildCategory._id,
@@ -129,7 +129,7 @@ const CreateProductForm = () => {
       name: "isFeatured",
       label: "Featured", // Add asterisk for required field
       type: "select",
-      value: newProduct.isFeatured,
+      value: newProduct?.isFeatured,
       options: [
         { value: true, label: "Yes" },
         { value: false, label: "No" },
@@ -143,7 +143,7 @@ const CreateProductForm = () => {
       name: "status",
       label: "Status", // Add asterisk for required field
       type: "select",
-      value: newProduct.status,
+      value: newProduct?.status,
       options: [
         { value: "draft", label: "Draft" },
         { value: "active", label: "Active" },
@@ -157,7 +157,9 @@ const CreateProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("New Product in handle submit -- ", newProduct);
 
+    // Validate first variation
     const firstVariation = newProduct.variations[0];
     if (
       !firstVariation.colorName ||
@@ -177,46 +179,51 @@ const CreateProductForm = () => {
     formData.append("description", newProduct.description);
     formData.append("basePrice", newProduct.basePrice);
     formData.append("stock", newProduct.stock);
-    formData.append("tags", JSON.stringify(newProduct.tags));
+    formData.append("tags", JSON.stringify(newProduct.tags)); // Ensure tags are sent as a JSON string
     formData.append(
       "category",
       JSON.stringify({
-        parent: newProduct.category.parent,
-        child: newProduct.category.child,
-        grandchild: newProduct.category.grandchild,
+        parent: newProduct.category,
+        child: newProduct.subCategory,
+        grandchild: newProduct.grandChildCategory,
       })
     );
 
     // Process variations
-    newProduct.variations.forEach((variation, vIndex) => {
-      // Color images
-      variation.colorImages.forEach((file, fIndex) => {
-        formData.append(`variations[${vIndex}].colorImages`, file);
-      });
-
-      // Size images and data
-      variation.sizes.forEach((size, sIndex) => {
-        formData.append(
-          `variations[${vIndex}].sizes[${sIndex}].value`,
-          size.value
-        );
-        formData.append(
-          `variations[${vIndex}].sizes[${sIndex}].price`,
-          size.price
-        );
-        formData.append(
-          `variations[${vIndex}].sizes[${sIndex}].quantity`,
-          size.quantity
+    const variations = await Promise.all(
+      newProduct.variations.map(async (variation, vIndex) => {
+        // Convert Blob URLs to File objects
+        const colorImages = await Promise.all(
+          variation.colorImages.map(async (blobUrl, fIndex) => {
+            const response = await fetch(blobUrl);
+            const blob = await response.blob();
+            const fileName = `variation-${vIndex}-colorImage-${fIndex}.${
+              blob.type.split("/")[1]
+            }`;
+            return new File([blob], fileName, { type: blob.type });
+          })
         );
 
-        size.images.forEach((file, fIndex) => {
-          formData.append(
-            `variations[${vIndex}].sizes[${sIndex}].images`,
-            file
-          );
+        // Append color images to FormData
+        colorImages.forEach((file, fIndex) => {
+          formData.append(`variations[${vIndex}].colorImages`, file);
         });
-      });
-    });
+
+        // Return variation data without images (images are appended separately)
+        return {
+          colorName: variation.colorName,
+          sizes: variation.sizes,
+        };
+      })
+    );
+
+    // Append variations as JSON string
+    formData.append("variations", JSON.stringify(variations));
+
+    // Log FormData for debugging
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
     try {
       const data = await createProduct(formData);
@@ -251,7 +258,7 @@ const CreateProductForm = () => {
         />
 
         <ProductVariations
-          variations={newProduct.variations}
+          variations={newProduct?.variations}
           handleVariationChange={handleVariationChange}
           removeVariation={removeVariation}
           removeImage={removeImage}
@@ -264,7 +271,13 @@ const CreateProductForm = () => {
           removeSizeImage={removeSizeImage}
         />
 
-        <Button type="submit" isBG={true} disabled={loading} className="w-full">
+        <Button
+          type="submit"
+          isBG={true}
+          disabled={loading}
+          className="w-full"
+          onSubmit={handleSubmit}
+        >
           {loading ? (
             <span className="flex items-center">
               <Loader

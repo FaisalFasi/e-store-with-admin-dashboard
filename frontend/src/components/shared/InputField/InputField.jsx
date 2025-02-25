@@ -120,14 +120,9 @@ const InputField = ({
             type={type}
             id={id || name}
             name={name}
-            value={value}
+            value={value || ""}
             onChange={(e) => {
-              // For tags field, we need to pass the event up
-              if (name === "tags") {
-                onChange(e); // Pass entire event for tags handling
-              } else {
-                onChange(e.target.value);
-              }
+              onChange(e); // Pass entire event for tags handling
             }}
             required={required}
             placeholder={placeholder}

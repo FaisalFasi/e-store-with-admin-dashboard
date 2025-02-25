@@ -34,15 +34,20 @@ export const createProduct = async (req, res) => {
       metaDescription,
     } = req.body;
 
+    const parsedCategory = JSON.parse(category);
+
+    console.log("received data --", req.body);
     // Validate required fields
-    if (!name || !category?.parent || !basePrice || stock === undefined) {
+    if (!name || !parsedCategory?.parent || !basePrice || stock === undefined) {
       return res.status(400).json({
         message:
           "Missing required fields: name, category.parent, basePrice, stock",
       });
     }
+
+    console.log("parsedCategory", parsedCategory);
     // Validate category structure
-    if (!mongoose.Types.ObjectId.isValid(category.parent)) {
+    if (!mongoose.Types.ObjectId.isValid(parsedCategory.parent)) {
       return res.status(400).json({ message: "Invalid parent category ID" });
     }
 
@@ -55,7 +60,7 @@ export const createProduct = async (req, res) => {
 
     const variations = JSON.parse(req.body.variations);
 
-    console.log("received data --", req.body);
+    console.log("variations --", variations);
 
     // Process variations and upload images
     const processedVariations = await processVariations(
@@ -70,9 +75,9 @@ export const createProduct = async (req, res) => {
       slug: generateSlug(name),
       description: description || "",
       category: {
-        parent: category.parent,
-        child: category.child || null,
-        grandchild: category.grandchild || null,
+        parent: parsedCategory.parent,
+        child: parsedCategory.child || null,
+        grandchild: parsedCategory.grandchild || null,
       },
       basePrice: parseFloat(basePrice),
       stock: parseInt(stock),

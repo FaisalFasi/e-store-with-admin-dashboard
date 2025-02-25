@@ -4,7 +4,7 @@ import InputField from "../../shared/InputField/InputField";
 export const ProductVariations = (props) => {
   return (
     <div className="space-y-6">
-      {props.variations.map((variation, vIndex) => (
+      {props?.variations?.map((variation, vIndex) => (
         <div key={vIndex} className="bg-gray-800 border p-4 rounded-lg">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium">
@@ -118,17 +118,6 @@ export const ProductVariations = (props) => {
                   }
                   placeholder="Quantity"
                   className="w-full p-2 mb-2 border rounded"
-                />
-                <InputField
-                  type="file"
-                  multiple
-                  onChange={(e) =>
-                    props.handleSizeImageChange(vIndex, sIndex, e.target.files)
-                  }
-                  selectedImages={size.images} // Changed to size.images
-                  handleImageRemove={(imgIndex) =>
-                    props.removeSizeImage(vIndex, sIndex, imgIndex)
-                  }
                 />
               </div>
             ))}

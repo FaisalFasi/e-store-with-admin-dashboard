@@ -27,16 +27,16 @@ export const processVariations = async (variations, files) => {
   );
 };
 
-export const processSizes = async (sizes) => {
+export const processSizes = async (sizes, vIndex) => {
   return Promise.all(
-    sizes.map(async (size) => {
+    sizes.map(async (size, sIndex) => {
       return {
         ...size,
         value: size.value,
         price: parseFloat(size.price),
         quantity: parseInt(size.quantity),
-        sku: size.sku || undefined,
-        barcode: size.barcode || undefined,
+        sku: size.sku || `SKU-${Date.now()}-${vIndex}-${sIndex}`, // Generate if missing
+        barcode: size.barcode || `BARCODE-${Date.now()}-${vIndex}-${sIndex}`, // Generate if missing
       };
     })
   );

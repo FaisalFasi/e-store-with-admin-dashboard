@@ -23,8 +23,8 @@ export const ProductFormFields = ({
             if (field.onChange) {
               // For tags field, pass the entire event
               field.onChange(e);
-            } else {
-              // For other fields, pass the value
+            } else if (handleInputChange) {
+              // Ensure function exists
               handleInputChange(field.name, e.target.value);
             }
           }}
