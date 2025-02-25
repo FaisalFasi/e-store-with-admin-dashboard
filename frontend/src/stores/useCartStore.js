@@ -120,9 +120,22 @@ export const useCartStore = create((set, get) => ({
         return;
       }
 
-      const productVariation = product.variations.find(
-        (variation) => variation._id === selectedVariation._id
-      );
+      // Find the matching variation in the product
+      const productVariation = product.variations
+        .flatMap((variation) =>
+          variation.colors.flatMap((color) =>
+            color.sizes.map((size) => ({
+              ...size,
+              color: color.name,
+              variationId: variation._id,
+            }))
+          )
+        )
+        .find(
+          (size) =>
+            size.value === selectedVariation.size &&
+            size.color === selectedVariation.color
+        );
 
       if (!productVariation) {
         toast.error("Selected variation not found in the product.");
@@ -131,11 +144,12 @@ export const useCartStore = create((set, get) => ({
 
       console.log("Cart in addToCart:", get().cart);
 
-      // Find the existing item in the cart based on productId and variationId
+      // Find the existing item in the cart based on productId, color, and size
       const existingCartItem = get().cart.find(
         (item) =>
           item._id === product._id &&
-          item.variations[0]._id === selectedVariation._id // Check the variation ID
+          item.variations[0].color === selectedVariation.color &&
+          item.variations[0].size === selectedVariation.size
       );
 
       const cartVariationQuantity = existingCartItem
@@ -158,10 +172,10 @@ export const useCartStore = create((set, get) => ({
       } else {
         console.log("Product in addToCart:", product);
         console.log("selectedVariation.quantity :", selectedVariation.quantity);
-        console.log("selectedVariation._id :", selectedVariation._id);
+        console.log("selectedVariation._id :", productVariation.variationId);
         const res = await axiosBaseURL.post("/cart", {
           productId: product._id,
-          variationId: selectedVariation._id,
+          variationId: productVariation.variationId,
           quantity: selectedVariation.quantity,
         });
         console.log("Response in addToCart:", res);
@@ -178,7 +192,8 @@ export const useCartStore = create((set, get) => ({
         const newCart = existingCartItem
           ? prevState.cart.map((item) =>
               item._id === product._id &&
-              item.variations[0]._id === selectedVariation._id
+              item.variations[0].color === selectedVariation.color &&
+              item.variations[0].size === selectedVariation.size
                 ? {
                     ...item,
                     quantity: item.quantity + selectedVariation.quantity,
@@ -190,9 +205,14 @@ export const useCartStore = create((set, get) => ({
               {
                 ...product,
                 _id: product._id,
-                variations: [selectedVariation], // Store only the selected variation
+                variations: [
+                  {
+                    ...selectedVariation,
+                    variationId: productVariation.variationId,
+                  },
+                ], // Store only the selected variation
                 quantity: selectedVariation.quantity,
-                key: `${product._id}-${selectedVariation._id}`, // Unique key
+                key: `${product._id}-${selectedVariation.color}-${selectedVariation.size}`, // Unique key
               },
             ];
         return { cart: newCart };

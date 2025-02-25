@@ -228,7 +228,10 @@ const CreateProductForm = () => {
     try {
       const data = await createProduct(formData);
       if (data) {
-        setNewProduct(initailProductState);
+        setNewProduct({
+          ...initailProductState, // Reset to initial state
+          variations: [{ ...initailProductState.variations[0] }], // Keep the first variation
+        });
         toast.success("Product created successfully!");
       }
     } catch (error) {

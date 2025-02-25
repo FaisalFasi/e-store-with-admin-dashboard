@@ -18,6 +18,7 @@ const CartPage = () => {
     getCartItems();
   }, []);
   console.log("Cart items in CartPage:", cart);
+
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (
@@ -48,7 +49,7 @@ const CartPage = () => {
               if (!item) return null;
 
               // Generate a unique key using product ID and variation ID
-              const uniqueKey = `${item._id}-${item.variations[0]._id}`;
+              const uniqueKey = `${item._id}-${item.variations[0].variationId}`;
 
               return (
                 <CartItem

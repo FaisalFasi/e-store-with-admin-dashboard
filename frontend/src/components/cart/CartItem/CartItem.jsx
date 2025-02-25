@@ -5,7 +5,41 @@ import { useCartStore } from "../../../stores/useCartStore";
 const CartItem = ({ item, index }) => {
   const { removeFromCart, updateQuantity } = useCartStore();
   console.log("Item in CartItem: ", item);
+
+  // Check if the item and its nested properties exist
+  if (
+    !item ||
+    !item.variations ||
+    !Array.isArray(item.variations) ||
+    item.variations.length === 0 ||
+    !item.variations[0].colors ||
+    !Array.isArray(item.variations[0].colors) ||
+    item.variations[0].colors.length === 0 ||
+    !item.variations[0].colors[0].sizes ||
+    !Array.isArray(item.variations[0].colors[0].sizes) ||
+    item.variations[0].colors[0].sizes.length === 0
+  ) {
+    console.error("Invalid item structure:", item);
+    return (
+      <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">
+        <p className="text-red-400">
+          Invalid product data. Please remove this item.
+        </p>
+        <button
+          className="inline-flex items-center text-sm font-medium text-red-400 hover:text-red-300 hover:underline"
+          onClick={() => removeFromCart(item._id, item.variations[0]?._id)}
+        >
+          <Trash className="mr-2" />
+          Remove
+        </button>
+      </div>
+    );
+  }
+
+  // Extract the selected variation details
   const selectedVariation = item.variations[0];
+  const selectedColor = selectedVariation.colors[0];
+  const selectedSize = selectedColor.sizes[0];
 
   // Handle quantity increase
   const handleIncreaseQuantity = () => {
@@ -14,7 +48,7 @@ const CartItem = ({ item, index }) => {
 
   // Handle quantity decrease
   const handleDecreaseQuantity = () => {
-    if (item.quantity > 0) {
+    if (item.quantity > 1) {
       updateQuantity(item._id, selectedVariation._id, item.quantity - 1);
     }
   };
@@ -31,7 +65,7 @@ const CartItem = ({ item, index }) => {
         <div className="shrink-0 md:order-1">
           <img
             className="h-20 md:h-32 rounded object-cover"
-            src={selectedVariation.imageUrls[0]} // Use the selected variation's image
+            src={selectedColor.imageUrls[0]} // Use the selected color's image
             alt={item.name}
           />
         </div>
@@ -61,7 +95,7 @@ const CartItem = ({ item, index }) => {
           {/* Price */}
           <div className="text-end md:order-4 md:w-32">
             <p className="text-base font-bold text-emerald-400">
-              ${selectedVariation.price}
+              ${selectedSize.price}
             </p>
           </div>
         </div>
@@ -78,8 +112,8 @@ const CartItem = ({ item, index }) => {
 
           {/* Selected Variation Details (Color and Size) */}
           <div className="text-sm text-gray-400">
-            <p>Color: {selectedVariation.color}</p>
-            <p>Size: {selectedVariation.size}</p>
+            <p>Color: {selectedColor.name}</p>
+            <p>Size: {selectedSize.value}</p>
           </div>
 
           {/* Remove Button */}

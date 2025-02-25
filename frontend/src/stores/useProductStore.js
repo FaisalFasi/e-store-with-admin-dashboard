@@ -47,18 +47,16 @@ export const useProductStore = create((set, get) => ({
 
       console.log("Data from fetchAllProducts: ", response.data);
 
-      if (Array.isArray(response.data.products)) {
+      if (response.data.products) {
         set({
           products: response.data.products,
           cacheTimestamp: Date.now(),
           loading: false,
         });
       } else {
-        console.error("Products data is not an array", response.data);
+        toast.error("Failed to fetch products");
         set({ products: [], loading: false });
       }
-
-      console.log("Products fetched successfully", response);
     } catch (error) {
       set({ loading: false, products: [] });
       console.log("Error fetching products:", error);

@@ -13,27 +13,58 @@ const ProductCard = ({ product, index }) => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
+  console.log("Product in product card--- ", product);
+
   // Extract unique colors from variations
   const uniqueColors = [
-    ...new Set(product?.variations?.map((v) => v.color) || []),
+    ...new Set(
+      product?.variations?.flatMap((v) => v.colors.map((c) => c.name)) || []
+    ),
   ];
+  console.log("uniqueColors--- ", uniqueColors);
 
   // Filter sizes based on the selected color
   const sizesForSelectedColor = selectedColor
     ? [
         ...new Set(
-          product.variations
-            .filter((v) => v.color === selectedColor)
-            .map((v) => v.size)
+          product.variations.flatMap((v) =>
+            v.colors
+              .filter((c) => c.name === selectedColor)
+              .flatMap((c) => c.sizes.map((s) => s.value))
+          )
         ),
       ]
     : [];
+  console.log("sizesForSelectedColor--- ", sizesForSelectedColor);
 
   // Find the selected variation based on color and size
-  const selectedVariationDetails = product?.variations?.find(
-    (variation) =>
-      variation.color === selectedColor && variation.size === selectedSize
-  );
+  const selectedVariationDetails = product?.variations
+    ?.flatMap((v) => v.colors)
+    .find(
+      (color) =>
+        color.name === selectedColor &&
+        color.sizes.some((size) => size.value === selectedSize)
+    )
+    ?.sizes.find((size) => size.value === selectedSize);
+
+  const handleColorChange = (event) => {
+    const color = event.target.value;
+    setSelectedColor(color);
+    setSelectedSize(""); // Reset size when color changes
+    setSelectedQuantity(1); // Reset quantity when color changes
+  };
+
+  const handleSizeChange = (event) => {
+    const size = event.target.value;
+    setSelectedSize(size);
+  };
+
+  const handleQuantityChange = (event) => {
+    const value = parseInt(event.target.value, 10);
+    if (value > 0) {
+      setSelectedQuantity(value);
+    }
+  };
 
   const handleAddToCart = () => {
     if (!user) {
@@ -61,32 +92,15 @@ const ProductCard = ({ product, index }) => {
       return;
     }
 
+    console.log("Selected Variation Details--- ", selectedVariationDetails);
     // Add the selected variation and quantity to the cart
     addToCart(product, {
       ...selectedVariationDetails,
+      color: selectedColor,
+      size: selectedSize,
       quantity: selectedQuantity,
     });
   };
-
-  const handleColorChange = (event) => {
-    const color = event.target.value;
-    setSelectedColor(color);
-    setSelectedSize(""); // Reset size when color changes
-    setSelectedQuantity(1); // Reset quantity when color changes
-  };
-
-  const handleSizeChange = (event) => {
-    const size = event.target.value;
-    setSelectedSize(size);
-  };
-
-  const handleQuantityChange = (event) => {
-    const value = parseInt(event.target.value, 10);
-    if (value > 0) {
-      setSelectedQuantity(value);
-    }
-  };
-
   return (
     <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
       <Navigation
@@ -95,7 +109,10 @@ const ProductCard = ({ product, index }) => {
       >
         <img
           className="object-cover w-full"
-          src={product?.defaultVariation?.imageUrls[0]}
+          src={
+            product?.variations[0]?.colors[0]?.imageUrls?.[0] || // Updated to match your data structure
+            "https://via.placeholder.com/300"
+          }
           alt="product image"
         />
         <div className="absolute inset-0 bg-black bg-opacity-20" />
@@ -108,15 +125,11 @@ const ProductCard = ({ product, index }) => {
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-emerald-400">
-              $
-              {selectedVariationDetails?.price ||
-                product?.defaultVariation?.price}
+              ${selectedVariationDetails?.price || product.basePrice}
             </span>
           </p>
           <p className="text-sm text-gray-400">
-            In Stock:{" "}
-            {selectedVariationDetails?.quantity ||
-              product?.defaultVariation?.quantity}
+            In Stock: {selectedVariationDetails?.quantity || product.stock}
           </p>
         </div>
 

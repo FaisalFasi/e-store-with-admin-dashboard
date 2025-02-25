@@ -139,18 +139,7 @@ export const createProduct = async (req, res) => {
     session.endSession();
 
     console.error("Product creation error:", error);
-
-    const errorMessage = error.message.includes("validation failed")
-      ? "Product validation failed: " +
-        Object.values(error.errors)
-          .map((e) => e.message)
-          .join(", ")
-      : "Internal server error";
-
-    res.status(500).json({
-      success: false,
-      message: errorMessage,
-    });
+    handleError(res, error, "createProduct");
   }
 };
 
