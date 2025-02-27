@@ -45,11 +45,11 @@ const CartPage = () => {
       >
         {Array.isArray(cart) && cart.length > 0 ? (
           <div className="space-y-6">
-            {cart.map((item, index) => {
+            {cart?.map((item, index) => {
               if (!item) return null;
 
               // Generate a unique key using product ID and variation ID
-              const uniqueKey = `${item._id}-${item.variations[0].variationId}`;
+              const uniqueKey = `${item._id}-${index}`;
 
               return (
                 <CartItem

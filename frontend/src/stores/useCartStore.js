@@ -113,144 +113,128 @@ export const useCartStore = create((set, get) => ({
 
   addToCart: async (product, selectedVariation) => {
     console.log("Product in addToCart:", product);
-    console.log("selectedVariation in addToCart:", selectedVariation);
-    try {
-      if (!selectedVariation) {
-        toast.error("Please select a variation before adding to the cart.");
-        return;
-      }
+    console.log("Selected variation in addToCart:", selectedVariation);
 
-      // Check if the product and its nested properties exist
+    try {
+      // Validate inputs
       if (
         !product ||
-        !product.variations ||
-        !Array.isArray(product.variations) ||
-        product.variations.length === 0
+        !selectedVariation?.variation ||
+        !selectedVariation?.color ||
+        !selectedVariation?.size
       ) {
         toast.error("Invalid product data. Please try again.");
         return;
       }
 
-      // Find the matching variation in the product
-      const productVariation = product.variations
-        .flatMap((variation) => {
-          if (
-            !variation.colors ||
-            !Array.isArray(variation.colors) ||
-            variation.colors.length === 0
-          ) {
-            return []; // Skip this variation if colors are missing or invalid
-          }
+      // Destructure the selected variation details
+      const {
+        variation: selectedVar,
+        color: selectedColor,
+        size: selectedSize,
+        quantity,
+      } = selectedVariation;
+      const sizeValue = selectedSize.value;
+      const colorName = selectedColor.name;
+      const variationId = selectedVar._id;
 
-          return variation.colors.flatMap((color) => {
-            if (
-              !color.sizes ||
-              !Array.isArray(color.sizes) ||
-              color.sizes.length === 0
-            ) {
-              return []; // Skip this color if sizes are missing or invalid
-            }
-
-            return color.sizes.map((size) => ({
-              ...size,
-              color: color.name,
-              variationId: variation._id,
-            }));
-          });
-        })
-        .find(
-          (size) =>
-            size.value === selectedVariation.size &&
-            size.color === selectedVariation.color
-        );
-
+      // Find the matching product variation
+      const productVariation = product.variations.find(
+        (v) => v._id === variationId
+      );
       if (!productVariation) {
-        toast.error("Selected variation not found in the product.");
+        toast.error("Selected variation not found in product");
         return;
       }
 
-      console.log("Cart in addToCart:", get().cart);
-
-      // Find the existing item in the cart based on productId, color, and size
-      const existingCartItem = get().cart.find(
-        (item) =>
-          item._id === product._id &&
-          item.variations[0].color === selectedVariation.color &&
-          item.variations[0].size === selectedVariation.size
+      // Find matching color in the variation
+      const colorObj = productVariation.colors.find(
+        (c) => c.name === colorName
       );
-
-      const cartVariationQuantity = existingCartItem
-        ? existingCartItem.quantity
-        : 0;
-
-      // Get the actual available stock from the product variation
-      const availableStock = productVariation.quantity;
-
-      // Calculate remaining available quantity
-      const remainingAvailable = availableStock - cartVariationQuantity;
-
-      if (selectedVariation.quantity > remainingAvailable) {
-        toast.error(
-          remainingAvailable === 0
-            ? "This variation is out of stock."
-            : `You can't add more of this variation. Only ${remainingAvailable} left in stock.`
-        );
-        return; // Exit here to prevent the else block from executing
-      } else {
-        console.log("Product in addToCart:", product);
-        console.log("selectedVariation.quantity :", selectedVariation.quantity);
-        console.log("selectedVariation._id :", productVariation.variationId);
-        const res = await axiosBaseURL.post("/cart", {
-          productId: product._id,
-          variationId: productVariation.variationId,
-          quantity: selectedVariation.quantity,
-        });
-        console.log("Response in addToCart:", res);
-        if (res.data.success === true) {
-          toast.success("Product added to cart!");
-        } else {
-          console.error("Failed to add product to cart");
-          return;
-        }
+      if (!colorObj) {
+        toast.error("Selected color not found in variation");
+        return;
       }
 
-      // Update the frontend cart state
-      set((prevState) => {
-        const newCart = existingCartItem
-          ? prevState.cart.map((item) =>
-              item._id === product._id &&
-              item.variations[0].color === selectedVariation.color &&
-              item.variations[0].size === selectedVariation.size
-                ? {
-                    ...item,
-                    quantity: item.quantity + selectedVariation.quantity,
-                  }
-                : item
-            )
-          : [
-              ...prevState.cart,
-              {
-                ...product,
-                _id: product._id,
-                variations: [
-                  {
-                    ...selectedVariation,
-                    variationId: productVariation.variationId,
-                  },
-                ], // Store only the selected variation
-                quantity: selectedVariation.quantity,
-                key: `${product._id}-${selectedVariation.color}-${selectedVariation.size}`, // Unique key
-              },
-            ];
-        return { cart: newCart };
+      // Find matching size in the color
+      const sizeObj = colorObj.sizes.find((s) => s.value === sizeValue);
+      if (!sizeObj) {
+        toast.error("Selected size not found in color");
+        return;
+      }
+
+      // Check available stock
+      const availableStock = sizeObj.quantity;
+      if (quantity > availableStock) {
+        toast.error(`Only ${availableStock} items available in stock`);
+        return;
+      }
+
+      // API call to add to cart
+      const res = await axiosBaseURL.post("/cart", {
+        productId: product._id,
+        variationId: variationId,
+        color: colorName,
+        size: sizeValue,
+        quantity: quantity,
       });
 
+      if (!res.data.success) {
+        toast.error("Failed to add to cart");
+        return;
+      }
+
+      // Update local cart state
+      set((prevState) => {
+        const cartKey = `${product._id}-${variationId}-${colorName}-${sizeValue}`;
+        const existingItem = prevState.cart.find(
+          (item) => item.key === cartKey
+        );
+
+        if (existingItem) {
+          // Update existing item quantity
+          const newQuantity = existingItem.quantity + quantity;
+          if (newQuantity > availableStock) {
+            toast.error(`Cannot exceed available stock of ${availableStock}`);
+            return prevState;
+          }
+
+          return {
+            cart: prevState.cart.map((item) =>
+              item.key === cartKey ? { ...item, quantity: newQuantity } : item
+            ),
+          };
+        }
+
+        // Create new cart item
+        // const newItem = {
+        //   key: cartKey,
+        //   productId: product._id,
+        //   name: product.name,
+        //   basePrice: product.basePrice,
+        //   variationId: variationId,
+        //   color: colorName,
+        //   size: sizeValue,
+        //   quantity: quantity,
+        //   price: sizeObj.price || product.basePrice,
+        //   imageUrl:
+        //     colorObj.imageUrls?.[0] ||
+        //     product.variations[0]?.colors[0]?.imageUrls?.[0],
+        //   stock: availableStock,
+        // };
+
+        // return { cart: [...prevState.cart, newItem] };
+        return { cart: [...prevState.cart, product] };
+      });
+
+      toast.success("Added to cart!");
       get().calculate_Total_AmountInCart();
     } catch (error) {
-      console.log("Error in addToCart:", error);
-      toast.error(error.response?.data?.message || "An error occurred");
+      console.error("Add to cart error:", error);
+      toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   },
+
   removeFromCart: async (productId, variationId) => {
     try {
       // Call the backend to remove the specific variation
@@ -320,83 +304,50 @@ export const useCartStore = create((set, get) => ({
 
   calculate_Total_AmountInCart: () => {
     const { cart, coupon } = get();
-    console.log("Cart in calculate total amount:", cart);
 
-    // Check if cart is an array and not empty
-    if (!Array.isArray(cart) || cart.length === 0) {
-      console.warn("Cart is empty or invalid.");
-      set({ subTotal: 0, total: 0 }); // Reset totals if cart is empty
-      return;
+    // If cart is empty, reset totals
+    if (!Array.isArray(cart)) {
+      console.warn("Invalid cart data");
+      return set({ subTotal: 0, total: 0 });
     }
 
-    // Calculate subtotal using the price from the selected variation
+    // Calculate subtotal
     const subTotal = cart.reduce((sum, item) => {
-      // Check if item and its nested properties exist
-      if (
-        !item ||
-        !item.variations ||
-        !Array.isArray(item.variations) ||
-        item.variations.length === 0 ||
-        !item.variations[0].colors ||
-        !Array.isArray(item.variations[0].colors) ||
-        item.variations[0].colors.length === 0 ||
-        !item.variations[0].colors[0].sizes ||
-        !Array.isArray(item.variations[0].colors[0].sizes) ||
-        item.variations[0].colors[0].sizes.length === 0
-      ) {
-        console.warn("Invalid item structure in cart:", item);
-        return sum; // Skip this item if the structure is invalid
+      // Validate item structure
+      if (!item || typeof item !== "object") {
+        console.warn("Invalid item in cart:", item);
+        return sum;
       }
 
-      // Find the selected variation based on the selectedVariation ID
-      const selectedVariation = item.variations
-        .flatMap((variation) =>
-          variation.colors.flatMap((color) =>
-            color.sizes.map((size) => ({
-              ...size,
-              variationId: variation._id,
-              color: color.name,
-            }))
-          )
-        )
-        .find((size) => size.variationId === item.selectedVariation);
-
-      if (!selectedVariation) {
-        console.warn("Selected variation not found for item:", item);
-        return sum; // Skip this item if the selected variation is not found
-      }
-
-      // Ensure price and quantity are valid numbers
-      const price = parseFloat(selectedVariation.price);
+      // Use the size object's price if available, fallback to base price
+      const price = parseFloat(item.size?.price || item.basePrice || 0);
       const quantity = parseInt(item.quantity, 10);
 
+      // Validate price and quantity
       if (isNaN(price)) {
-        console.warn("Invalid price for variation:", selectedVariation);
-        return sum; // Skip this item if the price is invalid
+        console.warn("Invalid price for item:", item);
+        return sum;
       }
 
       if (isNaN(quantity)) {
         console.warn("Invalid quantity for item:", item);
-        return sum; // Skip this item if the quantity is invalid
+        return sum;
       }
 
       return sum + price * quantity;
     }, 0);
 
+    // Calculate total with coupon discount
     let total = subTotal;
-
-    // Apply coupon discount if available
-    if (coupon && !isNaN(coupon.discountPercentage)) {
+    if (coupon && typeof coupon.discountPercentage === "number") {
       const discount = subTotal * (coupon.discountPercentage / 100);
-      total = subTotal - discount;
+      total = Math.max(0, subTotal - discount); // Ensure total isn't negative
     }
 
-    // Ensure total is not negative
-    total = total < 0 ? 0 : total;
-
-    // Update state with new totals
+    // Update state
     set({ subTotal, total });
   },
+
   // enter shipping address
   saveShippingAddress: async (address) => {
     console.log("Shipping address:", address);

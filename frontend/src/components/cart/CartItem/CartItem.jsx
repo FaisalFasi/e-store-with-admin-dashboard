@@ -2,17 +2,11 @@ import React from "react";
 import { Minus, Plus, Trash } from "lucide-react";
 import { useCartStore } from "../../../stores/useCartStore";
 
-const CartItem = ({ item, index }) => {
+const CartItem = ({ item }) => {
   const { removeFromCart, updateQuantity } = useCartStore();
-  console.log("Item in CartItem: ", item);
 
-  // Check if the item and its nested properties exist
-  if (
-    !item ||
-    !item.variations ||
-    !Array.isArray(item.variations) ||
-    item.variations.length === 0
-  ) {
+  // Validate item structure
+  if (!item || typeof item !== "object") {
     console.error("Invalid item structure:", item);
     return (
       <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">
@@ -21,7 +15,7 @@ const CartItem = ({ item, index }) => {
         </p>
         <button
           className="inline-flex items-center text-sm font-medium text-red-400 hover:text-red-300 hover:underline"
-          onClick={() => removeFromCart(item._id, item.variations[0]?._id)}
+          onClick={() => removeFromCart(item.productId, item.variationId)}
         >
           <Trash className="mr-2" />
           Remove
@@ -30,26 +24,22 @@ const CartItem = ({ item, index }) => {
     );
   }
 
-  // Extract the selected variation details
-  const selectedVariation = item.variations[0];
-
   // Handle quantity increase
   const handleIncreaseQuantity = () => {
-    updateQuantity(item._id, selectedVariation._id, item.quantity + 1);
+    updateQuantity(item._id, item.variations[0]._id, item.quantity + 1);
   };
 
   // Handle quantity decrease
   const handleDecreaseQuantity = () => {
     if (item.quantity > 1) {
-      updateQuantity(item._id, selectedVariation._id, item.quantity - 1);
+      updateQuantity(item._id, item.variations[0]._id, item.quantity - 1);
     }
   };
 
   // Handle remove item
   const handleRemoveItem = () => {
-    removeFromCart(item._id, selectedVariation._id);
+    removeFromCart(item._id, item.variations[0]._id);
   };
-
   return (
     <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">
       <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
@@ -58,7 +48,7 @@ const CartItem = ({ item, index }) => {
           <img
             className="h-20 md:h-32 rounded object-cover"
             src={
-              selectedVariation.imageUrls?.[0] || "/placeholder.jpg" // Use local fallback image
+              item.variations[0]?.colors[0]?.imageUrls[0] || "/placeholder.jpg"
             }
             alt={item.name}
           />
@@ -69,8 +59,8 @@ const CartItem = ({ item, index }) => {
           <div className="flex items-center gap-2">
             <button
               className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border
-							 border-gray-600 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2
-							  focus:ring-emerald-500"
+               border-gray-600 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2
+                focus:ring-emerald-500"
               onClick={handleDecreaseQuantity}
             >
               <Minus className="text-gray-300" />
@@ -78,8 +68,8 @@ const CartItem = ({ item, index }) => {
             <p>{item.quantity}</p>
             <button
               className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border
-							 border-gray-600 bg-gray-700 hover:bg-gray-600 focus:outline-none 
-						focus:ring-2 focus:ring-emerald-500"
+               border-gray-600 bg-gray-700 hover:bg-gray-600 focus:outline-none 
+              focus:ring-2 focus:ring-emerald-500"
               onClick={handleIncreaseQuantity}
             >
               <Plus className="text-gray-300" />
@@ -89,7 +79,7 @@ const CartItem = ({ item, index }) => {
           {/* Price */}
           <div className="text-end md:order-4 md:w-32">
             <p className="text-base font-bold text-emerald-400">
-              ${selectedVariation.price}
+              ${item.variations[0].colors[0].sizes[0].price}
             </p>
           </div>
         </div>
@@ -101,20 +91,17 @@ const CartItem = ({ item, index }) => {
             {item.name}
           </p>
 
-          {/* Product Description */}
-          <p className="text-sm text-gray-400">{item.description}</p>
-
-          {/* Selected Variation Details (Color and Size) */}
+          {/* Selected Variation Details */}
           <div className="text-sm text-gray-400">
-            <p>Color: {selectedVariation.color}</p>
-            <p>Size: {selectedVariation.size}</p>
+            <p>Color: {item.variations[0].colors[0].name}</p>
+            <p>Size: {item.variations[0].colors[0].sizes[0].value}</p>
           </div>
 
           {/* Remove Button */}
           <div className="flex items-center gap-4">
             <button
               className="inline-flex items-center text-sm font-medium text-red-400
-							 hover:text-red-300 hover:underline"
+               hover:text-red-300 hover:underline"
               onClick={handleRemoveItem}
             >
               <Trash className="mr-2" />

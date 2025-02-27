@@ -5,7 +5,7 @@ import { useUserStore } from "../../../stores/useUserStore";
 import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
 
-const ProductCard = ({ product, index }) => {
+const ProductCard = ({ product }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
 
@@ -13,21 +13,18 @@ const ProductCard = ({ product, index }) => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
-  console.log("Product in product card--- ", product);
-
-  // Extract unique colors from variations
+  // Get unique colors across all variations
   const uniqueColors = [
     ...new Set(
       product?.variations?.flatMap((v) => v.colors.map((c) => c.name)) || []
     ),
   ];
-  console.log("uniqueColors--- ", uniqueColors);
 
-  // Filter sizes based on the selected color
+  // Get sizes for selected color across all variations
   const sizesForSelectedColor = selectedColor
     ? [
         ...new Set(
-          product.variations.flatMap((v) =>
+          product?.variations?.flatMap((v) =>
             v.colors
               .filter((c) => c.name === selectedColor)
               .flatMap((c) => c.sizes.map((s) => s.value))
@@ -35,72 +32,69 @@ const ProductCard = ({ product, index }) => {
         ),
       ]
     : [];
-  console.log("sizesForSelectedColor--- ", sizesForSelectedColor);
 
-  // Find the selected variation based on color and size
-  const selectedVariationDetails = product?.variations
-    ?.flatMap((v) => v.colors)
-    .find(
+  // Find the full variation details
+  const selectedVariation = product?.variations?.find((variation) =>
+    variation.colors.some(
       (color) =>
         color.name === selectedColor &&
         color.sizes.some((size) => size.value === selectedSize)
     )
-    ?.sizes.find((size) => size.value === selectedSize);
+  );
+
+  const selectedColorObj = selectedVariation?.colors?.find(
+    (c) => c.name === selectedColor
+  );
+  const selectedSizeObj = selectedColorObj?.sizes?.find(
+    (s) => s.value === selectedSize
+  );
 
   const handleColorChange = (event) => {
     const color = event.target.value;
     setSelectedColor(color);
-    setSelectedSize(""); // Reset size when color changes
-    setSelectedQuantity(1); // Reset quantity when color changes
+    setSelectedSize("");
+    setSelectedQuantity(1);
   };
 
   const handleSizeChange = (event) => {
-    const size = event.target.value;
-    setSelectedSize(size);
+    setSelectedSize(event.target.value);
   };
 
   const handleQuantityChange = (event) => {
     const value = parseInt(event.target.value, 10);
-    if (value > 0) {
-      setSelectedQuantity(value);
-    }
+    if (value > 0) setSelectedQuantity(value);
   };
 
   const handleAddToCart = () => {
     if (!user) {
-      toast.error("Please login to add products to cart", { id: "login" });
+      toast.error("Please login to add products to cart");
       return;
     }
 
     if (!selectedColor || !selectedSize) {
-      toast.error("Please select both color and size before adding to cart", {
-        id: "variation",
-      });
+      toast.error("Please select both color and size");
       return;
     }
 
-    if (!selectedVariationDetails) {
-      toast.error("Selected variation is not available", { id: "variation" });
+    if (!selectedSizeObj) {
+      toast.error("Selected variation is not available");
       return;
     }
 
-    if (selectedQuantity > selectedVariationDetails.quantity) {
-      toast.error(
-        `Only ${selectedVariationDetails.quantity} items available in stock`,
-        { id: "quantity" }
-      );
+    if (selectedQuantity > selectedSizeObj.quantity) {
+      toast.error(`Only ${selectedSizeObj.quantity} items available`);
       return;
     }
 
-    console.log("Selected Variation Details--- ", selectedVariationDetails);
-    // Add the selected variation and quantity to the cart
+    // Pass the complete variation structure
     addToCart(product, {
-      ...selectedVariationDetails,
-      color: selectedColor,
-      size: selectedSize,
+      variation: selectedVariation,
+      color: selectedColorObj,
+      size: selectedSizeObj,
       quantity: selectedQuantity,
     });
   };
+
   return (
     <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
       <Navigation
@@ -110,7 +104,8 @@ const ProductCard = ({ product, index }) => {
         <img
           className="object-cover w-full"
           src={
-            product?.variations[0]?.colors[0]?.imageUrls?.[0] || // Updated to match your data structure
+            selectedColorObj?.imageUrls?.[0] ||
+            product?.variations?.[0]?.colors?.[0]?.imageUrls?.[0] ||
             "https://via.placeholder.com/300"
           }
           alt="product image"
@@ -125,55 +120,47 @@ const ProductCard = ({ product, index }) => {
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-emerald-400">
-              ${selectedVariationDetails?.price || product.basePrice}
+              ${selectedSizeObj?.price || product.basePrice}
             </span>
           </p>
           <p className="text-sm text-gray-400">
-            In Stock: {selectedVariationDetails?.quantity || product.stock}
+            In Stock: {selectedSizeObj?.quantity || product.stock}
           </p>
         </div>
 
-        {/* Color Selection Dropdown */}
+        {/* Color Selection */}
         <div className="mb-4">
-          <label
-            htmlFor="color"
-            className="block text-sm font-medium text-gray-300"
-          >
+          <label className="block text-sm font-medium text-gray-300">
             Select Color
           </label>
           <select
-            id="color"
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
             onChange={handleColorChange}
             value={selectedColor}
           >
             <option value="">Choose a color</option>
-            {uniqueColors.map((color, i) => (
-              <option key={i} value={color}>
+            {uniqueColors.map((color) => (
+              <option key={color} value={color}>
                 {color}
               </option>
             ))}
           </select>
         </div>
 
-        {/* Size Selection Dropdown (only shown if a color is selected) */}
+        {/* Size Selection */}
         {selectedColor && (
           <div className="mb-4">
-            <label
-              htmlFor="size"
-              className="block text-sm font-medium text-gray-300"
-            >
+            <label className="block text-sm font-medium text-gray-300">
               Select Size
             </label>
             <select
-              id="size"
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
               onChange={handleSizeChange}
               value={selectedSize}
             >
               <option value="">Choose a size</option>
-              {sizesForSelectedColor.map((size, i) => (
-                <option key={i} value={size}>
+              {sizesForSelectedColor.map((size) => (
+                <option key={size} value={size}>
                   {size}
                 </option>
               ))}
@@ -181,28 +168,23 @@ const ProductCard = ({ product, index }) => {
           </div>
         )}
 
-        {/* Quantity Input (only shown if a size is selected) */}
+        {/* Quantity Input */}
         {selectedSize && (
           <div className="mb-4">
-            <label
-              htmlFor="quantity"
-              className="block text-sm font-medium text-gray-300"
-            >
+            <label className="block text-sm font-medium text-gray-300">
               Quantity
             </label>
             <input
               type="number"
-              id="quantity"
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
               value={selectedQuantity}
               min="1"
-              max={selectedVariationDetails?.quantity}
+              max={selectedSizeObj?.quantity}
               onChange={handleQuantityChange}
             />
           </div>
         )}
 
-        {/* Add to Cart Button */}
         <button
           className="flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium
        text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
