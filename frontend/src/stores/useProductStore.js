@@ -71,7 +71,7 @@ export const useProductStore = create((set, get) => ({
     try {
       const response = await axiosBaseURL.get(`/products/${productId}`);
 
-      set({ products: response.data.product, loading: false });
+      set({ products: response?.data?.product, loading: false });
     } catch (error) {
       set({ loading: false });
       console.log("Error fetching product:", error);

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import redis from "../db/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
+import Review from "../models/review.model.js";
 import fs from "fs/promises";
 import { imageValidationHelper } from "../helpers/validationHelper/imageValidationHelper.js";
 import ProductVariation from "../models/productVariation.model.js";
@@ -206,9 +207,11 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
-// Enhanced getProductById
+//   getProductById
 export const getProductById = async (req, res) => {
+  console.log("getProductById", req.params);
   try {
+    console.log("getProductById", req.params.id);
     const product = await Product.findById(req.params.id)
       .populate("category.parent category.child category.grandchild")
       .populate({
@@ -218,15 +221,17 @@ export const getProductById = async (req, res) => {
           model: "ProductVariation",
         },
       })
-      .populate("reviews");
+      .populate("reviews"); // Ensure Review model is registered
 
-    if (!product)
+    if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
+    }
 
     res.json({ success: true, product });
   } catch (error) {
+    console.error("Error in getProductById:", error);
     handleError(res, error, "getProductById");
   }
 };

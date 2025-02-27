@@ -17,7 +17,6 @@ const CartPage = () => {
   useEffect(() => {
     getCartItems();
   }, []);
-  console.log("Cart items in CartPage:", cart);
 
   return (
     <div className="relative z-10 container mx-auto px-4">

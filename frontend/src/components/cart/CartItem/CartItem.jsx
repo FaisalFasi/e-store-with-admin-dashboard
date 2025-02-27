@@ -15,7 +15,7 @@ const CartItem = ({ item }) => {
         </p>
         <button
           className="inline-flex items-center text-sm font-medium text-red-400 hover:text-red-300 hover:underline"
-          onClick={() => removeFromCart(item.productId, item.variationId)}
+          onClick={() => removeFromCart(item._id, item.variations[0]._id)}
         >
           <Trash className="mr-2" />
           Remove
@@ -23,6 +23,11 @@ const CartItem = ({ item }) => {
       </div>
     );
   }
+
+  // Extract nested properties safely
+  const variation = item.variations?.[0];
+  const color = variation?.colors?.[0];
+  const size = color?.sizes?.[0];
 
   // Handle quantity increase
   const handleIncreaseQuantity = () => {
@@ -40,6 +45,7 @@ const CartItem = ({ item }) => {
   const handleRemoveItem = () => {
     removeFromCart(item._id, item.variations[0]._id);
   };
+
   return (
     <div className="rounded-lg border p-4 shadow-sm border-gray-700 bg-gray-800 md:p-6">
       <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
@@ -47,9 +53,7 @@ const CartItem = ({ item }) => {
         <div className="shrink-0 md:order-1">
           <img
             className="h-20 md:h-32 rounded object-cover"
-            src={
-              item.variations[0]?.colors[0]?.imageUrls[0] || "/placeholder.jpg"
-            }
+            src={color?.imageUrls?.[0] || "/placeholder.jpg"}
             alt={item.name}
           />
         </div>
@@ -79,7 +83,7 @@ const CartItem = ({ item }) => {
           {/* Price */}
           <div className="text-end md:order-4 md:w-32">
             <p className="text-base font-bold text-emerald-400">
-              ${item.variations[0].colors[0].sizes[0].price}
+              ${size?.price || item.basePrice}
             </p>
           </div>
         </div>
@@ -93,8 +97,8 @@ const CartItem = ({ item }) => {
 
           {/* Selected Variation Details */}
           <div className="text-sm text-gray-400">
-            <p>Color: {item.variations[0].colors[0].name}</p>
-            <p>Size: {item.variations[0].colors[0].sizes[0].value}</p>
+            <p>Color: {color?.name}</p>
+            <p>Size: {size?.value}</p>
           </div>
 
           {/* Remove Button */}

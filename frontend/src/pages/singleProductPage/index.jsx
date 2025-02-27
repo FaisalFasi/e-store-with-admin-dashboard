@@ -25,54 +25,67 @@ const SingleProductPage = () => {
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
   // Extract unique colors from variations
-  const uniqueColors = [...new Set(product?.variations?.map((v) => v.color))];
+  const uniqueColors = [
+    ...new Set(
+      product?.variations?.flatMap((v) => v.colors.map((c) => c.name)) || []
+    ),
+  ];
 
   // Filter sizes based on the selected color
   const sizesForSelectedColor = selectedColor
     ? [
         ...new Set(
-          product?.variations
-            ?.filter((v) => v.color === selectedColor)
-            .map((v) => v.size)
+          product?.variations?.flatMap((v) =>
+            v.colors
+              .filter((c) => c.name === selectedColor)
+              .flatMap((c) => c.sizes.map((s) => s.value))
+          )
         ),
       ]
     : [];
 
   // Find the selected variation based on color and size
-  const selectedVariationDetails = product?.variations?.find(
-    (variation) =>
-      variation.color === selectedColor && variation.size === selectedSize
+  const selectedVariation = product?.variations?.find((variation) =>
+    variation.colors.some(
+      (color) =>
+        color.name === selectedColor &&
+        color.sizes.some((size) => size.value === selectedSize)
+    )
+  );
+
+  const selectedColorObj = selectedVariation?.colors?.find(
+    (c) => c.name === selectedColor
+  );
+  const selectedSizeObj = selectedColorObj?.sizes?.find(
+    (s) => s.value === selectedSize
   );
 
   const handleAddToCart = () => {
     if (!user) {
-      toast.error("Please login to add products to cart", { id: "login" });
+      toast.error("Please login to add products to cart");
       return;
     }
 
     if (!selectedColor || !selectedSize) {
-      toast.error("Please select both color and size before adding to cart", {
-        id: "variation",
-      });
+      toast.error("Please select both color and size");
       return;
     }
 
-    if (!selectedVariationDetails) {
-      toast.error("Selected variation is not available", { id: "variation" });
+    if (!selectedSizeObj) {
+      toast.error("Selected variation is not available");
       return;
     }
 
-    if (selectedQuantity > selectedVariationDetails.quantity) {
-      toast.error(
-        `Only ${selectedVariationDetails.quantity} items available in stock`,
-        { id: "quantity" }
-      );
+    if (selectedQuantity > selectedSizeObj.quantity) {
+      toast.error(`Only ${selectedSizeObj.quantity} items available`);
       return;
     }
 
     // Add the selected variation and quantity to the cart
     addToCart(product, {
-      ...selectedVariationDetails,
+      variation: selectedVariation,
+      color: selectedColorObj,
+      size: selectedSizeObj,
       quantity: selectedQuantity,
     });
   };
@@ -83,11 +96,11 @@ const SingleProductPage = () => {
     setSelectedQuantity(1); // Reset quantity when color changes
 
     // Update images to the first variation of the selected color
-    const firstVariationForColor = product?.variations?.find(
-      (v) => v.color === color
+    const firstVariationForColor = product?.variations?.find((v) =>
+      v.colors.some((c) => c.name === color)
     );
     if (firstVariationForColor) {
-      setSelectedImage(firstVariationForColor.imageUrls[0]);
+      setSelectedImage(firstVariationForColor.colors[0]?.imageUrls?.[0]);
     }
   };
 
@@ -95,19 +108,18 @@ const SingleProductPage = () => {
     setSelectedSize(size);
 
     // Update images to the selected variation
-    const selectedVariation = product?.variations?.find(
-      (v) => v.color === selectedColor && v.size === size
+    const selectedVariation = product?.variations?.find((v) =>
+      v.colors.some(
+        (c) => c.name === selectedColor && c.sizes.some((s) => s.value === size)
+      )
     );
     if (selectedVariation) {
-      setSelectedImage(selectedVariation.imageUrls[0]);
+      setSelectedImage(selectedVariation.colors[0]?.imageUrls?.[0]);
     }
   };
 
   const handleQuantityChange = (type) => {
-    if (
-      type === "increment" &&
-      selectedQuantity < selectedVariationDetails.quantity
-    ) {
+    if (type === "increment" && selectedQuantity < selectedSizeObj?.quantity) {
       setSelectedQuantity((prev) => prev + 1);
     } else if (type === "decrement" && selectedQuantity > 1) {
       setSelectedQuantity((prev) => prev - 1);
@@ -116,9 +128,7 @@ const SingleProductPage = () => {
 
   const handleAddToWishlist = () => {
     if (!user) {
-      toast.error("Please login to add products to wishlist", {
-        id: "wishlist",
-      });
+      toast.error("Please login to add products to wishlist");
       return;
     }
     toast.success("Product added to wishlist!");
@@ -131,13 +141,14 @@ const SingleProductPage = () => {
   useEffect(() => {
     if (product?.variations?.length > 0) {
       // Set initial selected variation
-      const initialVariation =
-        product.defaultVariation || product.variations[0];
+      const initialVariation = product.variations[0];
+      const initialColor = initialVariation.colors[0]?.name;
+      const initialSize = initialVariation.colors[0]?.sizes[0]?.value;
 
-      setSelectedColor(initialVariation.color);
-      setSelectedSize(initialVariation.size);
+      setSelectedColor(initialColor);
+      setSelectedSize(initialSize);
       setSelectedQuantity(1);
-      setSelectedImage(initialVariation.imageUrls[0]);
+      setSelectedImage(initialVariation.colors[0]?.imageUrls?.[0]);
     }
   }, [product]);
 
@@ -156,17 +167,18 @@ const SingleProductPage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 lg:gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 lg:gap-12"
         >
           {/* Left Section - Images */}
-          <div className="flex flex-col-reverse md:flex-row gap-4 items-center">
+          <div className="flex flex-col-reverse md:flex-row gap-6 items-center">
+            {/* Thumbnails */}
             <div className="max-w-full h-full flex items-center justify-start py-2 md:py-6 overflow-x-scroll">
               <div className="w-fit flex md:flex-col gap-4">
-                {selectedVariationDetails?.imageUrls?.map((imageUrl, index) => (
+                {selectedColorObj?.imageUrls?.map((imageUrl, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(imageUrl)}
-                    className={`flex w-fit border-4 transition rounded-sm ${
+                    className={`flex w-fit border-4 transition rounded-lg ${
                       selectedImage === imageUrl
                         ? "border-emerald-400"
                         : "border-gray-600"
@@ -175,16 +187,18 @@ const SingleProductPage = () => {
                     <img
                       src={imageUrl}
                       alt={`Thumbnail ${index + 1}`}
-                      className="w-16 h-16 object-cover rounded-sm"
+                      className="w-16 h-16 object-cover rounded-lg"
                     />
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Main Image */}
             <div className="w-fit h-full flex items-center justify-center">
               <ZoomImage
                 src={selectedImage}
-                className=" object-cover w-[320px] h-[400px] md:min-w-fit md:h-[400px] lg:min-w-fit lg:h-[550px] rounded-lg overflow-hidden shadow-lg"
+                className="object-cover w-[320px] h-[400px] md:min-w-fit md:h-[400px] lg:min-w-fit lg:h-[550px] rounded-lg overflow-hidden shadow-lg"
               />
             </div>
           </div>
@@ -198,6 +212,7 @@ const SingleProductPage = () => {
               <span className="font-bold">{product.name}</span>
             </div>
 
+            {/* Product Name */}
             <motion.h1
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -206,9 +221,12 @@ const SingleProductPage = () => {
             >
               {product.name}
             </motion.h1>
+
+            {/* Product Description */}
             <p className="text-gray-300 mb-6 leading-relaxed">
               {product.description}
             </p>
+
             {/* Price Display */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -216,15 +234,13 @@ const SingleProductPage = () => {
               transition={{ duration: 0.8 }}
               className="text-emerald-400 text-2xl lg:text-3xl font-bold mb-6"
             >
-              $
-              {selectedVariationDetails?.price ||
-                product?.defaultVariation?.price}
+              ${selectedSizeObj?.price || product.basePrice}
             </motion.div>
 
             {/* Stock Availability */}
             <p className="text-gray-300 mb-6">
-              {selectedVariationDetails?.quantity > 0
-                ? `In Stock: ${selectedVariationDetails?.quantity}`
+              {selectedSizeObj?.quantity > 0
+                ? `In Stock: ${selectedSizeObj?.quantity}`
                 : "Out of Stock"}
             </p>
 
@@ -260,8 +276,12 @@ const SingleProductPage = () => {
                         size === selectedSize ? "bg-emerald-400 text-white" : ""
                       }`}
                       disabled={
-                        product.variations.find(
-                          (v) => v.color === selectedColor && v.size === size
+                        product.variations.find((v) =>
+                          v.colors.some(
+                            (c) =>
+                              c.name === selectedColor &&
+                              c.sizes.some((s) => s.value === size)
+                          )
                         )?.quantity === 0
                       }
                     >
@@ -290,16 +310,14 @@ const SingleProductPage = () => {
                   <button
                     onClick={() => handleQuantityChange("increment")}
                     className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
-                    disabled={
-                      selectedQuantity >= selectedVariationDetails?.quantity
-                    }
+                    disabled={selectedQuantity >= selectedSizeObj?.quantity}
                   >
                     +
                   </button>
                 </div>
-                {selectedVariationDetails?.quantity > 0 && (
+                {selectedSizeObj?.quantity > 0 && (
                   <p className="text-sm text-gray-400 mt-2">
-                    Max quantity: {selectedVariationDetails?.quantity}
+                    Max quantity: {selectedSizeObj?.quantity}
                   </p>
                 )}
               </div>

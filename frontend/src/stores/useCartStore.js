@@ -205,7 +205,7 @@ export const useCartStore = create((set, get) => ({
             ),
           };
         }
-
+        console.log("Add to cart in variationId:", variationId);
         // Create new cart item
         // const newItem = {
         //   key: cartKey,
