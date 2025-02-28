@@ -1,36 +1,62 @@
-// models/Comment.js
 import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema(
   {
-    userId: {
+    // Core Relationships
+    review: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Review",
+      required: [true, "Review ID is required"],
+      index: true,
+    },
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "User ID is required"],
+      index: true,
     },
-    text: {
-      type: String,
-      required: true,
-      maxLength: 1000,
-    },
-    parent: {
+    parentComment: {
       type: mongoose.Schema.Types.ObjectId,
-      refPath: "parentModel", // Dynamic reference (Review or Comment)
+      ref: "Comment",
+      default: null,
+      index: true,
     },
-    parentModel: {
+
+    // Content
+    content: {
       type: String,
-      enum: ["Review", "Comment"],
-      required: true,
+      required: [true, "Comment content is required"],
+      maxlength: [1000, "Comment cannot exceed 1000 characters"],
+      trim: true,
     },
-    replies: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
+
+    // Moderation
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+// Indexes for quick lookups
+commentSchema.index({ review: 1, parentComment: 1 });
+commentSchema.index({ createdAt: -1 });
+
+// Virtual for replies
+commentSchema.virtual("replies", {
+  ref: "Comment",
+  localField: "_id",
+  foreignField: "parentComment",
+});
 
 const Comment = mongoose.model("Comment", commentSchema);
 export default Comment;

@@ -1,40 +1,87 @@
-// models/Review.js
 import mongoose from "mongoose";
 
 const reviewSchema = new mongoose.Schema(
   {
-    productId: {
+    // Core Relationships
+    product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true,
+      required: [true, "Product ID is required"],
+      index: true,
     },
-    userId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "User ID is required"],
+      index: true,
     },
+
+    // Review Content
     rating: {
       type: Number,
-      required: true,
-      min: 1,
-      max: 5,
+      required: [true, "Rating is required"],
+      min: [1, "Rating cannot be less than 1"],
+      max: [5, "Rating cannot exceed 5"],
+      validate: {
+        validator: Number.isInteger,
+        message: "Rating must be an integer",
+      },
     },
-    comment: {
+    title: {
       type: String,
-      maxLength: 1000,
+      maxlength: [120, "Title cannot exceed 120 characters"],
+      trim: true,
     },
-    images: [String],
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    dislikes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    replies: [
+    body: {
+      type: String,
+      maxlength: [2000, "Review cannot exceed 2000 characters"],
+      trim: true,
+    },
+    media: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
+        type: String,
+        validate: {
+          validator: (urls) => urls.length <= 4,
+          message: "Maximum 4 images/videos allowed",
+        },
       },
     ],
+
+    // Verification & Stats
+    verifiedPurchase: {
+      type: Boolean,
+      default: false,
+    },
+    helpfulVotes: {
+      type: Number,
+      default: 0,
+    },
+    reported: {
+      type: Boolean,
+      default: false,
+    },
+    commentCount: {
+      type: Number,
+      default: 0,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+// Indexes for search optimization
+reviewSchema.index({ product: 1, createdAt: -1 });
+reviewSchema.index({ rating: 1, createdAt: -1 });
+
+// Virtual for comments
+reviewSchema.virtual("comments", {
+  ref: "Comment",
+  localField: "_id",
+  foreignField: "review",
+});
 
 const Review = mongoose.model("Review", reviewSchema);
 export default Review;
