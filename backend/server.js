@@ -55,7 +55,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/newsletter", newsLetterRoutes);
 app.use("/api/address", addressRoutes);
-app.use("/api/review", reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 // app.use("/api/chatbot", chatbotRoutes);
 

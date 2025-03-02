@@ -112,9 +112,6 @@ export const useCartStore = create((set, get) => ({
   },
 
   addToCart: async (product, selectedVariation) => {
-    console.log("Product in addToCart:", product);
-    console.log("Selected variation in addToCart:", selectedVariation);
-
     try {
       // Validate inputs
       if (
@@ -205,7 +202,6 @@ export const useCartStore = create((set, get) => ({
             ),
           };
         }
-        console.log("Add to cart in variationId:", variationId);
         // Create new cart item
         // const newItem = {
         //   key: cartKey,

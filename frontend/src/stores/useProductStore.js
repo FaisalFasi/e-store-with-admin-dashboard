@@ -13,7 +13,6 @@ export const useProductStore = create((set, get) => ({
   setProducts: (products) => set({ products }),
 
   createProduct: async (formData) => {
-    console.log("Form Data in store: ", Object.fromEntries(formData));
     try {
       set({ loading: true });
 
@@ -44,8 +43,6 @@ export const useProductStore = create((set, get) => ({
 
     try {
       const response = await axiosBaseURL.get("/products");
-
-      console.log("Data from fetchAllProducts: ", response.data);
 
       if (response.data.products) {
         set({

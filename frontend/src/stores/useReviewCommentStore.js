@@ -11,10 +11,10 @@ export const useReviewCommentStore = create((set, get) => ({
 
   // Actions
   fetchProductReviews: async (productId) => {
+    console.log("productId in fetchProductReviews: ", productId);
     set({ loading: true, error: null });
     try {
       const response = await axiosBaseURL.get(`/reviews/product/${productId}`);
-
       console.log("Data from fetchProductReviews: ", response.data);
       set({ reviews: response.data, loading: false });
     } catch (error) {
@@ -22,7 +22,6 @@ export const useReviewCommentStore = create((set, get) => ({
         error: error.response?.data?.message || "Failed to fetch reviews",
         loading: false,
       });
-
       toast.error("Failed to load reviews");
     }
   },
@@ -90,10 +89,12 @@ export const useReviewCommentStore = create((set, get) => ({
     }
   },
 
-  markHelpful: async (reviewId) => {
+  markHelpful: async (reviewId, userId) => {
     set({ loading: true, error: null });
     try {
-      const response = await axiosBaseURL.post(`/reviews/${reviewId}/helpful`);
+      const response = await axiosBaseURL.post(`/reviews/${reviewId}/helpful`, {
+        userId,
+      });
       set((state) => ({
         reviews: state.reviews.map((review) =>
           review._id === reviewId ? response.data : review
@@ -209,31 +210,5 @@ export const useReviewCommentStore = create((set, get) => ({
       toast.error("Failed to delete comment");
       throw error;
     }
-  },
-
-  // Derived State
-  getReviewStats: (productId) => {
-    const reviews = get().reviews.filter(
-      (review) => review.product === productId
-    );
-    const totalReviews = reviews.length;
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating =
-      totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0;
-
-    const ratingDistribution = Array.from({ length: 5 }).map((_, index) => ({
-      stars: 5 - index,
-      count: reviews.filter((review) => review.rating === 5 - index).length,
-      percentage:
-        (reviews.filter((review) => review.rating === 5 - index).length /
-          totalReviews) *
-        100,
-    }));
-
-    return {
-      totalReviews,
-      averageRating,
-      ratingDistribution,
-    };
   },
 }));

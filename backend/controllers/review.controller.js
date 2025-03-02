@@ -1,5 +1,6 @@
-import Review from "../models/review.model.js";
 import asyncHandler from "express-async-handler";
+import Review from "../models/review.model.js";
+import { handleError } from "../utils/handleError/handleError.js";
 
 // Create Review
 export const createReview = asyncHandler(async (req, res) => {
@@ -20,11 +21,23 @@ export const createReview = asyncHandler(async (req, res) => {
 
 // Get Product Reviews
 export const getProductReviews = asyncHandler(async (req, res) => {
-  const reviews = await Review.find({ product: req.params.productId })
-    .populate("user", "name avatar")
-    .sort({ createdAt: -1 });
+  try {
+    const productId = req.params.productId;
+    console.log(" productId in getProductReviews: ", productId);
+    if (!productId) {
+      handleError(res, "Product ID is required", "Failed to fetch reviews");
+    }
+    // Use find instead of findById to query by the product field
+    const reviews = await Review.find({ product: productId })
+      .populate("user", "name avatar")
+      .sort({ createdAt: -1 });
+    console.log("reviews in getProductReviews: ", reviews);
 
-  res.json(reviews);
+    res.status(200).json(reviews);
+  } catch (error) {
+    console.log("error in getProductReviews: ", error);
+    handleError(res, error, "Failed to fetch reviews");
+  }
 });
 
 // Update Review

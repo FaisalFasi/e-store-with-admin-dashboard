@@ -1,8 +1,7 @@
-// components/ReviewCommentSection.jsx
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { getUserData } from "@utils/getUserData.js";
-import { useReviewCommentStore } from "../../../stores/useReviewCommentStore.js";
+import { useReviewCommentStore } from "../../../stores/useReviewCommentStore";
 
 const ReviewCommentSection = ({ productId }) => {
   const { user } = getUserData();
@@ -11,27 +10,31 @@ const ReviewCommentSection = ({ productId }) => {
     title: "",
     body: "",
   });
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [newComment, setNewComment] = useState({});
   const [showReply, setShowReply] = useState({});
 
-  // Zustand Store
   const {
     reviews,
     comments,
     loading,
     fetchProductReviews,
     createReview,
+    updateReview,
+    deleteReview,
     markHelpful,
     fetchComments,
     createComment,
-    deleteReview,
     deleteComment,
   } = useReviewCommentStore();
 
   // Fetch reviews when component mounts
   useEffect(() => {
-    fetchProductReviews(productId);
+    if (productId) fetchProductReviews(productId);
   }, [productId, fetchProductReviews]);
+
+  // Check if the user has already submitted a review
+  const userReview = reviews.find((review) => review.user._id === user?.id);
 
   // Handle review submission
   const handleReviewSubmit = async () => {
@@ -40,23 +43,49 @@ const ReviewCommentSection = ({ productId }) => {
       return;
     }
 
+    if (userReview && !editingReviewId) {
+      toast.error("You have already submitted a review for this product.");
+      return;
+    }
+
     try {
-      await createReview({
-        product: productId,
-        user: user.id,
-        ...newReview,
-      });
+      if (editingReviewId) {
+        await updateReview(editingReviewId, newReview);
+        toast.success("Review updated successfully!");
+        setEditingReviewId(null);
+      } else {
+        await createReview({
+          product: productId,
+          user: user.id,
+          ...newReview,
+        });
+        toast.success("Review submitted successfully!");
+      }
       setNewReview({ rating: 0, title: "", body: "" });
-      toast.success("Review submitted successfully!");
     } catch (error) {
       toast.error(error.message || "Failed to submit review");
     }
   };
 
-  // Handle comment submission
+  // Handle edit review
+  const handleEditReview = (review) => {
+    setNewReview({
+      rating: review.rating,
+      title: review.title,
+      body: review.body,
+    });
+    setEditingReviewId(review._id);
+  };
+
+  // Handle comment submission (admin-only for replies)
   const handleCommentSubmit = async (reviewId, parentCommentId = null) => {
     const content = newComment[reviewId]?.trim();
     if (!content) return;
+
+    if (parentCommentId && !user?.isAdmin) {
+      toast.error("Only admins can reply to comments.");
+      return;
+    }
 
     try {
       await createComment({
@@ -74,9 +103,13 @@ const ReviewCommentSection = ({ productId }) => {
 
   // Handle helpful vote
   const handleHelpful = async (reviewId) => {
+    if (!user) {
+      toast.error("Please login to mark helpful.");
+      return;
+    }
+
     try {
-      await markHelpful(reviewId);
-      toast.success("Marked as helpful!");
+      await markHelpful(reviewId, user.id);
     } catch (error) {
       toast.error(error.message || "Failed to mark helpful");
     }
@@ -106,49 +139,57 @@ const ReviewCommentSection = ({ productId }) => {
       <h3 className="text-2xl text-emerald-400 mb-6">Customer Reviews</h3>
 
       {/* New Review Form */}
-      <div className="bg-gray-800 p-6 rounded-lg mb-8">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-gray-300">Rating:</span>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => setNewReview({ ...newReview, rating: star })}
-                className={`text-xl ${
-                  star <= newReview.rating ? "text-yellow-400" : "text-gray-500"
-                }`}
-              >
-                ★
-              </button>
-            ))}
+      {(!userReview || editingReviewId) && (
+        <div className="bg-gray-800 p-6 rounded-lg mb-8">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-300">Rating:</span>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setNewReview({ ...newReview, rating: star })}
+                  className={`text-xl ${
+                    star <= newReview.rating
+                      ? "text-yellow-400"
+                      : "text-gray-500"
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              placeholder="Review title"
+              value={newReview.title}
+              onChange={(e) =>
+                setNewReview({ ...newReview, title: e.target.value })
+              }
+              className="w-full p-2 bg-gray-700 rounded text-white"
+            />
+            <textarea
+              placeholder="Write your review..."
+              value={newReview.body}
+              onChange={(e) =>
+                setNewReview({ ...newReview, body: e.target.value })
+              }
+              className="w-full p-2 bg-gray-700 rounded text-white"
+              rows="4"
+            />
+            <button
+              onClick={handleReviewSubmit}
+              className="ml-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg"
+              disabled={loading}
+            >
+              {loading
+                ? "Submitting..."
+                : editingReviewId
+                ? "Update Review"
+                : "Submit Review"}
+            </button>
           </div>
-          <input
-            type="text"
-            placeholder="Review title"
-            value={newReview.title}
-            onChange={(e) =>
-              setNewReview({ ...newReview, title: e.target.value })
-            }
-            className="w-full p-2 bg-gray-700 rounded text-white"
-          />
-          <textarea
-            placeholder="Write your review..."
-            value={newReview.body}
-            onChange={(e) =>
-              setNewReview({ ...newReview, body: e.target.value })
-            }
-            className="w-full p-2 bg-gray-700 rounded text-white"
-            rows="4"
-          />
-          <button
-            onClick={handleReviewSubmit}
-            className="ml-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : "Submit Review"}
-          </button>
         </div>
-      </div>
+      )}
 
       {/* Reviews List */}
       <div className="space-y-6">
@@ -176,12 +217,20 @@ const ReviewCommentSection = ({ productId }) => {
                   {new Date(review.createdAt).toLocaleDateString()}
                 </span>
                 {(user?.isAdmin || user?.id === review.user._id) && (
-                  <button
-                    onClick={() => handleDelete(review._id)}
-                    className="ml-auto text-red-400 hover:text-red-500"
-                  >
-                    Delete
-                  </button>
+                  <div className="ml-auto flex gap-2">
+                    <button
+                      onClick={() => handleEditReview(review)}
+                      className="text-blue-400 hover:text-blue-500"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(review._id)}
+                      className="text-red-400 hover:text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 )}
               </div>
               <h4 className="text-lg text-white mb-2">{review.title}</h4>
@@ -279,15 +328,15 @@ const CommentTree = ({
       </div>
       <p className="text-gray-300">{comment.content}</p>
 
-      {/* Reply Button */}
-      {user && (
+      {/* Reply Button (Admin Only) */}
+      {user?.isAdmin && (
         <button onClick={toggleReply} className="text-sm text-emerald-400 mt-1">
           {showReply ? "Hide Reply" : "Reply"}
         </button>
       )}
 
-      {/* Reply Form */}
-      {showReply && (
+      {/* Reply Form (Admin Only) */}
+      {showReply && user?.isAdmin && (
         <div className="mt-2 flex gap-2">
           <input
             type="text"
