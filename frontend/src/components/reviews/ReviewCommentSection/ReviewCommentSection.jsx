@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { getUserData } from "@utils/getUserData.js";
 import { useReviewCommentStore } from "../../../stores/useReviewCommentStore";
@@ -23,21 +23,24 @@ const ReviewCommentSection = ({ productId }) => {
     updateReview,
     deleteReview,
     markHelpful,
-    fetchComments,
     createComment,
     deleteComment,
   } = useReviewCommentStore();
 
-  // Fetch reviews when component mounts
   useEffect(() => {
-    if (productId) fetchProductReviews(productId);
+    if (productId) {
+      fetchProductReviews(productId).catch((error) => {
+        toast.error(error.message || "Failed to fetch reviews");
+      });
+    }
   }, [productId, fetchProductReviews]);
 
-  // Check if the user has already submitted a review
-  const userReview = reviews.find((review) => review.user._id === user?.id);
+  const userReview = useMemo(
+    () => reviews?.find((review) => review.user?._id === user?.id),
+    [reviews, user]
+  );
 
-  // Handle review submission
-  const handleReviewSubmit = async () => {
+  const handleReviewSubmit = useCallback(async () => {
     if (!user) {
       toast.error("Please login to submit a review");
       return;
@@ -54,91 +57,97 @@ const ReviewCommentSection = ({ productId }) => {
         toast.success("Review updated successfully!");
         setEditingReviewId(null);
       } else {
-        await createReview({
-          product: productId,
-          user: user.id,
-          ...newReview,
-        });
+        await createReview({ product: productId, user: user.id, ...newReview });
         toast.success("Review submitted successfully!");
       }
       setNewReview({ rating: 0, title: "", body: "" });
     } catch (error) {
       toast.error(error.message || "Failed to submit review");
     }
-  };
+  }, [
+    user,
+    userReview,
+    editingReviewId,
+    newReview,
+    productId,
+    updateReview,
+    createReview,
+  ]);
 
-  // Handle edit review
-  const handleEditReview = (review) => {
+  const handleEditReview = useCallback((review) => {
     setNewReview({
       rating: review.rating,
       title: review.title,
       body: review.body,
     });
     setEditingReviewId(review._id);
-  };
+  }, []);
 
-  // Handle comment submission (admin-only for replies)
-  const handleCommentSubmit = async (reviewId, parentCommentId = null) => {
-    const content = newComment[reviewId]?.trim();
-    if (!content) return;
+  const handleCommentSubmit = useCallback(
+    async (reviewId, parentCommentId = null) => {
+      const content = newComment[reviewId]?.trim();
+      if (!content) return;
 
-    if (parentCommentId && !user?.isAdmin) {
-      toast.error("Only admins can reply to comments.");
-      return;
-    }
-
-    try {
-      await createComment({
-        review: reviewId,
-        user: user.id,
-        content,
-        parentComment: parentCommentId,
-      });
-      setNewComment({ ...newComment, [reviewId]: "" });
-      toast.success("Comment added successfully!");
-    } catch (error) {
-      toast.error(error.message || "Failed to add comment");
-    }
-  };
-
-  // Handle helpful vote
-  const handleHelpful = async (reviewId) => {
-    if (!user) {
-      toast.error("Please login to mark helpful.");
-      return;
-    }
-
-    try {
-      await markHelpful(reviewId, user.id);
-    } catch (error) {
-      toast.error(error.message || "Failed to mark helpful");
-    }
-  };
-
-  // Handle deletion
-  const handleDelete = async (reviewId, commentId = null) => {
-    try {
-      if (commentId) {
-        await deleteComment(commentId);
-      } else {
-        await deleteReview(reviewId);
+      if (parentCommentId && !user?.isAdmin) {
+        toast.error("Only admins can reply to comments.");
+        return;
       }
-      toast.success("Deleted successfully!");
-    } catch (error) {
-      toast.error(error.message || "Failed to delete");
-    }
-  };
 
-  // Toggle reply form visibility
-  const toggleReplyForm = (commentId) => {
+      try {
+        await createComment({
+          review: reviewId,
+          user: user.id,
+          content,
+          parentComment: parentCommentId,
+        });
+        setNewComment((prev) => ({ ...prev, [reviewId]: "" }));
+        toast.success("Comment added successfully!");
+      } catch (error) {
+        toast.error(error.message || "Failed to add comment");
+      }
+    },
+    [newComment, user, createComment]
+  );
+
+  const handleHelpful = useCallback(
+    async (reviewId) => {
+      if (!user) {
+        toast.error("Please login to mark helpful.");
+        return;
+      }
+
+      try {
+        await markHelpful(reviewId, user.id);
+      } catch (error) {
+        toast.error(error.message || "Failed to mark helpful");
+      }
+    },
+    [user, markHelpful]
+  );
+
+  const handleDelete = useCallback(
+    async (reviewId, commentId = null) => {
+      try {
+        if (commentId) {
+          await deleteComment(commentId);
+        } else {
+          await deleteReview(reviewId);
+        }
+        toast.success("Deleted successfully!");
+      } catch (error) {
+        toast.error(error.message || "Failed to delete");
+      }
+    },
+    [deleteComment, deleteReview]
+  );
+
+  const toggleReplyForm = useCallback((commentId) => {
     setShowReply((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
-  };
+  }, []);
 
   return (
     <section className="mt-12">
       <h3 className="text-2xl text-emerald-400 mb-6">Customer Reviews</h3>
-
-      {/* New Review Form */}
       {(!userReview || editingReviewId) && (
         <div className="bg-gray-800 p-6 rounded-lg mb-8">
           <div className="flex flex-col gap-4">
@@ -147,7 +156,9 @@ const ReviewCommentSection = ({ productId }) => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
-                  onClick={() => setNewReview({ ...newReview, rating: star })}
+                  onClick={() =>
+                    setNewReview((prev) => ({ ...prev, rating: star }))
+                  }
                   className={`text-xl ${
                     star <= newReview.rating
                       ? "text-yellow-400"
@@ -163,7 +174,7 @@ const ReviewCommentSection = ({ productId }) => {
               placeholder="Review title"
               value={newReview.title}
               onChange={(e) =>
-                setNewReview({ ...newReview, title: e.target.value })
+                setNewReview((prev) => ({ ...prev, title: e.target.value }))
               }
               className="w-full p-2 bg-gray-700 rounded text-white"
             />
@@ -171,7 +182,7 @@ const ReviewCommentSection = ({ productId }) => {
               placeholder="Write your review..."
               value={newReview.body}
               onChange={(e) =>
-                setNewReview({ ...newReview, body: e.target.value })
+                setNewReview((prev) => ({ ...prev, body: e.target.value }))
               }
               className="w-full p-2 bg-gray-700 rounded text-white"
               rows="4"
@@ -190,21 +201,18 @@ const ReviewCommentSection = ({ productId }) => {
           </div>
         </div>
       )}
-
-      {/* Reviews List */}
       <div className="space-y-6">
         {reviews.map((review) => (
           <div key={review._id} className="bg-gray-800 p-6 rounded-lg">
-            {/* Review Header */}
             <div className="border-b border-gray-700 pb-4 mb-4">
               <div className="flex items-center gap-3 mb-2">
                 <img
-                  src={review.user.avatar}
-                  alt={review.user.name}
+                  src={review?.user?.avatar}
+                  alt={review?.user?.name}
                   className="w-8 h-8 rounded-full"
                 />
                 <span className="font-semibold text-emerald-400">
-                  {review.user.name}
+                  {review?.user?.name}
                 </span>
                 <div className="flex">
                   {[...Array(review.rating)].map((_, i) => (
@@ -216,7 +224,7 @@ const ReviewCommentSection = ({ productId }) => {
                 <span className="text-gray-400 text-sm">
                   {new Date(review.createdAt).toLocaleDateString()}
                 </span>
-                {(user?.isAdmin || user?.id === review.user._id) && (
+                {(user?.isAdmin || user?.id === review?.user?._id) && (
                   <div className="ml-auto flex gap-2">
                     <button
                       onClick={() => handleEditReview(review)}
@@ -244,8 +252,6 @@ const ReviewCommentSection = ({ productId }) => {
                 </button>
               </div>
             </div>
-
-            {/* Comments Section */}
             <div className="ml-8 space-y-4">
               {comments[review._id]?.map((comment) => (
                 <CommentTree
@@ -260,17 +266,15 @@ const ReviewCommentSection = ({ productId }) => {
                   toggleReply={() => toggleReplyForm(comment._id)}
                 />
               ))}
-
-              {/* New Comment Form */}
               <div className="flex gap-2 mt-4">
                 <input
                   type="text"
                   value={newComment[review._id] || ""}
                   onChange={(e) =>
-                    setNewComment({
-                      ...newComment,
+                    setNewComment((prev) => ({
+                      ...prev,
                       [review._id]: e.target.value,
-                    })
+                    }))
                   }
                   placeholder="Write a comment..."
                   className="flex-1 p-2 bg-gray-700 rounded text-white"
@@ -292,7 +296,6 @@ const ReviewCommentSection = ({ productId }) => {
   );
 };
 
-// Recursive Comment Component
 const CommentTree = ({
   comment,
   onDelete,
@@ -327,15 +330,11 @@ const CommentTree = ({
         )}
       </div>
       <p className="text-gray-300">{comment.content}</p>
-
-      {/* Reply Button (Admin Only) */}
       {user?.isAdmin && (
         <button onClick={toggleReply} className="text-sm text-emerald-400 mt-1">
           {showReply ? "Hide Reply" : "Reply"}
         </button>
       )}
-
-      {/* Reply Form (Admin Only) */}
       {showReply && user?.isAdmin && (
         <div className="mt-2 flex gap-2">
           <input
@@ -357,8 +356,6 @@ const CommentTree = ({
           </button>
         </div>
       )}
-
-      {/* Nested Replies */}
       {comment.replies?.map((reply) => (
         <CommentTree
           key={reply._id}

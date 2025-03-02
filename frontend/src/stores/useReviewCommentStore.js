@@ -95,6 +95,7 @@ export const useReviewCommentStore = create((set, get) => ({
       const response = await axiosBaseURL.post(`/reviews/${reviewId}/helpful`, {
         userId,
       });
+
       set((state) => ({
         reviews: state.reviews.map((review) =>
           review._id === reviewId ? response.data : review

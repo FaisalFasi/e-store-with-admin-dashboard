@@ -56,6 +56,12 @@ const reviewSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    helpfulVotesByUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     reported: {
       type: Boolean,
       default: false,
@@ -75,6 +81,8 @@ const reviewSchema = new mongoose.Schema(
 // Indexes for search optimization
 reviewSchema.index({ product: 1, createdAt: -1 });
 reviewSchema.index({ rating: 1, createdAt: -1 });
+
+reviewSchema.index({ product: 1, user: 1 }, { unique: true });
 
 // Virtual for comments
 reviewSchema.virtual("comments", {

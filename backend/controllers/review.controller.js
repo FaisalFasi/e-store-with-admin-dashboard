@@ -72,9 +72,58 @@ export const deleteReview = asyncHandler(async (req, res) => {
 });
 
 // Mark Helpful
+// export const markHelpful = asyncHandler(async (req, res) => {
+//   const review = await Review.findById(req.params.id);
+//   review.helpfulVotes += 1;
+//   await review.save();
+//   res.json(review);
+// });
+
 export const markHelpful = asyncHandler(async (req, res) => {
-  const review = await Review.findById(req.params.id);
-  review.helpfulVotes += 1;
-  await review.save();
-  res.json(review);
+  const reviewId = req.params.id;
+  const { userId } = req.body;
+
+  console.log("userId in markHelpful: ", userId);
+  console.log("reviewId in markHelpful: ", reviewId);
+
+  try {
+    const review = await Review.findById(reviewId);
+    console.log("review in markHelpful: ", review);
+
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    // Ensure helpfulVotesByUsers does not contain null values
+    review.helpfulVotesByUsers = review.helpfulVotesByUsers.filter(
+      (id) => id !== null
+    );
+
+    // Check if the user has already voted
+    const hasUserVoted = review.helpfulVotesByUsers.includes(userId);
+    console.log("hasUserVoted in markHelpful: ", hasUserVoted);
+
+    if (hasUserVoted) {
+      // Remove the user's vote
+      review.helpfulVotesByUsers = review.helpfulVotesByUsers.filter(
+        (id) => id.toString() !== userId
+      );
+      review.helpfulVotes -= 1;
+    } else {
+      // Add the user's vote
+      review.helpfulVotesByUsers.push(userId);
+      review.helpfulVotes += 1;
+    }
+
+    await review.save();
+
+    res.status(200).json({
+      message: hasUserVoted ? "Removed helpful vote!" : "Marked as helpful!",
+      helpfulVotes: review.helpfulVotes,
+      hasUserVoted: !hasUserVoted, // Return the new state
+    });
+  } catch (error) {
+    console.error("Error in markHelpful:", error);
+    handleError(res, error, "Failed to mark helpful");
+  }
 });
