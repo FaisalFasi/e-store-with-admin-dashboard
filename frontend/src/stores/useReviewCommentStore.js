@@ -30,13 +30,13 @@ export const useReviewCommentStore = create((set, get) => ({
 
     try {
       const response = await axiosBaseURL.post("/reviews", reviewData);
+      console.log("response in createReview:", response);
 
       set((state) => ({
-        reviews: [response.data, ...state.reviews],
+        reviews: [response.data.review, ...state.reviews],
         loading: false,
       }));
       toast.success("Review submitted successfully!");
-      // return response.data;
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || "Failed to submit review";
@@ -147,6 +147,8 @@ export const useReviewCommentStore = create((set, get) => ({
   createComment: async (commentData) => {
     set({ loading: true, error: null });
     try {
+      console.log("commentData:", commentData);
+
       const response = await axiosBaseURL.post("/comments", commentData);
       set((state) => ({
         comments: {

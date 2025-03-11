@@ -7,8 +7,6 @@ import mongoose from "mongoose";
 export const createReview = asyncHandler(async (req, res) => {
   const { product, rating, title, body, media } = req.body;
 
-  console.log("req.user.id in createReview: ", req.user.id);
-
   if (!product || !rating) {
     // 406 Not Acceptable
     return handleError(
@@ -34,7 +32,7 @@ export const createReview = asyncHandler(async (req, res) => {
     );
   }
 
-  const review = await Review.create({
+  let review = await Review.create({
     product,
     user: req.user.id,
     rating,
@@ -43,6 +41,7 @@ export const createReview = asyncHandler(async (req, res) => {
     media,
     verifiedPurchase: false, // Update this based on actual purchase verification
   });
+  review = await review.populate("user", "name avatar"); // Add other fields as needed
 
   res.status(201).json({ review });
 });
@@ -69,6 +68,7 @@ export const getProductReviews = asyncHandler(async (req, res) => {
 
   // Count total reviews for pagination metadata
   const totalReviews = await Review.countDocuments({ product: productId });
+  console.log("reviews in getProductReviews: ", reviews);
 
   res.status(200).json({
     reviews,
@@ -155,7 +155,7 @@ export const markHelpful = asyncHandler(async (req, res) => {
 
   try {
     // Find the review and update it atomically
-    const review = await Review.findOneAndUpdate(
+    let review = await Review.findOneAndUpdate(
       { _id: reviewId },
       [
         {
@@ -203,6 +203,8 @@ export const markHelpful = asyncHandler(async (req, res) => {
     if (!review) {
       return res.status(404).json({ message: "Review not found" });
     }
+
+    review = await review.populate("user", "name avatar"); // Add other fields as needed
 
     // Determine if the user has voted after the update
     const hasUserVoted = review.helpfulVotesByUsers.includes(userId);
