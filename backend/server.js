@@ -17,6 +17,7 @@ import ordersRoutes from "./routes/orders.route.js";
 import addressRoutes from "./routes/address.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import commentRoutes from "./routes/comment.route.js";
 import {
   getAllCategories,
   setDefaultCategories,
@@ -56,6 +57,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/newsletter", newsLetterRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/comments", commentRoutes);
 
 // app.use("/api/chatbot", chatbotRoutes);
 

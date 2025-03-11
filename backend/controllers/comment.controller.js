@@ -1,11 +1,14 @@
-import Comment from "../models/Comment.js";
-import Review from "../models/Review.js";
+import Comment from "../models/comment.model.js";
 import asyncHandler from "express-async-handler";
+import Review from "../models/review.model.js";
 
 // Create Comment
 export const createComment = asyncHandler(async (req, res) => {
   const { reviewId, content, parentComment } = req.body;
-
+  console.log("comments : ", req.body);
+  console.log("reviewId : ", reviewId);
+  console.log("content : ", content);
+  console.log("parentComment : ", parentComment);
   const comment = await Comment.create({
     review: reviewId,
     user: req.user.id,

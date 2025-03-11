@@ -18,6 +18,7 @@ const ReviewItem = ({
   const toggleReplyForm = (commentId) => {
     setShowReply((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
   };
+  console.log("ReviewItem -> user", user);
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
@@ -91,28 +92,30 @@ const ReviewItem = ({
             toggleReply={() => toggleReplyForm(comment._id)}
           />
         ))}
-        <div className="flex gap-2 mt-4">
-          <input
-            type="text"
-            value={newComment[review._id] || ""}
-            onChange={(e) =>
-              setNewComment((prev) => ({
-                ...prev,
-                [review._id]: e.target.value,
-              }))
-            }
-            placeholder="Write a comment..."
-            className="flex-1 p-2 bg-gray-700 rounded text-white"
-            disabled={loading}
-          />
-          <button
-            onClick={() => handleCommentSubmit(review._id)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded"
-            disabled={loading}
-          >
-            {loading ? "Posting..." : "Comment"}
-          </button>
-        </div>
+        {user?.role === "admin" && (
+          <div className="flex gap-2 mt-4">
+            <input
+              type="text"
+              value={newComment[review._id] || ""}
+              onChange={(e) =>
+                setNewComment((prev) => ({
+                  ...prev,
+                  [review._id]: e.target.value,
+                }))
+              }
+              placeholder="Write a comment..."
+              className="flex-1 p-2 bg-gray-700 rounded text-white"
+              disabled={loading}
+            />
+            <button
+              onClick={() => handleCommentSubmit(review._id)}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded"
+              disabled={loading}
+            >
+              {loading ? "Posting..." : "Comment"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
