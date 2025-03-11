@@ -4,11 +4,10 @@ import Review from "../models/review.model.js";
 
 // Create Comment
 export const createComment = asyncHandler(async (req, res) => {
-  const { reviewId, content, parentComment } = req.body;
+  const { review: reviewId, content, parentComment } = req.body;
   console.log("comments : ", req.body);
-  console.log("reviewId : ", reviewId);
-  console.log("content : ", content);
-  console.log("parentComment : ", parentComment);
+
+  console.log("req.user.id : ", req.user.id);
   const comment = await Comment.create({
     review: reviewId,
     user: req.user.id,
