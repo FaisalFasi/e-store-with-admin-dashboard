@@ -5,6 +5,7 @@ import {
   deleteReview,
   getProductReviews,
   markHelpful,
+  hasUserReviewedProduct,
 } from "../controllers/review.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
@@ -18,5 +19,6 @@ router
   .delete(protectRoute, deleteReview);
 
 router.post("/:id/helpful", protectRoute, markHelpful);
+// router.get("/products/:productId/has-reviewed/:userId", hasUserReviewedProduct);
 
 export default router;

@@ -11,12 +11,11 @@ export const useReviewCommentStore = create((set, get) => ({
 
   // Actions
   fetchProductReviews: async (productId) => {
-    console.log("productId in fetchProductReviews: ", productId);
     set({ loading: true, error: null });
     try {
       const response = await axiosBaseURL.get(`/reviews/product/${productId}`);
-      console.log("Data from fetchProductReviews: ", response.data);
-      set({ reviews: response.data, loading: false });
+
+      set({ reviews: response.data.reviews, loading: false });
     } catch (error) {
       set({
         error: error.response?.data?.message || "Failed to fetch reviews",
@@ -28,21 +27,25 @@ export const useReviewCommentStore = create((set, get) => ({
 
   createReview: async (reviewData) => {
     set({ loading: true, error: null });
+
+    console.log("createReview... ", reviewData);
     try {
       const response = await axiosBaseURL.post("/reviews", reviewData);
+
       set((state) => ({
         reviews: [response.data, ...state.reviews],
         loading: false,
       }));
       toast.success("Review submitted successfully!");
-      return response.data;
+      // return response.data;
     } catch (error) {
-      set({
-        error: error.response?.data?.message || "Failed to create review",
-        loading: false,
-      });
-      toast.error("Failed to submit review");
-      throw error;
+      // const errorMessage =
+      //   error.response?.data?.message || "Failed to submit review";
+      // set({
+      //   error: errorMessage,
+      //   loading: false,
+      // });
+      // toast.error(errorMessage);
     }
   },
 
@@ -54,19 +57,20 @@ export const useReviewCommentStore = create((set, get) => ({
         updateData
       );
       set((state) => ({
-        reviews: state.reviews.map((review) =>
+        reviews: state.reviews?.map((review) =>
           review._id === reviewId ? response.data : review
         ),
         loading: false,
       }));
       toast.success("Review updated successfully!");
     } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to update review";
       set({
-        error: error.response?.data?.message || "Failed to update review",
+        error: errorMessage,
         loading: false,
       });
-      toast.error("Failed to update review");
-      throw error;
+      toast.error(errorMessage);
     }
   },
 
@@ -91,6 +95,13 @@ export const useReviewCommentStore = create((set, get) => ({
 
   markHelpful: async (reviewId, userId) => {
     set({ loading: true, error: null });
+
+    if (!reviewId || !userId) {
+      set({ error: "Review ID or User ID is missing", loading: false });
+      toast.error("Review ID or User ID is missing");
+      return;
+    }
+
     try {
       const response = await axiosBaseURL.post(`/reviews/${reviewId}/helpful`, {
         userId,
@@ -98,11 +109,11 @@ export const useReviewCommentStore = create((set, get) => ({
 
       set((state) => ({
         reviews: state.reviews.map((review) =>
-          review._id === reviewId ? response.data : review
+          review._id === reviewId ? response.data.review : review
         ),
         loading: false,
       }));
-      toast.success("Marked as helpful!");
+      toast.success(response.data.message);
     } catch (error) {
       set({
         error: error.response?.data?.message || "Failed to mark helpful",

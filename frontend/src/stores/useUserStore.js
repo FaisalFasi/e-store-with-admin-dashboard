@@ -186,8 +186,6 @@ axiosBaseURL.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    console.log("originalRequest", originalRequest);
-
     if (
       error.response.status === 401 &&
       !originalRequest._retry &&
@@ -210,7 +208,7 @@ axiosBaseURL.interceptors.response.use(
 
         return axiosBaseURL(originalRequest);
       } catch (refreshError) {
-        console.error("Error refreshing token:", refreshError);
+        // console.error("Error refreshing token:", refreshError);
         refreshingPromise = null;
         useUserStore.getState().logout();
         return Promise.reject(refreshError);

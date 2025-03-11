@@ -4,8 +4,11 @@ import Button from "@components/shared/Button/Button";
 import ZoomImage from "@components/shared/ZoomImage/ZoomImage";
 import { useSingleProduct } from "../../hooks/useSingleProduct";
 import ReviewCommentSection from "../../components/reviews/ReviewCommentSection/ReviewCommentSection";
+import { getUserData } from "../../utils/getUserData.js";
 
 const SingleProductPage = () => {
+  const { user } = getUserData();
+
   const {
     product,
     isLoading,
@@ -245,7 +248,7 @@ const SingleProductPage = () => {
         </div>
 
         {/* Comment and Review Section */}
-        <ReviewCommentSection productId={product._id} />
+        {user && <ReviewCommentSection productId={product._id} />}
       </div>
     </div>
   );

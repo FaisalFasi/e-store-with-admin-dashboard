@@ -84,6 +84,23 @@ reviewSchema.index({ rating: 1, createdAt: -1 });
 
 reviewSchema.index({ product: 1, user: 1 }, { unique: true });
 
+reviewSchema.methods.toggleHelpfulVote = async function (userId) {
+  const index = this.helpfulVotesByUsers.indexOf(userId);
+
+  if (index === -1) {
+    // User hasn't voted yet, add their vote
+    this.helpfulVotesByUsers.push(userId);
+    this.helpfulVotes += 1;
+  } else {
+    // User has already voted, remove their vote
+    this.helpfulVotesByUsers.splice(index, 1);
+    this.helpfulVotes -= 1;
+  }
+
+  await this.save();
+  return this;
+};
+
 // Virtual for comments
 reviewSchema.virtual("comments", {
   ref: "Comment",

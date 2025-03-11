@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { getUserData } from "@utils/getUserData.js";
-import { useReviewCommentStore } from "../../../stores/useReviewCommentStore";
+import { useReviewCommentStore } from "@stores/useReviewCommentStore";
 
 const ReviewCommentSection = ({ productId }) => {
   const { user } = getUserData();
@@ -35,10 +35,9 @@ const ReviewCommentSection = ({ productId }) => {
     }
   }, [productId, fetchProductReviews]);
 
-  const userReview = useMemo(
-    () => reviews?.find((review) => review.user?._id === user?.id),
-    [reviews, user]
-  );
+  const userReview = useMemo(() => {
+    reviews?.find((review) => review.user?._id === user?._id);
+  }, [reviews, user]);
 
   const handleReviewSubmit = useCallback(async () => {
     if (!user) {
@@ -54,11 +53,13 @@ const ReviewCommentSection = ({ productId }) => {
     try {
       if (editingReviewId) {
         await updateReview(editingReviewId, newReview);
-        toast.success("Review updated successfully!");
         setEditingReviewId(null);
       } else {
-        await createReview({ product: productId, user: user.id, ...newReview });
-        toast.success("Review submitted successfully!");
+        await createReview({
+          product: productId,
+          user: user._id,
+          ...newReview,
+        });
       }
       setNewReview({ rating: 0, title: "", body: "" });
     } catch (error) {
@@ -101,7 +102,6 @@ const ReviewCommentSection = ({ productId }) => {
           parentComment: parentCommentId,
         });
         setNewComment((prev) => ({ ...prev, [reviewId]: "" }));
-        toast.success("Comment added successfully!");
       } catch (error) {
         toast.error(error.message || "Failed to add comment");
       }
@@ -110,14 +110,14 @@ const ReviewCommentSection = ({ productId }) => {
   );
 
   const handleHelpful = useCallback(
-    async (reviewId) => {
+    async (review, user) => {
       if (!user) {
         toast.error("Please login to mark helpful.");
         return;
       }
 
       try {
-        await markHelpful(reviewId, user.id);
+        await markHelpful(review._id, user?._id);
       } catch (error) {
         toast.error(error.message || "Failed to mark helpful");
       }
@@ -133,7 +133,6 @@ const ReviewCommentSection = ({ productId }) => {
         } else {
           await deleteReview(reviewId);
         }
-        toast.success("Deleted successfully!");
       } catch (error) {
         toast.error(error.message || "Failed to delete");
       }
@@ -202,8 +201,11 @@ const ReviewCommentSection = ({ productId }) => {
         </div>
       )}
       <div className="space-y-6">
-        {reviews.map((review) => (
-          <div key={review._id} className="bg-gray-800 p-6 rounded-lg">
+        {reviews?.map((review, index) => (
+          <div
+            key={review?._id || index}
+            className="bg-gray-800 p-6 rounded-lg"
+          >
             <div className="border-b border-gray-700 pb-4 mb-4">
               <div className="flex items-center gap-3 mb-2">
                 <img
@@ -241,19 +243,19 @@ const ReviewCommentSection = ({ productId }) => {
                   </div>
                 )}
               </div>
-              <h4 className="text-lg text-white mb-2">{review.title}</h4>
-              <p className="text-gray-300">{review.body}</p>
+              <h4 className="text-lg text-white mb-2">{review?.title}</h4>
+              <p className="text-gray-300">{review?.body}</p>
               <div className="flex items-center gap-4 mt-3">
                 <button
-                  onClick={() => handleHelpful(review._id)}
+                  onClick={() => handleHelpful(review, user)}
                   className="text-gray-400 hover:text-emerald-400"
                 >
-                  Helpful ({review.helpfulVotes})
+                  Helpful ({review?.helpfulVotes})
                 </button>
               </div>
             </div>
             <div className="ml-8 space-y-4">
-              {comments[review._id]?.map((comment) => (
+              {comments[review?._id]?.map((comment) => (
                 <CommentTree
                   key={comment._id}
                   comment={comment}
@@ -261,7 +263,7 @@ const ReviewCommentSection = ({ productId }) => {
                   user={user}
                   showReply={showReply[comment._id]}
                   onReply={(content) =>
-                    handleCommentSubmit(review._id, comment._id, content)
+                    handleCommentSubmit(review?._id, comment._id, content)
                   }
                   toggleReply={() => toggleReplyForm(comment._id)}
                 />
@@ -356,7 +358,7 @@ const CommentTree = ({
           </button>
         </div>
       )}
-      {comment.replies?.map((reply) => (
+      {/* {comment.replies?.map((reply) => (
         <CommentTree
           key={reply._id}
           comment={reply}
@@ -366,7 +368,7 @@ const CommentTree = ({
           onReply={onReply}
           toggleReply={() => toggleReply(reply._id)}
         />
-      ))}
+      ))} */}
     </div>
   );
 };
