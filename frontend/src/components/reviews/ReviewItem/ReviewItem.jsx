@@ -50,7 +50,7 @@ const ReviewItem = ({
             </div>
           </div>
 
-          {(user?.isAdmin || user?.id === review?.user?._id) && (
+          {(user?.role === "admin" || user?.id === review?.user?._id) && (
             <div className="ml-auto flex gap-2">
               <button
                 onClick={() => handleEditReview(review)}

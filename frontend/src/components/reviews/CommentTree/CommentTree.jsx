@@ -25,7 +25,7 @@ const CommentTree = ({
         <span className="text-gray-400 text-sm">
           {new Date(comment.createdAt).toLocaleDateString()}
         </span>
-        {(user?.isAdmin || user?.id === comment.user._id) && (
+        {(user?.role === "admin" || user?.id === comment.user._id) && (
           <button
             onClick={() => onDelete(null, comment?._id)}
             className="ml-auto text-red-400 hover:text-red-500"
@@ -35,12 +35,12 @@ const CommentTree = ({
         )}
       </div>
       <p className="text-gray-300">{comment.content}</p>
-      {user?.isAdmin && (
+      {user?.role === "admin" && (
         <button onClick={toggleReply} className="text-sm text-emerald-400 mt-1">
           {showReply ? "Hide Reply" : "Reply"}
         </button>
       )}
-      {showReply && user?.isAdmin && (
+      {showReply && user?.role === "admin" && (
         <div className="mt-2 flex gap-2">
           <input
             type="text"
