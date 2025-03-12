@@ -164,5 +164,6 @@ export const useSingleProduct = () => {
     handleQuantityChange,
     handleAddToWishlist,
     selectedColorObj,
+    setSelectedImage,
   };
 };

@@ -25,6 +25,7 @@ const SingleProductPage = () => {
     handleQuantityChange,
     handleAddToWishlist,
     selectedColorObj,
+    setSelectedImage,
   } = useSingleProduct();
 
   if (isLoading) {
