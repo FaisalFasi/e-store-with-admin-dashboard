@@ -70,10 +70,10 @@ const SingleProductPage = () => {
             </div>
 
             {/* Main Image */}
-            <div className="w-fit h-full flex items-center justify-center">
+            <div className="w-[320px] h-[400px] md:w-[320px] lg:w-[550px] md:h-[400px] lg:h-[400px] xl:h-[550px]">
               <ZoomImage
                 src={selectedImage}
-                className="object-cover w-[320px] h-[400px] md:min-w-fit md:h-[400px] lg:min-w-fit lg:h-[550px] rounded-lg overflow-hidden shadow-lg"
+                className="object-cover rounded-lg overflow-hidden shadow-lg w-[320px] h-[400px] md:w-[320px] lg:w-[550px] md:h-[400px] lg:h-[400px] xl:h-[550px]"
               />
             </div>
           </div>
