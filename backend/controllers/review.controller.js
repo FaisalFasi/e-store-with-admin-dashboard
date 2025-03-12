@@ -41,13 +41,7 @@ export const createReview = asyncHandler(async (req, res) => {
     media,
     verifiedPurchase: false, // Update this based on actual purchase verification
   });
-  review = await review.populate("user", "name avatar role").populate({
-    path: "comments",
-    populate: {
-      path: "user",
-      select: " name avatar",
-    },
-  });
+  review = await review.populate("user", "name avatar role");
 
   res.status(201).json({ review });
 });
@@ -116,37 +110,34 @@ export const updateReview = asyncHandler(async (req, res) => {
   }
 
   // Update the review
-  const updatedReview = await Review.findByIdAndUpdate(reviewId, updates, {
+  let updatedReview = await Review.findByIdAndUpdate(reviewId, updates, {
     new: true,
     runValidators: true, // Ensure updates are validated
   });
 
-  res.status(200).json(updatedReview);
+  updatedReview = await updatedReview.populate("user", "name avatar role");
+  res.status(200).json({ review: updatedReview });
 });
 
 // Delete Review
 export const deleteReview = asyncHandler(async (req, res) => {
   const reviewId = req.params.id;
 
-  console.log("reviewId", reviewId);
   // Validate reviewId
   if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-    res.status(400);
-    throw new Error("Invalid review ID");
+    handleError(res, "Invalid review ID", 400);
   }
 
   // Find the review
   const review = await Review.findById(reviewId);
 
   if (!review) {
-    res.status(404);
-    throw new Error("Review not found");
+    handleError(res, "Review not found", 404);
   }
 
   // Check if the user is authorized to delete the review
   if (review.user.toString() !== req.user.id) {
-    res.status(401);
-    throw new Error("Not authorized to delete this review");
+    handleError(res, "Not authorized to delete this review", 401);
   }
 
   // Delete the review
@@ -229,10 +220,7 @@ export const markHelpful = asyncHandler(async (req, res) => {
       review, // Return the full review object for frontend consistency
     });
   } catch (error) {
-    console.error("Error in markHelpful:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to mark helpful", error: error.message });
+    handleError(res, "Failed to mark review as helpful", 500);
   }
 });
 

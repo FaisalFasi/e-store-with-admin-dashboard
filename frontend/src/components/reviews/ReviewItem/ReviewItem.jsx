@@ -18,8 +18,6 @@ const ReviewItem = ({
   const toggleReplyForm = (commentId) => {
     setShowReply((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
   };
-  console.log("ReviewItem -> review", review);
-
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
       <div className="border-b border-gray-700 pb-4 mb-4">
@@ -50,7 +48,7 @@ const ReviewItem = ({
             </div>
           </div>
 
-          {(user?.role === "admin" || user?.id === review?.user?._id) && (
+          {(user?.role === "admin" || user?._id === review?.user?._id) && (
             <div className="ml-auto flex gap-2">
               <button
                 onClick={() => handleEditReview(review)}

@@ -65,12 +65,16 @@ export const useReviewCommentStore = create((set, get) => ({
         `/reviews/${reviewId}`,
         updateData
       );
+
       set((state) => ({
-        reviews: state.reviews?.map((review) =>
-          review._id === reviewId ? response.data : review
+        reviews: state.reviews.map((review) =>
+          review._id === response.data.review._id
+            ? response.data.review
+            : review
         ),
         loading: false,
       }));
+
       toast.success("Review updated successfully!");
     } catch (error) {
       const errorMessage =

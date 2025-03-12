@@ -25,7 +25,7 @@ const CommentTree = ({
         <span className="text-gray-400 text-sm">
           {new Date(comment.createdAt).toLocaleDateString()}
         </span>
-        {(user?.role === "admin" || user?.id === comment.user._id) && (
+        {(user?.role === "admin" || user?._id === comment?.user?._id) && (
           <button
             onClick={() => onDelete(null, comment?._id)}
             className="ml-auto text-red-400 hover:text-red-500"
