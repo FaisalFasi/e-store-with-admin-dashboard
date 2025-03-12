@@ -128,6 +128,8 @@ const ReviewCommentSection = ({ productId }) => {
 
   const handleDelete = useCallback(
     async (reviewId, commentId = null) => {
+      console.log("reviewId : ", reviewId);
+      console.log("commentId : ", commentId);
       try {
         if (commentId) {
           await deleteComment(commentId);

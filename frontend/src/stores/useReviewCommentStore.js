@@ -14,8 +14,18 @@ export const useReviewCommentStore = create((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await axiosBaseURL.get(`/reviews/product/${productId}`);
+      const { reviews } = response.data;
 
-      set({ reviews: response.data.reviews, loading: false });
+      set((state) => ({
+        ...state.reviews,
+        reviews,
+        comments: reviews.reduce((acc, review) => {
+          acc[review._id] = review.comments || [];
+          return acc;
+        }, {}),
+        loading: false,
+      }));
+      // set({ reviews: response.data.reviews, loading: false });
     } catch (error) {
       set({
         error: error.response?.data?.message || "Failed to fetch reviews",

@@ -41,7 +41,13 @@ export const createReview = asyncHandler(async (req, res) => {
     media,
     verifiedPurchase: false, // Update this based on actual purchase verification
   });
-  review = await review.populate("user", "name avatar role"); // Add other fields as needed
+  review = await review.populate("user", "name avatar role").populate({
+    path: "comments",
+    populate: {
+      path: "user",
+      select: " name avatar",
+    },
+  });
 
   res.status(201).json({ review });
 });
@@ -62,6 +68,14 @@ export const getProductReviews = asyncHandler(async (req, res) => {
 
   const reviews = await Review.find({ product: productId })
     .populate("user", "name avatar")
+    .populate({
+      path: "comments",
+      match: { isDeleted: false }, // Only show comments that are not deleted
+      populate: {
+        path: "user",
+        select: " name avatar",
+      },
+    })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
@@ -114,6 +128,7 @@ export const updateReview = asyncHandler(async (req, res) => {
 export const deleteReview = asyncHandler(async (req, res) => {
   const reviewId = req.params.id;
 
+  console.log("reviewId", reviewId);
   // Validate reviewId
   if (!mongoose.Types.ObjectId.isValid(reviewId)) {
     res.status(400);
@@ -203,8 +218,7 @@ export const markHelpful = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "Review not found" });
     }
 
-    review = await review.populate("user", "name avatar role"); // Add other fields as needed
-
+    review = await review.populate("user", "name avatar role");
     // Determine if the user has voted after the update
     const hasUserVoted = review.helpfulVotesByUsers.includes(userId);
 

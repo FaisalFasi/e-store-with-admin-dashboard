@@ -18,7 +18,7 @@ const ReviewItem = ({
   const toggleReplyForm = (commentId) => {
     setShowReply((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
   };
-  console.log("ReviewItem -> user", user);
+  console.log("ReviewItem -> review", review);
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
@@ -83,7 +83,7 @@ const ReviewItem = ({
           <CommentTree
             key={comment._id}
             comment={comment}
-            onDelete={handleDelete}
+            onDelete={() => handleDelete(null, comment._id)}
             user={user}
             showReply={showReply[comment._id]}
             onReply={(content) =>

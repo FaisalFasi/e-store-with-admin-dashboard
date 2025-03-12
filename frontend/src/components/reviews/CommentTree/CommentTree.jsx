@@ -9,6 +9,7 @@ const CommentTree = ({
   toggleReply,
 }) => {
   const [replyContent, setReplyContent] = useState("");
+  console.log("CommentTree -> comment", comment);
 
   return (
     <div className="border-l-2 border-emerald-600 pl-4">
@@ -26,7 +27,7 @@ const CommentTree = ({
         </span>
         {(user?.isAdmin || user?.id === comment.user._id) && (
           <button
-            onClick={() => onDelete(comment._id)}
+            onClick={() => onDelete(null, comment?._id)}
             className="ml-auto text-red-400 hover:text-red-500"
           >
             Delete
@@ -60,11 +61,11 @@ const CommentTree = ({
           </button>
         </div>
       )}
-      {comment.replies?.map((reply) => (
+      {comment?.replies?.map((reply) => (
         <CommentTree
           key={reply._id}
           comment={reply}
-          onDelete={onDelete}
+          onDelete={() => onDelete(null, reply._id)}
           user={user}
           showReply={showReply[reply._id]}
           onReply={onReply}

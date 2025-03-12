@@ -7,8 +7,7 @@ export const createComment = asyncHandler(async (req, res) => {
   const { review: reviewId, content, parentComment } = req.body;
   console.log("comments : ", req.body);
 
-  console.log("req.user.id : ", req.user.id);
-  const comment = await Comment.create({
+  let comment = await Comment.create({
     review: reviewId,
     user: req.user.id,
     content,
@@ -18,6 +17,7 @@ export const createComment = asyncHandler(async (req, res) => {
   // Update review's comment count
   await Review.findByIdAndUpdate(reviewId, { $inc: { commentCount: 1 } });
 
+  comment = await comment.populate("user", "name avatar");
   res.status(201).json(comment);
 });
 
@@ -49,6 +49,8 @@ export const updateComment = asyncHandler(async (req, res) => {
 // Delete Comment
 export const deleteComment = asyncHandler(async (req, res) => {
   const comment = await Comment.findById(req.params.id);
+
+  console.log("comment : ", comment);
 
   if (comment.user.toString() !== req.user.id) {
     res.status(401);

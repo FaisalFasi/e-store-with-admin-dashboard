@@ -102,6 +102,13 @@ reviewSchema.methods.toggleHelpfulVote = async function (userId) {
 };
 
 // Virtual for comments
+// This is a virtual field that allows us to populate comments for a review
+// when we query the review model.
+// It's a one-to-many relationship between Review and Comment models.
+// This is useful when we want to fetch all comments for a review.
+// We can simply query the Review model and populate the comments field.
+// This is a common pattern in MongoDB to avoid nested queries.
+// This way we can fetch all comments for a review in a single query.
 reviewSchema.virtual("comments", {
   ref: "Comment",
   localField: "_id",
