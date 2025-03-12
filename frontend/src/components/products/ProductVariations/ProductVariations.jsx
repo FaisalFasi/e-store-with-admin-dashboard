@@ -23,19 +23,24 @@ export const ProductVariations = (props) => {
           </div>
 
           {/* Color Name */}
-          <input
-            value={variation.colorName}
-            onChange={(e) =>
-              props.handleVariationChange(vIndex, "colorName", e.target.value)
-            }
-            placeholder="Color name"
-            className="w-full p-2 mb-4 border rounded text-black"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Color Name
+            </label>
+            <input
+              value={variation.colorName}
+              onChange={(e) =>
+                props.handleVariationChange(vIndex, "colorName", e.target.value)
+              }
+              placeholder="Color name i.e. Red, Blue, etc."
+              className="w-full p-2 mb-4 border rounded text-black"
+            />
+          </div>
 
           {/* Color Images */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Color Images
+              Images <span className="text-red-500 ">*</span>
             </label>
             <InputField
               type="file"
@@ -75,50 +80,63 @@ export const ProductVariations = (props) => {
                     </button>
                   )}
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Size Value
+                  </label>
+                  <input
+                    value={size.value}
+                    onChange={(e) =>
+                      props.handleSizeChange(
+                        vIndex,
+                        sIndex,
+                        "value",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Size value i.e. 32, 34, or S, M, L, XL"
+                    className="w-full p-2 mb-2 border rounded"
+                  />
+                </div>
 
-                <input
-                  value={size.value}
-                  onChange={(e) =>
-                    props.handleSizeChange(
-                      vIndex,
-                      sIndex,
-                      "value",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Size value"
-                  className="w-full p-2 mb-2 border rounded"
-                />
-
-                <input
-                  type="number"
-                  value={size.price}
-                  onChange={(e) =>
-                    props.handleSizeChange(
-                      vIndex,
-                      sIndex,
-                      "price",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Price"
-                  className="w-full p-2 mb-2 border rounded"
-                />
-
-                <input
-                  type="number"
-                  value={size.quantity}
-                  onChange={(e) =>
-                    props.handleSizeChange(
-                      vIndex,
-                      sIndex,
-                      "quantity",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Quantity"
-                  className="w-full p-2 mb-2 border rounded"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Price
+                  </label>
+                  <input
+                    type="number"
+                    value={size.price || ""}
+                    onChange={(e) =>
+                      props.handleSizeChange(
+                        vIndex,
+                        sIndex,
+                        "price",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Price in USD"
+                    className="w-full p-2 mb-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    value={size.quantity || ""}
+                    onChange={(e) =>
+                      props.handleSizeChange(
+                        vIndex,
+                        sIndex,
+                        "quantity",
+                        e.target.value
+                      )
+                    }
+                    placeholder="Quantity i.e. 10, 20, 30"
+                    className="w-full p-2 mb-2 border rounded"
+                  />
+                </div>
               </div>
             ))}
             <button

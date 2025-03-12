@@ -71,7 +71,7 @@ const CreateProductForm = () => {
       label: "Tags (comma separated)",
       type: "text",
       value: newProduct?.tags?.join(", ") || "", // Keep it as a string
-      placeholder: "tag1, tag2, tag3",
+      placeholder: "Product tags i.e. tag1, tag2, tag3",
       required: false,
       onChange: (e) => {
         handleInputChange("tags", e.target.value); // Store as raw string while typing

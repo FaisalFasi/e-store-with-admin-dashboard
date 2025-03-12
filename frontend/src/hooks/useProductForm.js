@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import { validateImages } from "../utils/imageValidation/imageValidation.js";
 import { useCategoryStore } from "../stores/useCategoryStore.js";
 import { initializeVariation } from "../helpers/productHelopers/productHelper.js";
-import { Construction } from "lucide-react";
 
 export const useProductForm = () => {
   const { categories } = useCategoryStore();

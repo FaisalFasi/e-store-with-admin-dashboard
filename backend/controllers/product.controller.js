@@ -37,7 +37,6 @@ export const createProduct = async (req, res) => {
 
     const parsedCategory = JSON.parse(category);
 
-    console.log("received data --", req.body);
     // Validate required fields
     if (!name || !parsedCategory?.parent || !basePrice || stock === undefined) {
       return res.status(400).json({
@@ -46,7 +45,6 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    console.log("parsedCategory", parsedCategory);
     // Validate category structure
     if (!mongoose.Types.ObjectId.isValid(parsedCategory.parent)) {
       return res.status(400).json({ message: "Invalid parent category ID" });
@@ -61,15 +59,11 @@ export const createProduct = async (req, res) => {
 
     const variations = JSON.parse(req.body.variations);
 
-    console.log("variations --", variations);
-
     // Process variations and upload images
     const processedVariations = await processVariations(
       variations,
       requestedFiles
     );
-
-    console.log("processedVariations", processedVariations);
 
     const productData = {
       name,
@@ -94,6 +88,7 @@ export const createProduct = async (req, res) => {
       metaTitle: metaTitle || "",
       metaDescription: metaDescription || "",
     }; // Handle featured image
+
     if (requestedFiles.featuredImage) {
       const featuredImage = await uploadToCloudinary(
         [requestedFiles.featuredImage],
@@ -138,8 +133,6 @@ export const createProduct = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-
-    console.error("Product creation error:", error);
     handleError(res, error, "createProduct");
   }
 };
