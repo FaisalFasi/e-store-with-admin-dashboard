@@ -22,20 +22,12 @@ export const useCommentHandlers = (
   }, []);
 
   const handleCommentSubmit = useCallback(
-    async (reviewId, parentCommentId = null) => {
-      const content = newComment.editingCommentId
-        ? newComment.editingContent
-        : newComment.content;
-
-      if (!content.trim()) return;
-
-      if (!user?.isAdmin) {
-        toast.error("Only admins can reply to comments.");
-        return;
-      }
+    async (reviewId, parentCommentId = null, content) => {
+      if (!content) return toast.error("Please enter a comment");
 
       try {
         if (newComment.editingCommentId) {
+          // Update existing comment
           await updateComment(newComment.editingCommentId, {
             content: newComment.editingContent,
           });
@@ -45,6 +37,7 @@ export const useCommentHandlers = (
             editingContent: "",
           });
         } else {
+          // Create new comment
           await createComment({
             review: reviewId,
             user: user.id,
@@ -54,7 +47,7 @@ export const useCommentHandlers = (
           setNewComment((prev) => ({ ...prev, content: "" }));
         }
       } catch (error) {
-        toast.error(error.message || "Failed to add comment");
+        toast.error(error.message || "Failed to submit comment");
       }
     },
     [newComment, user, createComment, updateComment]

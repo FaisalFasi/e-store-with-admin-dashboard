@@ -5,7 +5,6 @@ import Review from "../models/review.model.js";
 // Create Comment
 export const createComment = asyncHandler(async (req, res) => {
   const { review: reviewId, content, parentComment } = req.body;
-  console.log("comments : ", req.body);
 
   let comment = await Comment.create({
     review: reviewId,
@@ -17,7 +16,7 @@ export const createComment = asyncHandler(async (req, res) => {
   // Update review's comment count
   await Review.findByIdAndUpdate(reviewId, { $inc: { commentCount: 1 } });
 
-  comment = await comment.populate("user", "name avatar");
+  comment = await comment.populate("user", "name avatar role");
   res.status(201).json(comment);
 });
 
@@ -25,14 +24,14 @@ export const createComment = asyncHandler(async (req, res) => {
 export const getReplies = asyncHandler(async (req, res) => {
   const comments = await Comment.find({
     parentComment: req.params.commentId,
-  }).populate("user", "name avatar");
+  }).populate("user", "name avatar role");
 
   res.json(comments);
 });
 
 // Update Comment
 export const updateComment = asyncHandler(async (req, res) => {
-  const comment = await Comment.findById(req.params.id);
+  let comment = await Comment.findById(req.params.id);
 
   if (comment.user.toString() !== req.user.id) {
     res.status(401);
@@ -41,6 +40,9 @@ export const updateComment = asyncHandler(async (req, res) => {
 
   comment.content = req.body.content || comment.content;
   comment.isEdited = true;
+
+  comment = await comment.populate("user", "name avatar role");
+
   await comment.save();
 
   res.json(comment);

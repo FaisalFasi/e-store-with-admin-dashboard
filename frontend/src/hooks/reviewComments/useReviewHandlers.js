@@ -18,6 +18,11 @@ export const useReviewHandlers = (
 
   const handleReviewSubmit = useCallback(
     async (productId, userReview) => {
+      if (!newReview.rating || !newReview.body) {
+        toast.error("Please enter a rating and review");
+        return;
+      }
+
       if (!user) {
         toast.error("Please login to submit a review");
         return;

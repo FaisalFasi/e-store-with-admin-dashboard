@@ -99,14 +99,14 @@ const Navbar = () => {
                   <LogIn className="mr-2" size={18} />
                   Login
                 </Link>
-                <button
+                {/* <button
                   onClick={() => loginAsGuest()}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white py-1 md:py-2 px-2 md:px-4 text-sm md:text-xl 
                       rounded-md flex items-center transition duration-300 ease-in-out"
                 >
                   <Key className="mr-2" size={18} />
                   Guest
-                </button>
+                </button> */}
               </>
 
               // <>

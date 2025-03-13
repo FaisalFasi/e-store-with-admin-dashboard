@@ -103,6 +103,7 @@ const ReviewCommentSection = ({ productId }) => {
             newComment={newComment}
             updateComment={updateComment}
             setNewComment={setNewComment}
+            handleCommentSubmit={handleCommentSubmit}
             handleEditComment={handleEditComment}
             handleEditReview={handleEditReview}
             handleDelete={handleDelete}

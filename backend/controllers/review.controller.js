@@ -61,13 +61,13 @@ export const getProductReviews = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const reviews = await Review.find({ product: productId })
-    .populate("user", "name avatar")
+    .populate("user", "name avatar role")
     .populate({
       path: "comments",
       match: { isDeleted: false }, // Only show comments that are not deleted
       populate: {
         path: "user",
-        select: " name avatar",
+        select: " name avatar role",
       },
     })
     .sort({ createdAt: -1 })

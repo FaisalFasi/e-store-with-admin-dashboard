@@ -135,7 +135,7 @@ const LoginPage = () => {
                 )}
               </button>
             </form>
-            <div className="mt-4">
+            {/* <div className="mt-4">
               <Button
                 onClick={loginAsGuest}
                 className="w-full flex justify-center py-2 px-4 border border-transparent
@@ -159,7 +159,7 @@ const LoginPage = () => {
                   </span>
                 )}
               </Button>
-            </div>
+            </div> */}
 
             <div className="flex flex-col gap-6 pt-2">
               <button

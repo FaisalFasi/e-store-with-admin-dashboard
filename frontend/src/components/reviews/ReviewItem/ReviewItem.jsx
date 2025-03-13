@@ -19,6 +19,7 @@ const ReviewItem = ({
   const toggleReplyForm = (commentId) => {
     setShowReply((prev) => ({ ...prev, [commentId]: !prev[commentId] }));
   };
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg">
       <div className="border-b border-gray-700 pb-4 mb-4">
@@ -82,16 +83,17 @@ const ReviewItem = ({
           <CommentTree
             key={comment._id}
             comment={comment}
-            newComment={newComment}
-            setNewComment={setNewComment}
             onDelete={() => handleDelete(null, comment._id)}
-            handleEditComment={handleEditComment}
             user={user}
             showReply={showReply[comment._id]}
             onReply={(content) =>
               handleCommentSubmit(review?._id, comment._id, content)
             }
             toggleReply={() => toggleReplyForm(comment._id)}
+            newComment={newComment}
+            setNewComment={setNewComment}
+            handleEditComment={handleEditComment}
+            handleCommentSubmit={handleCommentSubmit}
           />
         ))}
         {user?.role === "admin" && (
@@ -110,7 +112,10 @@ const ReviewItem = ({
               disabled={loading}
             />
             <button
-              onClick={() => handleCommentSubmit(review._id)}
+              onClick={() => {
+                handleCommentSubmit(review._id, null, newComment[review._id]);
+                setNewComment((prev) => ({ ...prev, [review._id]: "" }));
+              }}
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded"
               disabled={loading}
             >
