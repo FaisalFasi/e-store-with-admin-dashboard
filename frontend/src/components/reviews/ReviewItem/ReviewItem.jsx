@@ -7,8 +7,9 @@ const ReviewItem = ({
   comments,
   newComment,
   setNewComment,
-  handleCommentSubmit,
+  handleEditComment,
   handleEditReview,
+  handleCommentSubmit,
   handleDelete,
   handleHelpful,
   loading,
@@ -81,7 +82,10 @@ const ReviewItem = ({
           <CommentTree
             key={comment._id}
             comment={comment}
+            newComment={newComment}
+            setNewComment={setNewComment}
             onDelete={() => handleDelete(null, comment._id)}
+            handleEditComment={handleEditComment}
             user={user}
             showReply={showReply[comment._id]}
             onReply={(content) =>

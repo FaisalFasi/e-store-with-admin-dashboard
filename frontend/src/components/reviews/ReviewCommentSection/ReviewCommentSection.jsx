@@ -1,32 +1,57 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { getUserData } from "@utils/getUserData.js";
 import { useReviewCommentStore } from "@stores/useReviewCommentStore";
 import ReviewItem from "../ReviewItem/ReviewItem";
 import ReviewForm from "../ReviewForm/ReviewForm";
+import { useCommentHandlers } from "@hooks/reviewComments/useCommentHandlers"; // Import the custom hook
+import { useReviewHandlers } from "@hooks/reviewComments/useReviewHandlers"; // Import the custom hook
 
 const ReviewCommentSection = ({ productId }) => {
   const { user } = getUserData();
-  const [newReview, setNewReview] = useState({
-    rating: 0,
-    title: "",
-    body: "",
-  });
-  const [editingReviewId, setEditingReviewId] = useState(null);
-  const [newComment, setNewComment] = useState({});
 
   const {
+    // store state
     reviews,
     comments,
     loading,
+    error,
+    // store actions
     fetchProductReviews,
     createReview,
     updateReview,
     deleteReview,
     markHelpful,
     createComment,
+    updateComment,
     deleteComment,
   } = useReviewCommentStore();
+
+  // Use the custom hook for review-related logic
+  const {
+    newReview,
+    setNewReview,
+    editingReviewId,
+    handleReviewSubmit,
+    handleEditReview,
+    handleHelpful,
+    handleDeleteReview,
+  } = useReviewHandlers(
+    user,
+    createReview,
+    updateReview,
+    deleteReview,
+    markHelpful
+  );
+
+  // Use the custom hook for comment-related logic
+  const {
+    newComment,
+    setNewComment,
+    handleEditComment,
+    handleCommentSubmit,
+    handleDeleteComment,
+  } = useCommentHandlers(user, createComment, updateComment, deleteComment);
 
   useEffect(() => {
     if (productId) {
@@ -40,107 +65,19 @@ const ReviewCommentSection = ({ productId }) => {
     return reviews?.find((review) => review.user?._id === user?._id);
   }, [reviews, user]);
 
-  const handleReviewSubmit = useCallback(async () => {
-    if (!user) {
-      toast.error("Please login to submit a review");
-      return;
-    }
-
-    if (userReview && !editingReviewId) {
-      toast.error("You have already submitted a review for this product.");
-      return;
-    }
-
-    try {
-      if (editingReviewId) {
-        await updateReview(editingReviewId, newReview);
-        setEditingReviewId(null);
-      } else {
-        await createReview({
-          product: productId,
-          user: user._id,
-          ...newReview,
-        });
-      }
-      setNewReview({ rating: 0, title: "", body: "" });
-    } catch (error) {
-      toast.error(error.message || "Failed to submit review");
-    }
-  }, [
-    user,
-    userReview,
-    editingReviewId,
-    newReview,
-    productId,
-    updateReview,
-    createReview,
-  ]);
-
-  const handleEditReview = useCallback((review) => {
-    setNewReview({
-      rating: review.rating,
-      title: review.title,
-      body: review.body,
-    });
-    setEditingReviewId(review._id);
-  }, []);
-
-  const handleCommentSubmit = useCallback(
-    async (reviewId, parentCommentId = null) => {
-      const content = newComment[reviewId]?.trim();
-      if (!content) return;
-
-      if (parentCommentId && !user?.isAdmin) {
-        toast.error("Only admins can reply to comments.");
-        return;
-      }
-
-      try {
-        await createComment({
-          review: reviewId,
-          user: user.id,
-          content,
-          parentComment: parentCommentId,
-        });
-        setNewComment((prev) => ({ ...prev, [reviewId]: "" }));
-      } catch (error) {
-        toast.error(error.message || "Failed to add comment");
-      }
-    },
-    [newComment, user, createComment]
-  );
-
-  const handleHelpful = useCallback(
-    async (review, user) => {
-      if (!user) {
-        toast.error("Please login to mark helpful.");
-        return;
-      }
-
-      try {
-        await markHelpful(review._id, user?._id);
-      } catch (error) {
-        toast.error(error.message || "Failed to mark helpful");
-      }
-    },
-    [user, markHelpful]
-  );
-
   const handleDelete = useCallback(
     async (reviewId, commentId = null) => {
-      console.log("reviewId : ", reviewId);
-      console.log("commentId : ", commentId);
       try {
         if (commentId) {
-          await deleteComment(commentId);
+          await handleDeleteComment(commentId); // Use the custom hook's delete function
         } else {
-          await deleteReview(reviewId);
+          await handleDeleteReview(reviewId); // Use the custom hook's delete function
         }
       } catch (error) {
         toast.error(error.message || "Failed to delete");
       }
     },
-    [deleteComment, deleteReview]
+    [handleDeleteComment, handleDeleteReview]
   );
 
   return (
@@ -150,9 +87,10 @@ const ReviewCommentSection = ({ productId }) => {
         user={user}
         userReview={userReview}
         editingReviewId={editingReviewId}
+        updateComment={updateComment}
         newReview={newReview}
         setNewReview={setNewReview}
-        handleReviewSubmit={handleReviewSubmit}
+        handleReviewSubmit={() => handleReviewSubmit(productId, userReview)}
         loading={loading}
       />
       <div className="space-y-6">
@@ -163,8 +101,9 @@ const ReviewCommentSection = ({ productId }) => {
             user={user}
             comments={comments}
             newComment={newComment}
+            updateComment={updateComment}
             setNewComment={setNewComment}
-            handleCommentSubmit={handleCommentSubmit}
+            handleEditComment={handleEditComment}
             handleEditReview={handleEditReview}
             handleDelete={handleDelete}
             handleHelpful={handleHelpful}

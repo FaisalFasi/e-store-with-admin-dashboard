@@ -2,36 +2,50 @@ import React, { useState } from "react";
 
 const CommentTree = ({
   comment,
+  updateComment,
+  handleEditComment,
   onDelete,
   user,
   showReply,
   onReply,
   toggleReply,
+  newComment,
+  setNewComment,
 }) => {
   const [replyContent, setReplyContent] = useState("");
   console.log("CommentTree -> comment", comment);
 
   return (
     <div className="border-l-2 border-emerald-600 pl-4">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="font-semibold text-emerald-400">
-          {comment.user.name}
-          {comment.user.isAdmin && (
-            <span className="ml-2 px-2 py-1 bg-emerald-600 text-xs rounded">
-              Admin
-            </span>
-          )}
-        </span>
-        <span className="text-gray-400 text-sm">
-          {new Date(comment.createdAt).toLocaleDateString()}
-        </span>
+      <div className="flex items-center gap-2 mb-1 justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-semibold text-emerald-400">
+            {comment.user.name}
+            {comment.user.isAdmin && (
+              <span className="ml-2 px-2 py-1 bg-emerald-600 text-xs rounded">
+                Admin
+              </span>
+            )}
+          </span>
+          <span className="text-gray-400 text-sm">
+            {new Date(comment.createdAt).toLocaleDateString()}
+          </span>
+        </div>
         {(user?.role === "admin" || user?._id === comment?.user?._id) && (
-          <button
-            onClick={() => onDelete(null, comment?._id)}
-            className="ml-auto text-red-400 hover:text-red-500"
-          >
-            Delete
-          </button>
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={() => handleEditComment(comment)}
+              className="ml-auto text-blue-400 hover:text-red-500"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => onDelete(null, comment?._id)}
+              className="ml-auto text-red-400 hover:text-red-500"
+            >
+              Delete
+            </button>
+          </div>
         )}
       </div>
       <p className="text-gray-300">{comment.content}</p>
@@ -65,11 +79,14 @@ const CommentTree = ({
         <CommentTree
           key={reply._id}
           comment={reply}
+          updateComment={updateComment}
           onDelete={() => onDelete(null, reply._id)}
           user={user}
           showReply={showReply[reply._id]}
           onReply={onReply}
           toggleReply={() => toggleReply(reply._id)}
+          newComment={newComment}
+          setNewComment={setNewComment}
         />
       ))}
     </div>
