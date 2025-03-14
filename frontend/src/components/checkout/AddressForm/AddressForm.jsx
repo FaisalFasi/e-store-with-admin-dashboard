@@ -39,6 +39,21 @@ const AddressForm = () => {
     if (address.postalCode && !/^\d{5}$/.test(address.postalCode)) {
       newErrors.postalCode = "Postal code must be 5 digits";
     }
+    // check for empty spaces
+    if (
+      address.country &&
+      address.country.trim() != 0 &&
+      !/^[a-zA-Z\s]*$/.test(address.country)
+    ) {
+      newErrors.country = "Country must contain only alphabets";
+    }
+    if (address.city && !/^[a-zA-Z\s]*$/.test(address.city)) {
+      newErrors.city = "City must contain only alphabets";
+    }
+    if (address.state && !/^[a-zA-Z\s]*$/.test(address.state)) {
+      newErrors.state = "State must contain only alphabets";
+    }
+
     return newErrors;
   };
 
@@ -62,7 +77,7 @@ const AddressForm = () => {
   };
 
   return (
-    <section className="min-h-screen relative overflow-hidden rounded-lg">
+    <section className="mt-4 min-h-screen relative overflow-hidden rounded-lg">
       <div className="flex w-full z-10 container ">
         {/* Form */}
         <motion.form

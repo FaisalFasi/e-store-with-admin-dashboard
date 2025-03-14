@@ -351,6 +351,9 @@ export const useCartStore = create((set, get) => ({
       const response = await axiosBaseURL.post("/address", {
         ...address,
       });
+
+      console.log("Response:", response);
+
       if (response.status === 201 || response.status === 200) {
         // localStorage.removeItem("address"); // Clear localStorage on successful save
         toast.success(response.data.message || " address saved successfully");

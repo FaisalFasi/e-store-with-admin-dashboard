@@ -3,7 +3,6 @@ import UserAddress from "../models/address.model.js";
 export const saveShippingAddress = async (req, res) => {
   try {
     const userId = req.user?._id; // Check if userId exists (for logged-in users)
-    console.log("User ID:", userId);
 
     const { fullName, street, city, state, postalCode, country, phoneNumber } =
       req.body;
@@ -19,7 +18,6 @@ export const saveShippingAddress = async (req, res) => {
       country,
       phoneNumber,
     };
-    console.log("Address received:", address);
 
     // Validate required fields
     for (const [key, value] of Object.entries(address)) {

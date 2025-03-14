@@ -42,10 +42,11 @@ const addressSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      required: true,
+      required: false, // Make it optional
       validate: {
-        validator: (value) => /^[+]?[1-9]\d{1,14}$/.test(value), // E.164 format
-        message: "Invalid phone number format",
+        validator: (value) => /^[+]?\d{1,20}$/.test(value), // Allows up to 20 digits with optional '+' prefix
+        message:
+          "Phone number must be up to 20 digits and can start with a '+'",
       },
     },
 

@@ -3,18 +3,25 @@ import { motion } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore";
 import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { useCheckoutStore } from "../../../stores/useCheckoutStore";
 
 const OrderSummary = () => {
   const { subTotal, total, coupon, isCouponApplied, savings } = useCartStore();
+
+  const { setCurrentStep, openAddressModal } = useCheckoutStore();
 
   // Format values for display
   const formattedSubtotal = subTotal ? subTotal.toFixed(2) : "0.00";
   const formattedTotal = total ? total.toFixed(2) : "0.00";
   const formattedSavings = savings ? savings.toFixed(2) : "0.00";
 
+  const hanldeProceedToAddress = () => {
+    setCurrentStep("address");
+    openAddressModal();
+  };
   return (
     <motion.div
-      className="space-y-4 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm sm:p-6"
+      className=" space-y-4 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm sm:p-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -68,7 +75,7 @@ const OrderSummary = () => {
           className="flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => toast.success("Proceeding to checkout...")}
+          onClick={() => hanldeProceedToAddress()}
         >
           Proceed to checkout
         </motion.button>

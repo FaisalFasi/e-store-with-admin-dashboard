@@ -66,6 +66,10 @@ export const useCheckoutStore = create((set, get) => ({
   handlePayment: async (cart, coupon) => {
     const { currentStep, openAddressModal, resetToAddress } = get();
 
+    console.log("Current Step:", currentStep);
+    console.log("Cart:", cart);
+    console.log("Coupon:", coupon);
+
     if (currentStep === "address") {
       const stripe = await stripePromise;
       try {
@@ -76,6 +80,7 @@ export const useCheckoutStore = create((set, get) => ({
             couponCode: coupon ? coupon.code : null,
           }
         );
+        console.log("Response :", res);
 
         const session = res?.data;
         const result = await stripe.redirectToCheckout({
