@@ -25,7 +25,7 @@ const HomePage = () => {
   const { user } = useUserStore();
 
   useEffect(() => {
-    if (user.role === "admin") getAllCategories();
+    if (user?.role === "admin") getAllCategories();
   }, [user]);
 
   useEffect(() => {

@@ -34,9 +34,12 @@ const orderSchema = new mongoose.Schema(
           type: String,
         },
         variation: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "ProductVariation", // Link to the specific product variation (e.g., size, color)
+          type: String,
         },
+        // variation: {
+        //   type: mongoose.Schema.Types.ObjectId,
+        //   ref: "ProductVariation", // Link to the specific product variation (e.g., size, color)
+        // },
       },
     ],
 

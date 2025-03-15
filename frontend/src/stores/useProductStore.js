@@ -105,12 +105,14 @@ export const useProductStore = create((set, get) => ({
       toast.error(error?.response?.data.error || "Failed to delete product");
     }
   },
+
   toggleFeaturedProduct: async (productId) => {
     set({ loading: true });
     try {
-      const response = await axiosBaseURL.patch(`/products/${productId}`);
-      const updatedProduct = response?.data?.updatedProduct;
-
+      const response = await axiosBaseURL.patch(
+        `/products/toggleFeature/${productId}`
+      );
+      const updatedProduct = response?.data?.product;
       set((prevProducts) => ({
         products: prevProducts.products.map((product) =>
           product._id === productId
@@ -119,9 +121,10 @@ export const useProductStore = create((set, get) => ({
         ),
         loading: false,
       }));
-      toast.success("Product updated successfully");
+      toast.success(`${response?.data?.product?.name} successfully updated `);
     } catch (error) {
       set({ loading: false });
+      console.log("Error in toggle product:", error);
       toast.error(error?.response?.data.error || "Failed to update product");
     }
   },

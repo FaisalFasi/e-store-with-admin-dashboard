@@ -24,7 +24,12 @@ router.get("/featured", getFeaturedProducts);
 router.get("/recommendations", getRecommendedProducts);
 router.get("/category/:category", getProductByCategory);
 router.get("/:id", getProductById);
-router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
+router.patch(
+  "/toggleFeature/:id",
+  protectRoute,
+  adminRoute,
+  toggleFeaturedProduct
+);
 router.delete("/:id", protectRoute, adminRoute, deleteProduct);
 
 export default router;

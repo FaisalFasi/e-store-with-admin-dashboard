@@ -302,7 +302,7 @@ export const checkoutSuccess = async (req, res) => {
               price: p.price,
               color: p.selectedColor,
               size: p.selectedSize,
-              selectedVariation: p.selectedVariation,
+              variation: p.selectedVariation,
             })),
             totalAmount: stripeSession.amount_total / 100, // Convert cents to dollars
             grandTotal: stripeSession.amount_total / 100, // Assuming grandTotal is the same as totalAmount

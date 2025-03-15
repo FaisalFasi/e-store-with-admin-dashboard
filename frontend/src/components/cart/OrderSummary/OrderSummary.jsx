@@ -1,7 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore";
-import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { useCheckoutStore } from "../../../stores/useCheckoutStore";
 
@@ -14,6 +13,10 @@ const OrderSummary = () => {
   const formattedSubtotal = subTotal ? subTotal.toFixed(2) : "0.00";
   const formattedTotal = total ? total.toFixed(2) : "0.00";
   const formattedSavings = savings ? savings.toFixed(2) : "0.00";
+
+  console.log("formattedSubtotal", formattedSubtotal);
+  console.log("formattedTotal", formattedTotal);
+  console.log("formattedSavings", formattedSavings);
 
   const hanldeProceedToAddress = () => {
     setCurrentStep("address");

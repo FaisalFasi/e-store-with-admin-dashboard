@@ -95,7 +95,7 @@ const InputField = ({
                 <div key={imageIndex} className="relative group">
                   <img
                     src={
-                      typeof image === "object"
+                      image instanceof File || image instanceof Blob
                         ? URL.createObjectURL(image)
                         : image
                     }

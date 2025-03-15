@@ -7,6 +7,8 @@ import CustomTooltip from "../../shared/CustomTooltip/CustomTooltip";
 const ProductsList = () => {
   const { deleteProduct, products, toggleFeaturedProduct } = useProductStore();
 
+  console.log("products--:", products);
+
   return (
     <motion.div
       className="p-0 bg-gray-800 shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto"
@@ -60,7 +62,7 @@ const ProductsList = () => {
                     <div className="h-10 w-10 rounded-full overflow-hidden">
                       <img
                         className="h-10 w-10 object-cover"
-                        src={product.images[0]}
+                        src={product?.variations[0].colors[0].imageUrls[0]}
                         alt={product.name}
                       />
                     </div>
@@ -72,13 +74,18 @@ const ProductsList = () => {
 
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-gray-300 text-sm">
-                    {product.price ? `$${product.price.toFixed(2)}` : "N/A"}
+                    $
+                    {product.variations[0]?.colors[0]?.sizes[0].price.toFixed(
+                      2
+                    ) || "N/A"}{" "}
                   </div>
                 </td>
 
-                <td className="hidden md:block px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-gray-300 text-sm">
-                    {product.category}
+                    {product.category?.grandchild?.name ||
+                      product.category?.child?.name ||
+                      product.category?.parent?.name}
                   </div>
                 </td>
 
@@ -109,7 +116,7 @@ const ProductsList = () => {
         </table>
       </div>
 
-      {/* Beautiful cards for smaller screens */}
+      {/* cards for smaller screens */}
       <div className="md:hidden p-0 flex flex-col gap-4">
         {products?.map((product, index) => (
           <div
@@ -118,16 +125,22 @@ const ProductsList = () => {
           >
             <img
               className="h-40 w-full object-cover rounded-md"
-              src={product.images[0]}
+              src={product?.variations[0]?.colors[0]?.imageUrls[0]}
               alt={product.name}
             />
             <div className="mt-4 text-center">
               <p className="text-white font-semibold text-lg truncate max-w-[15ch]">
                 {product.name}
               </p>
-              <p className="text-gray-300 mt-2 text-sm">{product.category}</p>
+              <p className="text-gray-300 mt-2 text-sm">
+                {product.category?.grandchild?.name ||
+                  product.category?.child?.name ||
+                  product.category?.parent?.name}{" "}
+              </p>
               <p className="text-gray-200 mt-1 font-bold text-xl">
-                ${product.price ? product.price.toFixed(2) : "N/A"}
+                $
+                {product.variations[0]?.colors[0]?.sizes[0].price.toFixed(2) ||
+                  "N/A"}
               </p>
 
               <div className="mt-4 flex justify-center space-x-2">
