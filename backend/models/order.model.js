@@ -27,6 +27,12 @@ const orderSchema = new mongoose.Schema(
           required: true,
           min: 0,
         },
+        color: {
+          type: String,
+        },
+        size: {
+          type: String,
+        },
         variation: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "ProductVariation", // Link to the specific product variation (e.g., size, color)
@@ -101,7 +107,7 @@ const orderSchema = new mongoose.Schema(
       zip: { type: String, required: true },
       state: { type: String, required: true },
       country: { type: String, required: true },
-      phoneNumber: { type: String, required: true },
+      phoneNumber: { type: String, required: false },
     },
     dispatchDetails: {
       dispatchedBy: { type: String },

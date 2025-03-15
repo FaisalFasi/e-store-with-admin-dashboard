@@ -149,10 +149,10 @@ export const createCheckoutSession = async (req, res) => {
           products.map((p) => ({
             id: p._id,
             quantity: p.quantity || 1,
-            price: p.basePrice, // Use basePrice as fallback
+            price: p.variations[0].colors[0].sizes[0].price,
             selectedVariation: p.selectedVariation,
-            selectedColor: p.selectedColor,
-            selectedSize: p.selectedSize,
+            selectedColor: p.variations[0].colors[0].name,
+            selectedSize: p.variations[0].colors[0].sizes[0].value,
           }))
         ),
       },
@@ -221,9 +221,7 @@ export const checkoutSuccess = async (req, res) => {
         }
 
         // Find the selected variation
-        const selectedVariation = foundProduct.variations.find(
-          (v) => v._id.toString() === product.selectedVariation
-        );
+        const selectedVariation = product.selectedVariation;
 
         if (!selectedVariation) {
           return res.status(400).json({
@@ -232,9 +230,7 @@ export const checkoutSuccess = async (req, res) => {
         }
 
         // Find the selected color
-        const selectedColor = selectedVariation.colors.find(
-          (c) => c.name === product.selectedColor
-        );
+        const selectedColor = product.selectedColor;
 
         if (!selectedColor) {
           return res.status(400).json({
@@ -243,9 +239,7 @@ export const checkoutSuccess = async (req, res) => {
         }
 
         // Find the selected size
-        const selectedSize = selectedColor.sizes.find(
-          (s) => s.value === product.selectedSize
-        );
+        const selectedSize = product.selectedSize;
 
         if (!selectedSize) {
           return res.status(400).json({
@@ -253,18 +247,50 @@ export const checkoutSuccess = async (req, res) => {
           });
         }
 
+        const getVariationData = await ProductVariation.findById(
+          selectedVariation
+        ).session(mongoDB_Session);
+
+        console.log("getVariationData", getVariationData);
+
+        const availableQuantity = getVariationData.colors[0].sizes[0].quantity;
+
+        console.log("availableQuantity", availableQuantity);
+
         // Check if there's enough stock
-        if (selectedSize.quantity < product.quantity) {
+        if (availableQuantity < product.quantity) {
           return res.status(400).json({
             message: `Insufficient inventory for Product: ${foundProduct.name}`,
           });
         }
 
         // Update the stock
-        selectedSize.quantity -= product.quantity;
+        getVariationData.colors[0].sizes[0].quantity -= product.quantity;
+
+        await getVariationData.save({ session: mongoDB_Session });
         await foundProduct.save({ session: mongoDB_Session });
       }
 
+      // Retrieve the shipping address
+      const userAddress = await UserAddress.findOne({ userId }).session(
+        mongoDB_Session
+      );
+
+      if (!userAddress) {
+        return res.status(400).json({
+          message: "Shipping address not found for the user.",
+        });
+      }
+
+      const userShippingAddress = {
+        fullName: userAddress.fullName,
+        street: userAddress.street,
+        city: userAddress.city,
+        zip: userAddress.zip,
+        state: userAddress.state,
+        country: userAddress.country,
+        phoneNumber: userAddress.phoneNumber,
+      };
       // Create a new order
       const newOrder = await Order.create(
         [
@@ -274,26 +300,31 @@ export const checkoutSuccess = async (req, res) => {
               product: p.id,
               quantity: p.quantity,
               price: p.price,
+              color: p.selectedColor,
+              size: p.selectedSize,
               selectedVariation: p.selectedVariation,
-              selectedColor: p.selectedColor,
-              selectedSize: p.selectedSize,
             })),
             totalAmount: stripeSession.amount_total / 100, // Convert cents to dollars
+            grandTotal: stripeSession.amount_total / 100, // Assuming grandTotal is the same as totalAmount
             status: "Pending",
             paymentDetails: {
               method: "Card",
               transactionId: stripeSession.payment_intent,
               paymentStatus: "paid",
+              paymentDate: new Date(),
             },
             dispatchDetails: {
               dispatchedBy: "DHL or FedEx or UPS or Hermes",
               dispatchedAt: null,
               deliveryEstimate: null,
+              trackingNumber: null,
+              carrier: null,
             },
-            shippingAddress: await UserAddress.findOne({ userId }),
+            shippingAddress: userShippingAddress,
             orderHistory: {
               status: "Payment Confirmed",
               timestamp: Date.now(),
+              notes: "Payment successfully processed.",
             },
             stripeSessionId: stripeSession.id, // Ensure idempotency
           },

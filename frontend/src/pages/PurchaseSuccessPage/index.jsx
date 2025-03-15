@@ -19,15 +19,15 @@ const PurchaseSuccessPage = () => {
           setIsProcessing(false);
           return;
         }
-        console.log("Clearing cart after successful purchase");
+
         // Clear the cart after successful purchase
         const response = await axiosBaseURL.post("/payments/checkout-success", {
           sessionId,
         });
-        console.log("Checkout success response: ", response);
+
         clearCart();
         sessionStorage.setItem("paymentProcessed", "true");
-        console.log("Payment processed");
+
         // sessionStorage.setItem("paymentProcessed", true);
       } catch (error) {
         console.error("Error clearing cart: ", error);
@@ -57,7 +57,7 @@ const PurchaseSuccessPage = () => {
   if (isProcessing) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   return (
-    <div className="h-screen flex items-center justify-center px-4">
+    <div className="h-screen flex mt-10 md:mt-0 md:items-center justify-center px-4">
       {/*  The Confetti component is used to create a confetti effect on the screen. */}
       <Confetti
         width={window.innerWidth}
@@ -68,7 +68,7 @@ const PurchaseSuccessPage = () => {
         recycle={false}
       />
 
-      <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-xl overflow-hidden relative z-10">
+      <div className="max-w-md w-full h-fit bg-gray-800 rounded-lg shadow-xl overflow-hidden relative z-10">
         <div className="p-6 sm:p-8">
           <div className="flex justify-center">
             <CheckCircle className="text-emerald-400 w-16 h-16 mb-4" />
