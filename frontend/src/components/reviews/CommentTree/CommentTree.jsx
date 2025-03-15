@@ -13,7 +13,6 @@ const CommentTree = ({
   handleCommentSubmit,
 }) => {
   const isEditing = newComment.editingCommentId === comment._id;
-  console.log("CommentTree -> comment", comment);
   return (
     <div className="border-l-2 border-emerald-600 pl-4">
       <div className="flex items-center gap-2 mb-1 justify-between">

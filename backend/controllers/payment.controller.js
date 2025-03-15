@@ -55,7 +55,6 @@ export const createCheckoutSession = async (req, res) => {
 
         // Find the selected color (case-insensitive)
         const selectedColor = __selectedProductVariationData[0]?.color;
-        console.log("selectedColor", selectedColor);
 
         if (!selectedColor) {
           throw new Error(
@@ -126,6 +125,10 @@ export const createCheckoutSession = async (req, res) => {
       }
     }
 
+    const get_price = (p) => p.variations[0].colors[0].sizes[0].price;
+    const get_color = (p) => p.variations[0].colors[0].name;
+    const get_size = (p) => p.variations[0].colors[0].sizes[0].value;
+
     // Step 3: Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -149,14 +152,14 @@ export const createCheckoutSession = async (req, res) => {
           products.map((p) => ({
             id: p._id,
             quantity: p.quantity || 1,
-            price: p.variations[0].colors[0].sizes[0].price,
             selectedVariation: p.selectedVariation,
-            selectedColor: p.variations[0].colors[0].name,
-            selectedSize: p.variations[0].colors[0].sizes[0].value,
           }))
         ),
       },
     });
+    // price: get_price(p),
+    // selectedColor: get_color(p),
+    // selectedSize: get_size(p),
 
     // Step 4: Create a new coupon if total amount is above a threshold
     if (totalAmount >= 20000) {
@@ -229,17 +232,43 @@ export const checkoutSuccess = async (req, res) => {
           });
         }
 
+        const getVariationData = await ProductVariation.findById(
+          selectedVariation
+        ).session(mongoDB_Session);
+
+        if (!getVariationData) {
+          throw new Error(
+            `Product variation not found for product: ${product.name}`
+          );
+        }
+        const __selectedProductVariationData = getVariationData?.colors?.map(
+          (color) => {
+            return {
+              color: color?.name?.toUpperCase(),
+              size: color.sizes[0].value,
+              price: color.sizes[0].price,
+              imageUrls: color.imageUrls,
+              quantity: product.quantity,
+            };
+          }
+        );
+
+        console.log("pro--", product);
+        console.log("Found:", foundProduct);
+
+        // here is the problem need to resolve
         // Find the selected color
-        const selectedColor = product.selectedColor;
+        const selectedColor = __selectedProductVariationData?.color;
 
         if (!selectedColor) {
           return res.status(400).json({
             message: `Selected color not found for product: ${foundProduct.name}`,
           });
         }
+        console.log("selectedColor", selectedColor);
 
         // Find the selected size
-        const selectedSize = product.selectedSize;
+        const selectedSize = __selectedProductVariationData.size;
 
         if (!selectedSize) {
           return res.status(400).json({
@@ -247,15 +276,7 @@ export const checkoutSuccess = async (req, res) => {
           });
         }
 
-        const getVariationData = await ProductVariation.findById(
-          selectedVariation
-        ).session(mongoDB_Session);
-
-        console.log("getVariationData", getVariationData);
-
-        const availableQuantity = getVariationData.colors[0].sizes[0].quantity;
-
-        console.log("availableQuantity", availableQuantity);
+        const availableQuantity = __selectedProductVariationData.quantity;
 
         // Check if there's enough stock
         if (availableQuantity < product.quantity) {
@@ -300,8 +321,8 @@ export const checkoutSuccess = async (req, res) => {
               product: p.id,
               quantity: p.quantity,
               price: p.price,
-              color: p.selectedColor,
-              size: p.selectedSize,
+              color: p.selectedColor || "",
+              size: p.selectedSize || "",
               variation: p.selectedVariation,
             })),
             totalAmount: stripeSession.amount_total / 100, // Convert cents to dollars
@@ -321,11 +342,13 @@ export const checkoutSuccess = async (req, res) => {
               carrier: null,
             },
             shippingAddress: userShippingAddress,
-            orderHistory: {
-              status: "Payment Confirmed",
-              timestamp: Date.now(),
-              notes: "Payment successfully processed.",
-            },
+            orderHistory: [
+              {
+                status: "Payment Confirmed",
+                timestamp: Date.now(),
+                notes: "Payment successfully processed.",
+              },
+            ],
             stripeSessionId: stripeSession.id, // Ensure idempotency
           },
         ],

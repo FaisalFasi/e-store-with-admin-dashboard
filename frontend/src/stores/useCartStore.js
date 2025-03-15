@@ -316,7 +316,9 @@ export const useCartStore = create((set, get) => ({
       }
 
       // Use the size object's price if available, fallback to base price
-      const price = parseFloat(item.size?.price || item.basePrice || 0);
+      const price = parseFloat(
+        item.variations[0].colors[0].sizes[0]?.price || 0
+      );
       const quantity = parseInt(item.quantity, 10);
 
       // Validate price and quantity

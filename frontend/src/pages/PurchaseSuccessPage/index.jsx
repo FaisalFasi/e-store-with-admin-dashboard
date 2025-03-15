@@ -24,8 +24,8 @@ const PurchaseSuccessPage = () => {
         const response = await axiosBaseURL.post("/payments/checkout-success", {
           sessionId,
         });
-
-        clearCart();
+        console.log("Response --", response.data);
+        if (response.data) clearCart();
         sessionStorage.setItem("paymentProcessed", "true");
 
         // sessionStorage.setItem("paymentProcessed", true);

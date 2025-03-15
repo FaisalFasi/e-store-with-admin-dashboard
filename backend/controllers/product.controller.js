@@ -202,9 +202,7 @@ export const getAllProducts = async (req, res) => {
 
 //   getProductById
 export const getProductById = async (req, res) => {
-  console.log("getProductById", req.params);
   try {
-    console.log("getProductById", req.params.id);
     const product = await Product.findById(req.params.id)
       .populate("category.parent category.child category.grandchild")
       .populate({
