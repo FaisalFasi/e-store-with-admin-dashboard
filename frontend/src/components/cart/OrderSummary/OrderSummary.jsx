@@ -14,10 +14,6 @@ const OrderSummary = () => {
   const formattedTotal = total ? total.toFixed(2) : "0.00";
   const formattedSavings = savings ? savings.toFixed(2) : "0.00";
 
-  console.log("formattedSubtotal", formattedSubtotal);
-  console.log("formattedTotal", formattedTotal);
-  console.log("formattedSavings", formattedSavings);
-
   const hanldeProceedToAddress = () => {
     setCurrentStep("address");
     openAddressModal();

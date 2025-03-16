@@ -1,19 +1,29 @@
-import React, { useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import HomePage from "@pages/homePage";
-import SignUpPage from "@pages/signupPage";
-import LoginPage from "@pages/loginPage";
-import AdminDashboardPage from "@pages/adminDashboardPage";
-import CategoryPage from "@pages/CategoryPage";
-import CartPage from "@pages/cartPage";
-import PurchaseCancelPage from "@pages/PurchaseCancelPage";
 import { getUserData } from "@utils/getUserData.js";
-import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
 import { useCartStore } from "@stores/useCartStore.js";
-import ResetPasswordPage from "@pages/resetPasswordPage/index.jsx";
-import SingleProductPage from "@pages/singleProductPage/index.jsx";
-import SingleOrderDetailPage from "@pages/singleOrderDetailPage/index.jsx";
-import PurchaseSuccessPage from "@pages/purchaseSuccessPage/index.jsx";
+import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
+
+//  Lazy Load Pages (Code Splitting)
+const HomePage = lazy(() => import("@pages/homePage"));
+const SignUpPage = lazy(() => import("@pages/signupPage"));
+const LoginPage = lazy(() => import("@pages/loginPage"));
+const AdminDashboardPage = lazy(() => import("@pages/adminDashboardPage"));
+const CategoryPage = lazy(() => import("@pages/CategoryPage"));
+const CartPage = lazy(() => import("@pages/cartPage"));
+const PurchaseCancelPage = lazy(() => import("@pages/PurchaseCancelPage"));
+const ResetPasswordPage = lazy(() =>
+  import("@pages/resetPasswordPage/index.jsx")
+);
+const SingleProductPage = lazy(() =>
+  import("@pages/singleProductPage/index.jsx")
+);
+const SingleOrderDetailPage = lazy(() =>
+  import("@pages/singleOrderDetailPage/index.jsx")
+);
+const PurchaseSuccessPage = lazy(() =>
+  import("@pages/purchaseSuccessPage/index.jsx")
+);
 
 const AppRoutes = () => {
   const { user, checkAuth, checkingAuth } = getUserData();
@@ -29,53 +39,71 @@ const AppRoutes = () => {
   }, [getCartItems, user]);
 
   if (checkingAuth) return <LoadingSpinner />;
+
   return (
     <div className="py-24 min-h-screen bg-gray-900 text-white relative overflow-hidden">
-      {/* Background gradient */}
-      {/* <BackgroundGradient /> */}
       <Routes>
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-        <Route path="/products/:productId" element={<SingleProductPage />} />
         <Route
-          path="/order-detail/:orderId"
-          element={<SingleOrderDetailPage />}
-        />
-
-        <Route path="/" element={<HomePage />} />
-        {/* user signup and login pages */}
-        <Route
-          path="/signup"
-          element={!user ? <SignUpPage /> : <Navigate to={"/"} />}
-        />
-        <Route
-          path="/login"
-          element={!user ? <LoginPage /> : <Navigate to={"/"} />}
-        />
-        {/* admin dashboard page */}
-        <Route
-          path="/admin-dashboard"
+          path="*"
           element={
-            user?.role === "admin" ? (
-              <AdminDashboardPage />
-            ) : (
-              <Navigate to={user ? "/" : "/login"} />
-            )
-          }
-        />
-        <Route path="/category/:category" element={<CategoryPage />} />
+            //Wraped routes in Suspense to show a loading spinner while pages load
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route
+                  path="/products/:productId"
+                  element={<SingleProductPage />}
+                />
+                <Route
+                  path="/order-detail/:orderId"
+                  element={<SingleOrderDetailPage />}
+                />
+                <Route path="/" element={<HomePage />} />
 
-        <Route
-          path="/cart"
-          element={user ? <CartPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/purchase-success"
-          element={user ? <PurchaseSuccessPage /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/purchase-cancel"
-          element={user ? <PurchaseCancelPage /> : <Navigate to="/login" />}
+                {/* User signup and login pages */}
+                <Route
+                  path="/signup"
+                  element={!user ? <SignUpPage /> : <Navigate to="/" />}
+                />
+                <Route
+                  path="/login"
+                  element={!user ? <LoginPage /> : <Navigate to="/" />}
+                />
+
+                {/* Admin dashboard page */}
+                <Route
+                  path="/admin-dashboard"
+                  element={
+                    user?.role === "admin" ? (
+                      <AdminDashboardPage />
+                    ) : (
+                      <Navigate to={user ? "/" : "/login"} />
+                    )
+                  }
+                />
+
+                <Route path="/category/:category" element={<CategoryPage />} />
+
+                <Route
+                  path="/cart"
+                  element={user ? <CartPage /> : <Navigate to="/login" />}
+                />
+                <Route
+                  path="/purchase-success"
+                  element={
+                    user ? <PurchaseSuccessPage /> : <Navigate to="/login" />
+                  }
+                />
+
+                <Route
+                  path="/purchase-cancel"
+                  element={
+                    user ? <PurchaseCancelPage /> : <Navigate to="/login" />
+                  }
+                />
+              </Routes>
+            </Suspense>
+          }
         />
       </Routes>
     </div>
@@ -83,13 +111,3 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
-
-const BackgroundGradient = () => {
-  return (
-    <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.3)_0%,rgba(10,80,60,0.2)_45%,rgba(0,0,0,0.1)_100%)]" />
-      </div>
-    </div>
-  );
-};
