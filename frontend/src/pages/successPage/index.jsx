@@ -6,7 +6,7 @@ import axiosBaseURL from "../../lib/axios";
 import Confetti from "react-confetti";
 import { useState } from "react";
 
-const PurchaseSuccessPage = () => {
+const SuccessPage = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const { clearCart } = useCartStore();
   const [error, setError] = useState(null);
@@ -121,4 +121,4 @@ const PurchaseSuccessPage = () => {
   );
 };
 
-export default PurchaseSuccessPage;
+export default SuccessPage;

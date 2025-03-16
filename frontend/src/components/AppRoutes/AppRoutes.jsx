@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { getUserData } from "@utils/getUserData.js";
 import { useCartStore } from "@stores/useCartStore.js";
 import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
-import PurchaseSuccessPage from "@pages/purchaseSuccessPage/index.jsx";
+import SuccessPage from "@pages/successPage/index.jsx";
 
 //  Lazy Load Pages (Code Splitting)
 const HomePage = lazy(() => import("@pages/homePage"));
@@ -91,9 +91,7 @@ const AppRoutes = () => {
                 />
                 <Route
                   path="/purchase-success"
-                  element={
-                    user ? <PurchaseSuccessPage /> : <Navigate to="/login" />
-                  }
+                  element={user ? <SuccessPage /> : <Navigate to="/login" />}
                 />
 
                 <Route
