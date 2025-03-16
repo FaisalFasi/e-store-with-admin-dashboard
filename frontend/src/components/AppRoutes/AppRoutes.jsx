@@ -1,19 +1,19 @@
 import React, { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import HomePage from "../../pages/homePage";
-import SignUpPage from "../../pages/signupPage";
-import LoginPage from "../../pages/loginPage";
-import AdminDashboardPage from "../../pages/adminDashboardPage";
-import CategoryPage from "../../pages/CategoryPage";
-import CartPage from "../../pages/cartPage";
-import PurchaseCancelPage from "../../pages/PurchaseCancelPage";
-import { getUserData } from "../../utils/getUserData.js";
+import HomePage from "@pages/homePage";
+import SignUpPage from "@pages/signupPage";
+import LoginPage from "@pages/loginPage";
+import AdminDashboardPage from "@pages/adminDashboardPage";
+import CategoryPage from "@pages/CategoryPage";
+import CartPage from "@pages/cartPage";
+import PurchaseCancelPage from "@pages/PurchaseCancelPage";
+import { getUserData } from "@utils/getUserData.js";
 import LoadingSpinner from "../shared/LoadingSpinner/LoadingSpinner.jsx";
-import { useCartStore } from "../../stores/useCartStore.js";
-import ResetPasswordPage from "../../pages/resetPasswordPage/index.jsx";
-import SingleProductPage from "../../pages/singleProductPage/index.jsx";
-import SingleOrderDetailPage from "../../pages/singleOrderDetailPage/index.jsx";
-import PurchaseSuccessPage from "../../pages/purchaseSuccessPage/index.jsx";
+import { useCartStore } from "@stores/useCartStore.js";
+import ResetPasswordPage from "@pages/resetPasswordPage/index.jsx";
+import SingleProductPage from "@pages/singleProductPage/index.jsx";
+import SingleOrderDetailPage from "@pages/singleOrderDetailPage/index.jsx";
+import PurchaseSuccessPage from "@pages/purchaseSuccessPage/index.jsx";
 
 const AppRoutes = () => {
   const { user, checkAuth, checkingAuth } = getUserData();
