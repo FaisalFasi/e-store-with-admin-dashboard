@@ -18,13 +18,13 @@ export const createCheckoutSession = async (req, res) => {
 
     // Validate shipping address before proceeding
     if (!userId) {
-      return res.status(400).json({ error: "User is not logged in" });
+      return handleError(res, "User is not logged in", 400);
     }
 
     const shippingAddress = await UserAddress.findOne({ userId });
 
     if (!shippingAddress) {
-      return res.status(400).json({ error: "Please add a shipping address" });
+      return handleError(res, "Please add a shipping address", 400);
     }
 
     // Step 1: Calculate Total and Generate Line Items
@@ -37,8 +37,10 @@ export const createCheckoutSession = async (req, res) => {
         ).lean();
 
         if (!__productVariation) {
-          throw new Error(
-            `Product variation not found for product: ${product.name}`
+          return handleError(
+            res,
+            `Product variation not found for product: ${product.name}`,
+            400
           );
         }
         const __selectedProductVariationData = __productVariation?.colors?.map(
@@ -57,8 +59,10 @@ export const createCheckoutSession = async (req, res) => {
         const selectedColor = __selectedProductVariationData[0]?.color;
 
         if (!selectedColor) {
-          throw new Error(
-            `Selected color not found for product: ${product.name}`
+          return handleError(
+            res,
+            `Selected color not found for product: ${product.name}`,
+            400
           );
         }
 
@@ -66,8 +70,10 @@ export const createCheckoutSession = async (req, res) => {
         const selectedSize = __selectedProductVariationData[0].size;
 
         if (!selectedSize) {
-          throw new Error(
-            `Selected size not found for product: ${product.name}`
+          return handleError(
+            res,
+            `Selected size not found for product: ${product.name}`,
+            400
           );
         }
 
@@ -79,11 +85,19 @@ export const createCheckoutSession = async (req, res) => {
         const imageUrl = __selectedProductVariationData[0]?.imageUrls || [];
 
         if (isNaN(price)) {
-          throw new Error(`Invalid price for product: ${product.name}`);
+          return handleError(
+            res,
+            `Invalid price for product: ${product.name}`,
+            400
+          );
         }
 
         if (isNaN(quantity) || quantity <= 0) {
-          throw new Error(`Invalid quantity for product: ${product.name}`);
+          return handleError(
+            res,
+            `Invalid quantity for product: ${product.name}`,
+            400
+          );
         }
 
         const amount = Math.round(price * 100); // Convert to cents
@@ -185,12 +199,12 @@ export const checkoutSuccess = async (req, res) => {
     // Retrieve the Stripe session
     const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
     if (!stripeSession || !stripeSession.id) {
-      return res.status(400).json({ message: "Invalid Stripe session ID" });
+      return handleError(res, "Invalid Stripe session ID", 400);
     }
 
     // Validate Stripe session payment status
     if (stripeSession.payment_status !== "paid") {
-      return res.status(400).json({ message: "Payment status is not 'paid'" });
+      return handleError(res, "Payment status is not 'paid", 400);
     }
 
     await mongoDB_Session.withTransaction(async () => {
@@ -227,9 +241,11 @@ export const checkoutSuccess = async (req, res) => {
         const selectedVariation = product.selectedVariation;
 
         if (!selectedVariation) {
-          return res.status(400).json({
-            message: `Selected variation not found for product: ${foundProduct.name}`,
-          });
+          return handleError(
+            res,
+            `Selected variation not found for product: ${foundProduct.name}`,
+            400
+          );
         }
 
         const getVariationData = await ProductVariation.findById(
@@ -237,8 +253,10 @@ export const checkoutSuccess = async (req, res) => {
         ).session(mongoDB_Session);
 
         if (!getVariationData) {
-          throw new Error(
-            `Product variation not found for product: ${product.name}`
+          return handleError(
+            res,
+            `Product variation not found for product: ${product.name}`,
+            400
           );
         }
         const __selectedProductVariationData = getVariationData?.colors?.map(
@@ -253,36 +271,37 @@ export const checkoutSuccess = async (req, res) => {
           }
         );
 
-        console.log("pro--", product);
-        console.log("Found:", foundProduct);
-
-        // here is the problem need to resolve
         // Find the selected color
-        const selectedColor = __selectedProductVariationData?.color;
+        const selectedColor = __selectedProductVariationData[0]?.color;
 
         if (!selectedColor) {
-          return res.status(400).json({
-            message: `Selected color not found for product: ${foundProduct.name}`,
-          });
+          return handleError(
+            res,
+            `Selected color not found for product: ${foundProduct.name}`,
+            400
+          );
         }
-        console.log("selectedColor", selectedColor);
 
         // Find the selected size
-        const selectedSize = __selectedProductVariationData.size;
+        const selectedSize = __selectedProductVariationData[0]?.size;
 
         if (!selectedSize) {
-          return res.status(400).json({
-            message: `Selected size not found for product: ${foundProduct.name}`,
-          });
+          return handleError(
+            res,
+            `Selected size not found for product: ${foundProduct.name}`,
+            400
+          );
         }
 
-        const availableQuantity = __selectedProductVariationData.quantity;
+        const availableQuantity = __selectedProductVariationData[0].quantity;
 
         // Check if there's enough stock
         if (availableQuantity < product.quantity) {
-          return res.status(400).json({
-            message: `Insufficient inventory for Product: ${foundProduct.name}`,
-          });
+          return handleError(
+            res,
+            `Insufficient inventory for Product: ${foundProduct.name}`,
+            400
+          );
         }
 
         // Update the stock
@@ -298,9 +317,11 @@ export const checkoutSuccess = async (req, res) => {
       );
 
       if (!userAddress) {
-        return res.status(400).json({
-          message: "Shipping address not found for the user.",
-        });
+        return handleError(
+          res,
+          "Shipping address not found for the user.",
+          400
+        );
       }
 
       const userShippingAddress = {
@@ -372,11 +393,7 @@ export const checkoutSuccess = async (req, res) => {
     });
   } catch (error) {
     console.error("Error processing checkout:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error processing checkout",
-      error: error.message,
-    });
+    return handleError(res, error.message || "Error processing checkout", 400);
   } finally {
     mongoDB_Session.endSession();
   }
