@@ -175,10 +175,8 @@ productSchema.pre(
 // Indexes for common queries
 productSchema.index({ createdAt: -1 });
 productSchema.index({ name: "text", description: "text" });
-productSchema.index({ categories: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ tags: 1 });
-productSchema.index({ slug: 1 }, { unique: true });
 productSchema.index({ "discounts.expiry": 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ "ratings.average": -1 });

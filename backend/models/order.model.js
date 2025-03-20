@@ -164,7 +164,6 @@ orderSchema.index({ user: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ paymentStatus: 1 });
-orderSchema.index({ stripeSessionId: 1 }, { unique: true, sparse: true });
 
 const Order = mongoose.model("Order", orderSchema);
 export default Order;

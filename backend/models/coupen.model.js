@@ -101,7 +101,6 @@ const couponSchema = new mongoose.Schema(
 );
 
 // Indexes for common queries
-couponSchema.index({ code: 1 }, { unique: true });
 couponSchema.index({ expirationDate: 1 });
 couponSchema.index({ isActive: 1 });
 couponSchema.index({ userIds: 1 });
