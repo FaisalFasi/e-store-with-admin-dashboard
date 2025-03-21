@@ -1,12 +1,12 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { UserPlus, Mail, Lock, User, ArrowRight, Loader } from "lucide-react";
 import { motion } from "framer-motion";
-import { useUserStore } from "../../stores/useUserStore";
 import Captcha from "../../components/shared/Captcha/Captcha";
 import toast from "react-hot-toast";
+import { getUserData } from "../../utils/getUserData";
 
 const SignUpPage = () => {
-  const { signUp, loading } = useUserStore();
+  const { signUp, loading, user } = getUserData();
   const navigate = useNavigate();
   let captchaValue = "";
 
@@ -41,6 +41,10 @@ const SignUpPage = () => {
       navigate("/login"); // Redirect to login page
     }
   };
+
+  if (user) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <div className="flex flex-col justify-center py-12 sm:px-6 lg:px-8">

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { getUserData } from "@utils/getUserData";
-import { useCartStore } from "@stores/useCartStore";
-import { useProductStore } from "@stores/useProductStore";
+import { getUserData } from "@/utils/getUserData";
+import { useCartStore } from "@/stores/useCartStore";
+import { useProductStore } from "@/stores/useProductStore";
 
 export const useSingleProduct = () => {
   const { productId } = useParams();

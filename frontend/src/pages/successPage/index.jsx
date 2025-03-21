@@ -1,15 +1,17 @@
 import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { CheckCircle, HandHeart, ArrowRight } from "lucide-react";
 import { useCartStore } from "../../stores/useCartStore";
 import axiosBaseURL from "../../lib/axios";
 import Confetti from "react-confetti";
 import { useState } from "react";
+import { getUserData } from "../../utils/getUserData";
 
 const SuccessPage = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const { clearCart } = useCartStore();
   const [error, setError] = useState(null);
+  const { user } = getUserData();
 
   useEffect(() => {
     const handleCheckoutSuccess = async (sessionId) => {
@@ -56,6 +58,10 @@ const SuccessPage = () => {
 
   if (isProcessing) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
+
+  if (!user) {
+    return <Navigate to="/" />;
+  }
   return (
     <div className="h-screen flex mt-10 md:mt-0 md:items-center justify-center px-4">
       {/*  The Confetti component is used to create a confetti effect on the screen. */}

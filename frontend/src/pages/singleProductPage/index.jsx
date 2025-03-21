@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
-import Button from "@components/shared/Button/Button";
-import ZoomImage from "@components/shared/ZoomImage/ZoomImage";
+import Button from "@/components/shared/Button/Button";
+import ZoomImage from "@/components/shared/ZoomImage/ZoomImage";
 import { useSingleProduct } from "../../hooks/useSingleProduct";
 import ReviewCommentSection from "../../components/reviews/ReviewCommentSection/ReviewCommentSection";
 import { getUserData } from "../../utils/getUserData.js";

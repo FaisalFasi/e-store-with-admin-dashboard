@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
 import Captcha from "../../components/shared/Captcha/Captcha";
 import toast from "react-hot-toast";
@@ -11,7 +11,7 @@ import { getUserData } from "../../utils/getUserData";
 const LoginPage = () => {
   const [captcha, setCaptcha] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { login, loading, loginAsGuest } = getUserData();
+  const { login, loading, user } = getUserData();
 
   const onCaptchaChange = (value) => {
     setCaptcha(value);
@@ -34,6 +34,10 @@ const LoginPage = () => {
 
     login(email, password, captcha);
   };
+
+  if (user) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <>

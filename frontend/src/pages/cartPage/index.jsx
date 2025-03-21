@@ -9,15 +9,20 @@ import { motion } from "framer-motion";
 import CartItem from "../../components/cart/CartItem/CartItem";
 import { ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getUserData } from "../../utils/getUserData";
 
 const CartPage = () => {
   const { cart, getCartItems } = useCartStore();
   const { currentStep, isAddressModalOpen } = useCheckoutStore();
+  const { user } = getUserData();
 
   useEffect(() => {
     getCartItems();
   }, []);
 
+  if (!user) {
+    return <Navigate to="/" />;
+  }
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (

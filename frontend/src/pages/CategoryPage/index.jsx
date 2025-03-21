@@ -1,15 +1,21 @@
 import React, { useEffect } from "react";
 import { useProductStore } from "../../stores/useProductStore";
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import ProductCard from "../../components/products/ProductCard/ProductCard";
+import { getUserData } from "../../utils/getUserData";
 const CategoryPage = () => {
   const { fetchProductsByCategory, products } = useProductStore();
   const { category } = useParams();
+  const { user } = getUserData();
 
   useEffect(() => {
     fetchProductsByCategory(category);
   }, [fetchProductsByCategory, category]);
+
+  if (!user) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <div className="min-h-screen">

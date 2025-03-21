@@ -14,6 +14,8 @@ import CreateCategoryForm from "../../components/dashboard/CreateCategoryForm/Cr
 import { motion } from "framer-motion";
 import { useProductStore } from "../../stores/useProductStore";
 import { useCategoryStore } from "../../stores/useCategoryStore";
+import { getUserData } from "../../utils/getUserData";
+import { Navigate } from "react-router-dom";
 
 const tabs = [
   { id: "create", label: "Product", icon: PlusCircle },
@@ -27,11 +29,16 @@ const AdminDashboardPage = () => {
   const [activeTab, setActiveTab] = useState("create");
   const { fetchAllProducts } = useProductStore();
   const { getAllCategories } = useCategoryStore(); // Added getAllCategories
+  const { user } = getUserData();
 
   useEffect(() => {
     fetchAllProducts();
     getAllCategories(); // Added getAllCategories
   }, [fetchAllProducts]);
+
+  if (!user.role === "admin") {
+    return <Navigate to={user ? "/" : "/login"} />;
+  }
 
   return (
     <section className="min-h-screen bg-gray-900 relative overflow-hidden">

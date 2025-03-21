@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { getUserData } from "@utils/getUserData.js";
-import { useReviewCommentStore } from "@stores/useReviewCommentStore";
+import { getUserData } from "@/utils/getUserData";
+import { useReviewCommentStore } from "@/stores/useReviewCommentStore";
 import ReviewItem from "../ReviewItem/ReviewItem";
 import ReviewForm from "../ReviewForm/ReviewForm";
-import { useCommentHandlers } from "@hooks/reviewComments/useCommentHandlers"; // Import the custom hook
-import { useReviewHandlers } from "@hooks/reviewComments/useReviewHandlers"; // Import the custom hook
+import { useCommentHandlers } from "@/hooks/reviewComments/useCommentHandlers"; // Import the custom hook
+import { useReviewHandlers } from "@/hooks/reviewComments/useReviewHandlers"; // Import the custom hook
 
 const ReviewCommentSection = ({ productId }) => {
   const { user } = getUserData();
