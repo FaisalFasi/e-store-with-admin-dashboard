@@ -1,17 +1,17 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "../Layout/Layout";
 import HomePage from "@/pages/homePage";
-import SignUpPage from "@/pages/SignUpPage";
-import LoginPage from "@/pages/LoginPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
-import SingleProductPage from "@/pages/SingleProductPage";
+import SignUpPage from "@/pages/signupPage";
+import LoginPage from "@/pages/loginPage";
+import ResetPasswordPage from "@/pages/resetPasswordPage";
+import SingleProductPage from "@/pages/singleProductPage";
 import SingleOrderDetailPage from "@/pages/singleOrderDetailPage";
-import AdminDashboardPage from "@/pages/AdminDashboardPage";
-import CategoryPage from "@/pages/CategoryPage";
-import CartPage from "@/pages/CartPage";
-import SuccessPage from "@/pages/SuccessPage";
-import PurchaseCancelPage from "@/pages/PurchaseCancelPage";
-import ProtectedRoute from "@/lib/ProtectedRoute.jsx";
+import AdminDashboardPage from "@/pages/adminDashboardPage";
+import CategoryPage from "@/pages/categoryPage";
+import CartPage from "@/pages/cartPage";
+import SuccessPage from "@/pages/successPage";
+import PurchaseCancelPage from "@/pages/purchaseCancelPage";
+import ProtectedRoute from "@/lib/protectedRoute.jsx";
 // import { getUserData } from "@/utils/getUserData";
 
 const RouterConfig = createBrowserRouter([
