@@ -10,7 +10,7 @@ import AdminDashboardPage from "@/pages/adminDashboardPage";
 import CategoryPage from "@/pages/CategoryPage";
 import CartPage from "@/pages/cartPage";
 import SuccessPage from "@/pages/successPage";
-import PurchaseCancelPage from "@/pages/purchaseCancelPage/index";
+import PurchaseCancelPage from "@/pages/purchaseCancelPage/PurchaseCancelPage";
 import ProtectedRoute from "@/lib/protectedRoute.jsx";
 
 const RouterConfig = createBrowserRouter([
