@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
@@ -62,7 +62,7 @@ const ProductCard = ({ product }) => {
 
   const handleQuantityChange = (event) => {
     const value = parseInt(event.target.value, 10);
-    if (value > 0) setSelectedQuantity(value);
+    if (value >= 0) setSelectedQuantity(value);
   };
 
   const handleAddToCart = () => {
@@ -124,7 +124,7 @@ const ProductCard = ({ product }) => {
             </span>
           </p>
           <p className="text-sm text-gray-400">
-            In Stock: {selectedSizeObj?.quantity || product.stock}
+            In Stock: {selectedSizeObj?.quantity}
           </p>
         </div>
 
