@@ -12,7 +12,6 @@ import CartPage from "@/pages/cartPage";
 import SuccessPage from "@/pages/successPage";
 import PurchaseCancelPage from "@/pages/purchaseCancelPage";
 import ProtectedRoute from "@/lib/protectedRoute.jsx";
-// import { getUserData } from "@/utils/getUserData";
 
 const RouterConfig = createBrowserRouter([
   {
