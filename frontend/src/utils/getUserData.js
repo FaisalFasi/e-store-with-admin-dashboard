@@ -2,8 +2,9 @@ import { useUserStore } from "../stores/useUserStore.js";
 
 export const getUserData = () => {
   const {
-    login,
     user,
+    login,
+    signUp,
     loading,
     checkAuth,
     checkingAuth,
@@ -11,8 +12,9 @@ export const getUserData = () => {
     loginAsGuest,
   } = useUserStore();
   return {
-    login,
     user,
+    login,
+    signUp,
     loading,
     checkAuth,
     checkingAuth,

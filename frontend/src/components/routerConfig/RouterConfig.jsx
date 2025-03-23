@@ -11,6 +11,7 @@ import CategoryPage from "@/pages/CategoryPage";
 import CartPage from "@/pages/CartPage";
 import SuccessPage from "@/pages/SuccessPage";
 import PurchaseCancelPage from "@/pages/PurchaseCancelPage";
+import ProtectedRoute from "@/lib/ProtectedRoute.jsx";
 // import { getUserData } from "@/utils/getUserData";
 
 const RouterConfig = createBrowserRouter([
@@ -24,7 +25,15 @@ const RouterConfig = createBrowserRouter([
       { path: "/reset-password", element: <ResetPasswordPage /> },
       { path: "/products/:productId", element: <SingleProductPage /> },
       { path: "/order-detail/:orderId", element: <SingleOrderDetailPage /> },
-      { path: "/admin-dashboard", element: <AdminDashboardPage /> },
+      {
+        path: "/admin-dashboard",
+        element: (
+          <ProtectedRoute requiredRole={"admin"}>
+            <AdminDashboardPage />
+          </ProtectedRoute>
+        ),
+      },
+
       { path: "/category/:category", element: <CategoryPage /> },
       { path: "/cart", element: <CartPage /> },
       { path: "/purchase-success", element: <SuccessPage /> },

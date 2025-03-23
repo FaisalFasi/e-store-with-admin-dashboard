@@ -32,13 +32,16 @@ const AdminDashboardPage = () => {
   const { user } = getUserData();
 
   useEffect(() => {
+    console.log("test 11111");
+
+    if (!user || user.role !== "admin") {
+      <Navigate to={user ? "/" : "/login"} />;
+    }
+    console.log("test 2222");
+
     fetchAllProducts();
     getAllCategories(); // Added getAllCategories
-  }, [fetchAllProducts]);
-
-  if (!user.role === "admin") {
-    return <Navigate to={user ? "/" : "/login"} />;
-  }
+  }, [user]); // Add dependencies to avoid unnecessary re-renders
 
   return (
     <section className="min-h-screen bg-gray-900 relative overflow-hidden">

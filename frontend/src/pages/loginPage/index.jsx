@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { LogIn, Mail, Lock, ArrowRight, Loader } from "lucide-react";
 import Captcha from "../../components/shared/Captcha/Captcha";
 import toast from "react-hot-toast";
@@ -12,6 +12,9 @@ const LoginPage = () => {
   const [captcha, setCaptcha] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, loading, user } = getUserData();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const from = location.state?.from || "/";
 
   const onCaptchaChange = (value) => {
     setCaptcha(value);
@@ -27,7 +30,6 @@ const LoginPage = () => {
 
     const formData = new FormData(e.target);
     const { email, password } = Object.fromEntries(formData);
-    console.log("email and password from form:", email, password);
     // other way to get form data one by one
     // const email = formData.get("email");
     // const password = formData.get("password");
@@ -36,7 +38,7 @@ const LoginPage = () => {
   };
 
   if (user) {
-    return <Navigate to="/" />;
+    navigate(from, { replace: true });
   }
 
   return (

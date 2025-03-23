@@ -118,6 +118,30 @@ export const useUserStore = create((set, get) => ({
       );
     }
   },
+
+  //  function to request reset password
+  requestResetPassword: async (email) => {
+    set({ loading: true });
+    try {
+      const response = await axiosBaseURL.post(
+        "/auth/request-forgot-password",
+        {
+          email: email,
+        }
+      );
+      console.log("response:", response);
+
+      toast.success(response?.data?.message || "Password reset successfully");
+
+      set({ loading: false });
+    } catch (error) {
+      set({ loading: false });
+      toast.error(
+        error.response?.data.message ||
+          "An error occurred in resetPassword function in user store"
+      );
+    }
+  },
   refreshToken: async () => {
     if (get().checkingAuth) return;
 
@@ -146,30 +170,6 @@ export const useUserStore = create((set, get) => ({
           "An error occurred while refreshing the token."
       );
       throw error; // Allow the interceptor to handle logout
-    }
-  },
-
-  //  function to request reset password
-  requestResetPassword: async (email) => {
-    set({ loading: true });
-    try {
-      const response = await axiosBaseURL.post(
-        "/auth/request-forgot-password",
-        {
-          email: email,
-        }
-      );
-      console.log("response:", response);
-
-      toast.success(response?.data?.message || "Password reset successfully");
-
-      set({ loading: false });
-    } catch (error) {
-      set({ loading: false });
-      toast.error(
-        error.response?.data.message ||
-          "An error occurred in resetPassword function in user store"
-      );
     }
   },
 }));
