@@ -4,6 +4,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import ProductCard from "../../components/products/ProductCard/ProductCard";
 import { getUserData } from "../../utils/getUserData";
+
 const CategoryPage = () => {
   const { fetchProductsByCategory, products } = useProductStore();
   const { category } = useParams();

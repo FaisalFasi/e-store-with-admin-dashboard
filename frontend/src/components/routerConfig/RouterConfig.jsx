@@ -10,7 +10,7 @@ import AdminDashboardPage from "@/pages/adminDashboardPage";
 import CategoryPage from "@/pages/CategoryPage";
 import CartPage from "@/pages/cartPage";
 import SuccessPage from "@/pages/successPage";
-import PurchaseCancelPage from "@/pages/purchaseCancelPage";
+import PurchaseCancelPage from "@/pages/purchaseCancelPage/index";
 import ProtectedRoute from "@/lib/protectedRoute.jsx";
 
 const RouterConfig = createBrowserRouter([
@@ -40,6 +40,7 @@ const RouterConfig = createBrowserRouter([
     ],
   },
 ]);
+export default RouterConfig;
 
 // will use this below later
 // const PrivateRoute = ({ element }) => {
@@ -95,5 +96,3 @@ const RouterConfig = createBrowserRouter([
 //     ],
 //   },
 // ]);
-
-export default RouterConfig;
