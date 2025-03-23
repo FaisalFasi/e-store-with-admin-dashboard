@@ -7,7 +7,7 @@ import ResetPasswordPage from "@/pages/resetPasswordPage";
 import SingleProductPage from "@/pages/singleProductPage";
 import SingleOrderDetailPage from "@/pages/singleOrderDetailPage";
 import AdminDashboardPage from "@/pages/adminDashboardPage";
-import CategoryPage from "@/pages/categoryPage";
+import CategoryPage from "../../pages/categoryPage";
 import CartPage from "@/pages/cartPage";
 import SuccessPage from "@/pages/successPage";
 import PurchaseCancelPage from "@/pages/purchaseCancelPage";
