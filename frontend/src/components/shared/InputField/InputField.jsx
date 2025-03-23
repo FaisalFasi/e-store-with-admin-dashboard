@@ -73,7 +73,21 @@ const InputField = ({
             ))}
           </select>
         );
-
+      case "color":
+        return (
+          <input
+            type={type}
+            id={id || name}
+            name={name}
+            value={value || ""}
+            onChange={(e) => {
+              onChange(e); // Pass entire event for tags handling
+            }}
+            required={required}
+            placeholder={placeholder}
+            className={className}
+          />
+        );
       // In InputField.js - Update the file input rendering
       case "file":
         return (

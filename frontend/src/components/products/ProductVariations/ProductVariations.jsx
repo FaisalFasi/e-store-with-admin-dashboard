@@ -25,16 +25,25 @@ export const ProductVariations = (props) => {
           {/* Color Name */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Color Name
+              Color
             </label>
-            <input
+            <InputField
+              type="color"
+              className="w-full"
+              value={variation.colorName}
+              onChange={(e) =>
+                props.handleVariationChange(vIndex, "colorName", e.target.value)
+              }
+            />
+
+            {/* <input
               value={variation.colorName}
               onChange={(e) =>
                 props.handleVariationChange(vIndex, "colorName", e.target.value)
               }
               placeholder="Color name i.e. Red, Blue, etc."
               className="w-full p-2 mb-4 border rounded text-black"
-            />
+            /> */}
           </div>
 
           {/* Color Images */}
