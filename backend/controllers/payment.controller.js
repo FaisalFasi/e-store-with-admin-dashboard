@@ -57,7 +57,7 @@ export const createCheckoutSession = async (req, res) => {
         );
 
         // Find the selected color (case-insensitive)
-        const selectedColor = __selectedProductVariationData[0]?.color;
+        const selectedColor = __selectedProductVariationData[0]?.name;
 
         if (!selectedColor) {
           return handleError(
@@ -263,8 +263,8 @@ export const checkoutSuccess = async (req, res) => {
         const __selectedProductVariationData = getVariationData?.colors?.map(
           (color) => {
             return {
-              color: color?.color,
-              name: color?.name?.toUpperCase(),
+              color: color?.color || "",
+              name: color?.name?.toUpperCase() || "",
               size: color.sizes[0].value,
               price: color.sizes[0].price,
               imageUrls: color.imageUrls,
@@ -274,7 +274,7 @@ export const checkoutSuccess = async (req, res) => {
         );
 
         // Find the selected color
-        const selectedColor = __selectedProductVariationData[0]?.color;
+        const selectedColor = __selectedProductVariationData[0]?.name;
 
         if (!selectedColor) {
           return handleError(
@@ -340,14 +340,37 @@ export const checkoutSuccess = async (req, res) => {
         [
           {
             user: userId,
-            products: products.map((p) => ({
-              product: p.id,
-              quantity: p.quantity,
-              price: p.price,
-              color: p.selectedColor || "",
-              size: p.selectedSize || "",
-              variation: p.selectedVariation,
-            })),
+            products: await Promise.all(
+              products?.map(async (p) => {
+                // Fetch the product variation to get price, color, size
+                const variation = await ProductVariation.findById(
+                  p.selectedVariation
+                ).session(mongoDB_Session);
+
+                if (!variation) {
+                  handleError(
+                    res,
+                    `Variation not found for product ${p.id}`,
+                    "checkout success metadata"
+                  );
+                }
+
+                // Get the first color and size (or implement your logic to get the correct ones)
+                const colorName = variation.colors[0]?.name || "";
+                const size = variation.colors[0]?.sizes[0]?.value || "";
+                const price = variation.colors[0]?.sizes[0]?.price || 0;
+
+                return {
+                  product: p.id,
+                  quantity: p.quantity,
+                  price: price,
+                  color: colorName,
+                  size: size,
+                  variation: p.selectedVariation,
+                };
+              })
+            ),
+
             totalAmount: stripeSession.amount_total / 100, // Convert cents to dollars
             grandTotal: stripeSession.amount_total / 100, // Assuming grandTotal is the same as totalAmount
             status: "Pending",
@@ -395,7 +418,7 @@ export const checkoutSuccess = async (req, res) => {
     });
   } catch (error) {
     console.error("Error processing checkout:", error);
-    return handleError(res, error.message || "Error processing checkout", 400);
+    handleError(res, error.message || "Error processing checkout", 400);
   } finally {
     mongoDB_Session.endSession();
   }

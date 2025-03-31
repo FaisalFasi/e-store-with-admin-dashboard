@@ -8,7 +8,3 @@ export const handleError = (res, error, context, status = 500) => {
     message: errorMessage,
   });
 };
-
-// errorMessage.includes("validation")
-//       ? `Validation error: ${errorMessage}`
-//       : errorMessage,
