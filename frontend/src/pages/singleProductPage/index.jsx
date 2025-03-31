@@ -36,7 +36,6 @@ const SingleProductPage = () => {
     return <div className="text-center text-white">Product not found!</div>;
   }
 
-  console.log(uniqueColors);
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
@@ -126,15 +125,14 @@ const SingleProductPage = () => {
                 ? `In Stock: ${selectedSizeObj?.quantity}`
                 : "Out of Stock"}
             </p>
-            {/* Color Selection */}
 
+            {/* Color Selection */}
             <div className="bg-gray-800 p-6 rounded-lg mb-6">
               <p className="text-gray-300 font-semibold mb-4">Select Color:</p>
               <div className="flex flex-wrap gap-3">
                 {uniqueColors?.map((color, index) => (
-                  <span className="flex flex-col items-center">
+                  <span key={index} className="flex flex-col items-center">
                     <button
-                      key={index}
                       onClick={() => handleColorChange(color?.name)}
                       className={`w-10 h-10 rounded-full border-2 transition-all ${
                         color?.name === selectedColor
@@ -156,7 +154,7 @@ const SingleProductPage = () => {
               <div className="mb-6">
                 <p className="text-gray-300 font-semibold mb-2">Select Size:</p>
                 <div className="flex flex-wrap gap-2">
-                  {sizesForSelectedColor.map((size, index) => (
+                  {sizesForSelectedColor?.map((size, index) => (
                     <button
                       key={index}
                       onClick={() => handleSizeChange(size)}

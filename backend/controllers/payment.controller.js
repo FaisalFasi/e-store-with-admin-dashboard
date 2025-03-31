@@ -46,7 +46,8 @@ export const createCheckoutSession = async (req, res) => {
         const __selectedProductVariationData = __productVariation?.colors?.map(
           (color) => {
             return {
-              color: color?.name?.toUpperCase(),
+              color: color?.color,
+              name: color?.name?.toUpperCase(),
               size: color.sizes[0].value,
               price: color.sizes[0].price,
               imageUrls: color.imageUrls,
@@ -262,7 +263,8 @@ export const checkoutSuccess = async (req, res) => {
         const __selectedProductVariationData = getVariationData?.colors?.map(
           (color) => {
             return {
-              color: color?.name?.toUpperCase(),
+              color: color?.color,
+              name: color?.name?.toUpperCase(),
               size: color.sizes[0].value,
               price: color.sizes[0].price,
               imageUrls: color.imageUrls,
