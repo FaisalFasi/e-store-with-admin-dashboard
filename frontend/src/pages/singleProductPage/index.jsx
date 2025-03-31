@@ -113,109 +113,127 @@ const SingleProductPage = () => {
             </motion.div>
 
             {/* Stock Availability */}
-            <p className="text-gray-300 mb-6">
+            <p
+              className={`w-fit p-2 mb-2 border ${
+                selectedSizeObj?.quantity > 0
+                  ? "text-gray-300"
+                  : " p-2 text-red-500 font-bold text-xl border-red-400"
+              }`}
+            >
               {selectedSizeObj?.quantity > 0
                 ? `In Stock: ${selectedSizeObj?.quantity}`
                 : "Out of Stock"}
             </p>
+            {selectedSizeObj?.quantity > 0 && (
+              <>
+                {/* Color Selection */}
 
-            {/* Color Selection */}
-            <div className="bg-gray-800 p-6 rounded-lg mb-6">
-              <p className="text-gray-300 font-semibold mb-4">Select Color:</p>
-              <div className="flex flex-wrap gap-3">
-                {uniqueColors.map((color, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleColorChange(color)}
-                    className={`w-10 h-10 rounded-full border-2 transition-all ${
-                      color === selectedColor
-                        ? "border-emerald-400 scale-110"
-                        : "border-gray-600 hover:border-gray-500"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Size Selection (only shown if a color is selected) */}
-            {selectedColor && (
-              <div className="mb-6">
-                <p className="text-gray-300 font-semibold mb-2">Select Size:</p>
-                <div className="flex flex-wrap gap-2">
-                  {sizesForSelectedColor.map((size, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSizeChange(size)}
-                      className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-400 ${
-                        size === selectedSize ? "bg-emerald-400 text-white" : ""
-                      }`}
-                      disabled={
-                        product.variations.find((v) =>
-                          v.colors.some(
-                            (c) =>
-                              c.name === selectedColor &&
-                              c.sizes.some((s) => s.value === size)
-                          )
-                        )?.quantity === 0
-                      }
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quantity Selection (only shown if a size is selected) */}
-            {selectedSize && (
-              <div className="mb-6">
-                <p className="text-gray-300 font-semibold mb-2">Quantity:</p>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleQuantityChange("decrement")}
-                    className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
-                    disabled={selectedQuantity <= 1}
-                  >
-                    -
-                  </button>
-                  <span className="text-lg font-semibold w-8 text-center">
-                    {selectedQuantity}
-                  </span>
-                  <button
-                    onClick={() => handleQuantityChange("increment")}
-                    className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
-                    disabled={selectedQuantity >= selectedSizeObj?.quantity}
-                  >
-                    +
-                  </button>
-                </div>
-                {selectedSizeObj?.quantity > 0 && (
-                  <p className="text-sm text-gray-400 mt-2">
-                    Max quantity: {selectedSizeObj?.quantity}
+                <div className="bg-gray-800 p-6 rounded-lg mb-6">
+                  <p className="text-gray-300 font-semibold mb-4">
+                    Select Color:
                   </p>
-                )}
-              </div>
-            )}
+                  <div className="flex flex-wrap gap-3">
+                    {uniqueColors.map((color, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleColorChange(color)}
+                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                          color === selectedColor
+                            ? "border-emerald-400 scale-110"
+                            : "border-gray-600 hover:border-gray-500"
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                </div>
 
-            {/* Add to Cart and Wishlist Buttons */}
-            <div className="flex items-center gap-4">
-              <Button
-                isBG={true}
-                className="self-start mb-4"
-                onClick={handleAddToCart}
-                disabled={!selectedColor || !selectedSize}
-              >
-                Add to Cart
-              </Button>
-              <Button
-                isBG={true}
-                className="self-start bg-gray-700"
-                onClick={handleAddToWishlist}
-              >
-                Add to Wishlist
-              </Button>
-            </div>
+                {/* Size Selection (only shown if a color is selected) */}
+                {selectedColor && (
+                  <div className="mb-6">
+                    <p className="text-gray-300 font-semibold mb-2">
+                      Select Size:
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {sizesForSelectedColor.map((size, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleSizeChange(size)}
+                          className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-400 ${
+                            size === selectedSize
+                              ? "bg-emerald-400 text-white"
+                              : ""
+                          }`}
+                          disabled={
+                            product.variations.find((v) =>
+                              v.colors.some(
+                                (c) =>
+                                  c.name === selectedColor &&
+                                  c.sizes.some((s) => s.value === size)
+                              )
+                            )?.quantity === 0
+                          }
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quantity Selection (only shown if a size is selected) */}
+                {selectedSize && (
+                  <div className="mb-6">
+                    <p className="text-gray-300 font-semibold mb-2">
+                      Quantity:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleQuantityChange("decrement")}
+                        className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
+                        disabled={selectedQuantity <= 1}
+                      >
+                        -
+                      </button>
+                      <span className="text-lg font-semibold w-8 text-center">
+                        {selectedQuantity}
+                      </span>
+                      <button
+                        onClick={() => handleQuantityChange("increment")}
+                        className="px-4 py-2 bg-gray-800 text-gray-300 rounded-md hover:bg-gray-700"
+                        disabled={selectedQuantity >= selectedSizeObj?.quantity}
+                      >
+                        +
+                      </button>
+                    </div>
+                    {selectedSizeObj?.quantity > 0 && (
+                      <p className="text-sm text-gray-400 mt-2">
+                        Max quantity: {selectedSizeObj?.quantity}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Add to Cart and Wishlist Buttons */}
+                <div className="flex items-center gap-4">
+                  <Button
+                    isBG={true}
+                    className="self-start mb-4"
+                    onClick={handleAddToCart}
+                    disabled={!selectedColor || !selectedSize}
+                  >
+                    Add to Cart
+                  </Button>
+                  <Button
+                    isBG={true}
+                    className="self-start bg-gray-700"
+                    onClick={handleAddToWishlist}
+                  >
+                    Add to Wishlist
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </motion.div>
 
