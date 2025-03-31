@@ -22,7 +22,7 @@ const InputField = ({
 }) => {
   // Shared classes for input elements
   const baseClass =
-    "mt-1 block w-full bg-gray-700 border border-gray-500 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500";
+    "block w-full bg-gray-800 border border-gray-500 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-0 focus:ring-emerald-500 focus:border-emerald-500";
 
   // Render the label with an asterisk if the field is required
   const renderLabel = () => {

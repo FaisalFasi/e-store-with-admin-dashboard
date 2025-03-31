@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
 import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
+import Select from "@/components/shared/Select/Select";
+import InputField from "@/components/shared/InputField/InputField";
 
 const ProductCard = ({ product }) => {
   const { user } = useUserStore();
@@ -49,15 +51,14 @@ const ProductCard = ({ product }) => {
     (s) => s.value === selectedSize
   );
 
-  const handleColorChange = (event) => {
-    const color = event.target.value;
+  const handleColorChange = (color) => {
     setSelectedColor(color);
     setSelectedSize("");
     setSelectedQuantity(1);
   };
 
-  const handleSizeChange = (event) => {
-    setSelectedSize(event.target.value);
+  const handleSizeChange = (value) => {
+    setSelectedSize(value);
   };
 
   const handleQuantityChange = (event) => {
@@ -96,7 +97,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="flex w-full relative flex-col overflow-hidden rounded-lg border border-gray-700 shadow-lg">
+    <div className="flex w-full relative flex-col overflow-visible rounded-lg border border-gray-700 shadow-lg">
       <Navigation
         to={`/products/${product._id}`}
         className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl hover:scale-105 transition-transform duration-300"
@@ -133,18 +134,12 @@ const ProductCard = ({ product }) => {
           <label className="block text-sm font-medium text-gray-300">
             Select Color
           </label>
-          <select
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+          <Select
+            options={uniqueColors}
+            selectedOption={selectedColor}
             onChange={handleColorChange}
-            value={selectedColor}
-          >
-            <option value="">Choose a color</option>
-            {uniqueColors.map((color) => (
-              <option key={color} value={color}>
-                {color}
-              </option>
-            ))}
-          </select>
+            isColor={true}
+          />
         </div>
 
         {/* Size Selection */}
@@ -153,18 +148,11 @@ const ProductCard = ({ product }) => {
             <label className="block text-sm font-medium text-gray-300">
               Select Size
             </label>
-            <select
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
+            <Select
+              options={sizesForSelectedColor}
+              selectedOption={selectedSize}
               onChange={handleSizeChange}
-              value={selectedSize}
-            >
-              <option value="">Choose a size</option>
-              {sizesForSelectedColor.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         )}
 
@@ -174,9 +162,8 @@ const ProductCard = ({ product }) => {
             <label className="block text-sm font-medium text-gray-300">
               Quantity
             </label>
-            <input
+            <InputField
               type="number"
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md bg-gray-700 text-white"
               value={selectedQuantity}
               min="1"
               max={selectedSizeObj?.quantity}
@@ -187,7 +174,7 @@ const ProductCard = ({ product }) => {
 
         <button
           className="flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-center text-sm font-medium
-       text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
+       text-white hover:bg-emerald-700 focus:outline-none focus:ring-1 focus:ring-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleAddToCart}
           disabled={!selectedColor || !selectedSize}
         >
