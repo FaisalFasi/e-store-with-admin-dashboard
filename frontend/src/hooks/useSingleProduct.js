@@ -154,26 +154,68 @@ export const useSingleProduct = () => {
   }, [productId, fetchProductById]);
 
   // Updated default values function
+  // const setDefaultProductValues = () => {
+  //   if (!product?.variations?.length) return;
+
+  //   // Find first color with available stock
+  //   const initialColorObjWithStock = product.variations
+  //     .flatMap((v) => v.colors)
+  //     .find((c) => c.sizes?.some((s) => s.quantity > 0));
+
+  //   console.log("initialColorObj", initialColorObj);
+
+  //   const initialColorObj =
+  //     initialColorObjWithStock || product.variations[0].colors[0];
+
+  //   if (initialColorObj) {
+  //     const initialColor = initialColorObj.name;
+
+  //     // Find first size with available stock for this color
+  //     const initialSize = initialColorObj.sizes.find(
+  //       (s) => s.quantity > 0
+  //     )?.value;
+
+  //     const initialImage = initialColorObj.imageUrls[0];
+  //     console.log("initialImage", initialImage);
+  //     setSelectedColor(initialColor);
+  //     setSelectedSize(initialSize || "");
+  //     setSelectedImage(initialImage || "");
+  //     setSelectedQuantity(1);
+  //   }
+  // };
+
   const setDefaultProductValues = () => {
-    if (product?.variations?.length > 0) {
-      // Find first color with available stock
-      const initialColorObj = product.variations
-        .flatMap((v) => v.colors)
-        .find((c) => c.sizes?.some((s) => s.quantity > 0));
+    if (!product?.variations?.length) return;
 
-      if (initialColorObj) {
-        const initialColor = initialColorObj.name;
-        // Find first size with available stock for this color
-        const initialSize = initialColorObj.sizes.find(
-          (s) => s.quantity > 0
-        )?.value;
-        const initialImage = initialColorObj.imageUrls?.[0];
+    // Try to find first color with available stock
+    const initialColorObjWithStock = product.variations
+      .flatMap((v) => v.colors)
+      .find((c) => c.sizes?.some((s) => s.quantity > 0));
 
-        setSelectedColor(initialColor);
-        setSelectedSize(initialSize || "");
-        setSelectedImage(initialImage || "");
-        setSelectedQuantity(1);
-      }
+    // Fallback to first color if none have stock
+    const initialColorObj =
+      initialColorObjWithStock || product.variations[0].colors[0];
+
+    if (initialColorObj) {
+      const initialColor = initialColorObj.name;
+
+      // Try to find first size with stock, fallback to first size
+      const initialSizeWithStock = initialColorObj.sizes?.find(
+        (s) => s.quantity > 0
+      );
+      const initialSize =
+        initialSizeWithStock?.value || initialColorObj.sizes?.[0]?.value || "";
+
+      // Always use first image URL if available
+      const initialImage =
+        initialColorObj.imageUrls?.[0] ||
+        product.variations[0].colors[0]?.imageUrls?.[0] ||
+        "";
+
+      setSelectedColor(initialColor);
+      setSelectedSize(initialSize);
+      setSelectedImage(initialImage);
+      setSelectedQuantity(1);
     }
   };
 
