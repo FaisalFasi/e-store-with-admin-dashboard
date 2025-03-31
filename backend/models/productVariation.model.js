@@ -17,6 +17,7 @@ const sizeSchema = new mongoose.Schema({
 
 // Schema for color variations
 const colorSchema = new mongoose.Schema({
+  color: { type: String, required: true },
   name: { type: String, required: true }, // Example: "Red", "Blue"
   sizes: [sizeSchema], // Array of sizes for this color
   imageUrls: { type: [String], required: true }, // Images specific to this color

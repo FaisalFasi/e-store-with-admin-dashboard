@@ -34,3 +34,32 @@ export const initializeVariation = {
   price: "",
   images: [],
 };
+
+export const initialProductState = {
+  name: "",
+  description: "",
+  category: {
+    parent: "",
+    child: null,
+    grandchild: null,
+  },
+  basePrice: 0,
+  stock: 0,
+  tags: [],
+  status: "draft",
+  isFeatured: false,
+  variations: [
+    {
+      color: "",
+      colorName: "",
+      colorImages: [],
+      sizes: [
+        {
+          value: "",
+          price: 0,
+          quantity: 0,
+        },
+      ],
+    },
+  ],
+};

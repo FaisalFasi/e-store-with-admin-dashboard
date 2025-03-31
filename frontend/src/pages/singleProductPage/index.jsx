@@ -35,6 +35,8 @@ const SingleProductPage = () => {
   if (!product) {
     return <div className="text-center text-white">Product not found!</div>;
   }
+
+  console.log(uniqueColors);
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
@@ -129,17 +131,22 @@ const SingleProductPage = () => {
             <div className="bg-gray-800 p-6 rounded-lg mb-6">
               <p className="text-gray-300 font-semibold mb-4">Select Color:</p>
               <div className="flex flex-wrap gap-3">
-                {uniqueColors.map((color, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleColorChange(color)}
-                    className={`w-10 h-10 rounded-full border-2 transition-all ${
-                      color === selectedColor
-                        ? "border-emerald-400 scale-110"
-                        : "border-gray-600 hover:border-gray-500"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
+                {uniqueColors?.map((color, index) => (
+                  <span className="flex flex-col items-center">
+                    <button
+                      key={index}
+                      onClick={() => handleColorChange(color?.name)}
+                      className={`w-10 h-10 rounded-full border-2 transition-all ${
+                        color?.name === selectedColor
+                          ? "border-emerald-400 scale-110"
+                          : "border-gray-600 hover:border-gray-500"
+                      }`}
+                      style={{ backgroundColor: color?.color }}
+                    />
+                    <span className="text-[12px] mt-1">
+                      {color?.name.slice(0, 10)}
+                    </span>
+                  </span>
                 ))}
               </div>
             </div>

@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { getUserData } from "@/utils/getUserData";
 import { useCartStore } from "@/stores/useCartStore";
 import { useProductStore } from "@/stores/useProductStore";
+import { color } from "framer-motion";
 
 export const useSingleProduct = () => {
   const { productId } = useParams();
@@ -23,7 +24,14 @@ export const useSingleProduct = () => {
   // Extract unique colors from variations
   const uniqueColors = [
     ...new Set(
-      product?.variations?.flatMap((v) => v.colors.map((c) => c.name)) || []
+      product?.variations?.flatMap((v) =>
+        v.colors.map((c) => {
+          return {
+            color: c.color,
+            name: c.name,
+          };
+        })
+      ) || []
     ),
   ];
 
@@ -87,6 +95,7 @@ export const useSingleProduct = () => {
   };
 
   const handleColorChange = (color) => {
+    console.log("handleColorChange", color);
     setSelectedColor(color);
     setSelectedSize(""); // Reset size when color changes
     setSelectedQuantity(1); // Reset quantity when color changes

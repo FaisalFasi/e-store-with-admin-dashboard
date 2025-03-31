@@ -18,6 +18,7 @@ export const processVariations = async (variations, files) => {
       return {
         ...variation,
         color: {
+          color: variation.color,
           name: variation.colorName,
           imageUrls: uploadedColorImages,
           sizes: await processSizes(variation.sizes, vIndex),
@@ -55,6 +56,7 @@ export const createProductVariations = async (
       productId,
       colors: [
         {
+          color: variationData.color.color,
           name: variationData.color.name,
           imageUrls: variationData.color.imageUrls,
           sizes: variationData.color.sizes,

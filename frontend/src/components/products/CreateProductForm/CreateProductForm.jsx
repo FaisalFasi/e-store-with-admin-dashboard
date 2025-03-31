@@ -162,6 +162,7 @@ const CreateProductForm = () => {
     // Validate first variation
     const firstVariation = newProduct.variations[0];
     if (
+      !firstVariation.color ||
       !firstVariation.colorName ||
       firstVariation.colorImages.length === 0 ||
       firstVariation.sizes.some(
@@ -211,6 +212,7 @@ const CreateProductForm = () => {
 
         // Return variation data without images (images are appended separately)
         return {
+          color: variation.color,
           colorName: variation.colorName,
           sizes: variation.sizes,
         };

@@ -2,7 +2,10 @@
 import { useState, useRef, useEffect } from "react";
 import { validateImages } from "../utils/imageValidation/imageValidation.js";
 import { useCategoryStore } from "../stores/useCategoryStore.js";
-import { initializeVariation } from "../helpers/productHelopers/productHelper.js";
+import {
+  initializeVariation,
+  initialProductState,
+} from "../helpers/productHelopers/productHelper.js";
 
 export const useProductForm = () => {
   const { categories } = useCategoryStore();
@@ -15,33 +18,6 @@ export const useProductForm = () => {
     grandChildCategories: [],
   });
 
-  const initialProductState = {
-    name: "",
-    description: "",
-    category: {
-      parent: "",
-      child: null,
-      grandchild: null,
-    },
-    basePrice: 0,
-    stock: 0,
-    tags: [],
-    status: "draft",
-    isFeatured: false,
-    variations: [
-      {
-        colorName: "",
-        colorImages: [],
-        sizes: [
-          {
-            value: "",
-            price: 0,
-            quantity: 0,
-          },
-        ],
-      },
-    ],
-  };
   const [newProduct, setNewProduct] = useState(initialProductState);
 
   const handleInputChange = (key, value) => {
@@ -170,6 +146,7 @@ export const useProductForm = () => {
       variations: [
         ...newProduct?.variations,
         {
+          color: "",
           colorName: "",
           colorImages: [],
           sizes: [
