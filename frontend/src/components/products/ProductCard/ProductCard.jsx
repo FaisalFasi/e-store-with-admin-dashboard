@@ -63,7 +63,8 @@ const ProductCard = ({ product }) => {
 
   const handleQuantityChange = (event) => {
     const value = parseInt(event.target.value, 10);
-    if (value >= 0) setSelectedQuantity(value);
+    if (value >= 0 && value <= selectedSizeObj?.quantity)
+      setSelectedQuantity(value);
   };
 
   const handleAddToCart = () => {
@@ -124,9 +125,11 @@ const ProductCard = ({ product }) => {
               ${selectedSizeObj?.price || product.basePrice}
             </span>
           </p>
-          <p className="text-sm text-gray-400">
-            In Stock: {selectedSizeObj?.quantity}
-          </p>
+          {selectedSizeObj?.quantity >= 0 && (
+            <p className="text-sm text-gray-400">
+              In Stock: {selectedSizeObj?.quantity}
+            </p>
+          )}
         </div>
 
         {/* Color Selection */}
