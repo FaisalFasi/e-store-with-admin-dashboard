@@ -246,7 +246,7 @@ export const getFeaturedProducts = async (req, res) => {
       featuredProducts = JSON.parse(featuredProducts);
     }
 
-    res.json({ success: true, products: featuredProducts });
+    res.status(200).json({ success: true, products: featuredProducts });
   } catch (error) {
     handleError(res, error, "getFeaturedProducts");
   }

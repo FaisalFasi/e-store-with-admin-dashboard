@@ -70,9 +70,9 @@ const HomePage = () => {
           ))} */}
         </div>
 
-        {/* {!isLoading && products.length > 0 && (
+        {!isLoading && products.length > 0 && (
           <FeaturedProducts featuredProducts={products} />
-        )} */}
+        )}
       </div>
     </div>
   );

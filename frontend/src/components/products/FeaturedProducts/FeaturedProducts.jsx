@@ -61,42 +61,52 @@ const FeaturedProducts = ({ featuredProducts }) => {
               }}
             >
               {featuredProducts.length > 0 &&
-                featuredProducts?.map((product) => (
-                  <div
-                    key={product._id}
-                    className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-2"
-                  >
-                    <div className="flex flex-col justify-between bg-white bg-opacity-10 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-emerald-500/30">
-                      <div className="overflow-hidden">
-                        <Navigation to={`/products/${product._id}`}>
-                          <img
-                            src={product.images[0]}
-                            alt={product.name}
-                            className="w-full h-48 object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                          />
-                        </Navigation>
-                      </div>
-                      <div className="flex flex-col justify-between h-[200px] p-4">
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2 text-white">
-                            {product.name}
-                          </h3>
-                          <p className="text-emerald-300 font-medium mb-4">
-                            ${Number(product.price || 0).toFixed(2)}
-                          </p>
+                featuredProducts?.map((product) => {
+                  console.log("product--", product);
+                  const productImageUrl =
+                    product?.variations[0].colors[0].imageUrls[0] ||
+                    "/public/images/imagePlaceholder.jpg";
+                  const productPrice =
+                    product?.variations[0].colors[0].sizes[0].price;
+
+                  console.log("productPrice--", productPrice);
+                  return (
+                    <div
+                      key={product._id}
+                      className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 flex-shrink-0 px-2"
+                    >
+                      <div className="flex flex-col justify-between bg-white bg-opacity-10 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden h-full transition-all duration-300 hover:shadow-xl border border-emerald-500/30">
+                        <div className="overflow-hidden">
+                          <Navigation to={`/products/${product._id}`}>
+                            <img
+                              src={productImageUrl}
+                              alt={product.name}
+                              className="w-full h-48 object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                            />
+                          </Navigation>
                         </div>
-                        <button
-                          onClick={() => addToCart(product)}
-                          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 
+                        <div className="flex flex-col justify-between h-[200px] p-4">
+                          <div>
+                            <h3 className="text-lg font-semibold mb-2 text-white">
+                              {product.name}
+                            </h3>
+                            <p className="text-emerald-300 font-medium mb-4">
+                              ${Number(productPrice || 0).toFixed(2)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => addToCart(product)}
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 
 												flex items-center justify-center"
-                        >
-                          <ShoppingCart className="w-5 h-5 mr-2" />
-                          Add to Cart
-                        </button>
+                          >
+                            <ShoppingCart className="w-5 h-5 mr-2" />
+                            Add to Cart
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           </div>
           {showNavigationButtons && (
