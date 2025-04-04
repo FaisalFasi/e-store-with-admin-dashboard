@@ -1,0 +1,182 @@
+import mongoose from "mongoose";
+import redis from "../../db/redis.js";
+import Product from "../../models/product.model.js";
+import { handleError } from "../../utils/handleError/handleError.js";
+
+export const __getRecommendedProducts = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // 1. Get current product's deepest category
+    const currentProduct = await Product.findById(productId)
+      .select("category")
+      .lean();
+
+    if (!currentProduct?.category) {
+      return res.status(200).json({
+        success: true,
+        products: [],
+        message: "Product has no category assigned",
+      });
+    }
+
+    // 2. Determine the most specific category level to use
+    const categoryLevels = [
+      currentProduct.category.grandchild,
+      currentProduct.category.child,
+      currentProduct.category.parent,
+    ];
+    const categoryId = categoryLevels.find((id) => id) || null;
+    const cacheKey = `recs:cat:${categoryId}`;
+
+    console.log("categoryId---", categoryId);
+
+    // 3. Check Redis cache with proper validation
+    const cachedData = await getValidCache(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        products: cachedData,
+        source: "cache",
+      });
+    }
+
+    // 4. Query database with optimized query
+    const recommendedProducts = await getProductsFromDatabase(
+      productId,
+      currentProduct.category,
+      categoryId
+    );
+
+    // 5. Cache the results if we have products
+    if (recommendedProducts?.length > 0) {
+      await cacheProducts(cacheKey, recommendedProducts);
+    }
+
+    // 6. Return the results
+    res.status(200).json({
+      success: true,
+      products: recommendedProducts,
+      source: "database",
+    });
+  } catch (error) {
+    handleError(res, error, "Server error  in getRecommendedProducts", 500);
+    console.error("Error in getRecommendedProducts:", error);
+  }
+};
+
+// Helper Functions
+
+// 1. Cache Management
+async function getValidCache(cacheKey) {
+  try {
+    const cached = await redis.get(cacheKey);
+    if (!cached) return null;
+
+    const parsed = JSON.parse(cached);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+  } catch (e) {
+    handleError(res, e, "Caching error", 500);
+
+    console.error("Cache error:", e);
+    return null;
+  }
+}
+
+async function cacheProducts(key, products, ttl = 3600) {
+  try {
+    await redis.set(key, JSON.stringify(products), "EX", ttl);
+  } catch (e) {
+    handleError(res, e, "Caching failed", 500);
+    console.error("Caching failed:", e);
+  }
+}
+
+// 2. Database Query
+async function getProductsFromDatabase(currentProductId, category, categoryId) {
+  const query = {
+    status: "draft",
+    _id: { $ne: new mongoose.Types.ObjectId(currentProductId) },
+  };
+
+  const categoryConditions = [];
+
+  if (category.grandchild) {
+    categoryConditions.push({ "category.grandchild": category.grandchild });
+  }
+  if (category.child) {
+    categoryConditions.push({ "category.child": category.child });
+  }
+  if (category.parent) {
+    categoryConditions.push({ "category.parent": category.parent });
+  }
+
+  if (categoryConditions.length > 0) {
+    query.$or = categoryConditions;
+  } else {
+    // No  category  conditions  -  fall  back  to  random  products
+    return await getRandomProducts(currentProductId);
+  }
+
+  const products = await Product.find(query)
+    .limit(10)
+    .select("name slug basePrice variations stockStatus")
+    .sort({ createdAt: -1 }) // Get newest products first
+    .lean();
+
+  return products.map(formatProductData);
+}
+
+async function getRandomProducts(excludeProductId) {
+  return await Product.find({
+    status: "active",
+    _id: { $ne: new mongoose.Types.ObjectId(excludeProductId) },
+  })
+    .limit(10)
+    .select("name  slug  basePrice  variations  stockStatus")
+    .sort({ createdAt: -1 })
+    .lean()
+    .then((products) => products.map(formatProductData));
+}
+// 3. Data Formatting
+function formatProductData(product) {
+  return {
+    _id: product._id,
+    name: product.name,
+    slug: product.slug,
+    price: product.basePrice,
+    inStock: product.stockStatus === "in_stock", // Added stock status
+    imageUrl: getProductImage(product),
+  };
+}
+
+function getProductImage(product) {
+  console.log("product:", product);
+  return (
+    product?.variations?.[0]?.colors?.[0]?.imageUrls?.[0] ||
+    "/public/images/placeholder.jpg"
+  );
+}
+
+// 4. Cache Invalidation (Call this when products change)
+export async function invalidateRecommendationsCache(productId) {
+  try {
+    const product = await Product.findById(productId).select("category").lean();
+    if (!product?.category) return;
+
+    const categoryLevels = [
+      product.category.grandchild,
+      product.category.child,
+      product.category.parent,
+    ];
+
+    await Promise.all(
+      categoryLevels
+        .filter(Boolean)
+        .map((catId) => redis.del(`recs:cat:${catId}`))
+    );
+  } catch (e) {
+    handleError(res, e, "Cache invalidation error", 500);
+    console.error("Cache invalidation error:", e);
+  }
+}

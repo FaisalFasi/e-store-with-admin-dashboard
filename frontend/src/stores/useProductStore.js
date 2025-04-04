@@ -5,12 +5,15 @@ import { cacheChecking } from "../helpers/cacheHelper";
 
 export const useProductStore = create((set, get) => ({
   products: [],
+  featuredProducts: [],
+  recommendedProducts: [],
   loading: false,
   cacheTimestamp: null,
   currentPage: 1,
   productsPerPage: 20,
 
   setProducts: (products) => set({ products }),
+  setFeaturedProducts: (featuredProducts) => set({ featuredProducts }),
 
   createProduct: async (formData) => {
     try {
@@ -132,14 +135,49 @@ export const useProductStore = create((set, get) => ({
     set({ loading: true });
     try {
       const response = await axiosBaseURL.get("/products/featured");
-      if (response?.data?.products?.length === 0) {
-        set({ error: "No featured products found", loading: false });
-        return;
+      console.log("Full API response:", response); // Add this to see the actual response structure
+
+      // Check if data exists and has the expected structure
+      if (!response.data || !response.data.products) {
+        set({
+          featuredProducts: [],
+          loading: false,
+        });
+        return toast.error("No featured products found");
       }
-      set({ products: response?.data?.products, loading: false });
+
+      set({ featuredProducts: response.data.products, loading: false });
     } catch (error) {
-      set({ error: "Failed to fetch products", loading: false });
-      console.log("Error fetching featured products:", error);
+      console.error("Full error details:", error); // More detailed error logging
+      toast.error("Failed to fetch featured products");
+      set({ error: "Failed to fetch featured products", loading: false });
+    }
+  },
+  fetchRecommendedProducts: async (productId) => {
+    set({ loading: true });
+    try {
+      console.log("/products/recommended/" + productId); // Add this to see the actual response structure
+
+      const response = await axiosBaseURL.get(
+        "/products/recommended/" + productId
+      );
+      console.log("Full API response:", response); // Add this to see the actual response structure
+      // Check if data exists and has the expected structure
+      if (!response.data || !response.data.products) {
+        set({
+          featuredProducts: [],
+          loading: false,
+        });
+        return toast.error("No featured products found");
+      }
+      set({ recommendedProducts: response.data.products, loading: false });
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      toast.error("Failed to load recommendations");
+      set({
+        error: "Failed to fetch recommendations",
+        loading: false,
+      });
     }
   },
 }));

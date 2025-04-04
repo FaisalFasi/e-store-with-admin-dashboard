@@ -21,7 +21,7 @@ router.get("/", getAllProducts);
 router.post("/", protectRoute, adminRoute, upload.any(), createProduct);
 router.get("/getHomeProducts", getHomepageProducts);
 router.get("/featured", getFeaturedProducts);
-router.get("/recommendations", getRecommendedProducts);
+router.get("/recommended/:productId", getRecommendedProducts);
 router.get("/category/:category", getProductByCategory);
 router.get("/:id", getProductById);
 router.patch(

@@ -9,6 +9,8 @@ export const useSingleProduct = () => {
   const { productId } = useParams();
   const {
     fetchProductById,
+    fetchRecommendedProducts,
+    recommendedProducts,
     products: product,
     loading: isLoading,
   } = useProductStore();
@@ -149,40 +151,6 @@ export const useSingleProduct = () => {
       quantity: selectedQuantity,
     });
   };
-  useEffect(() => {
-    fetchProductById(productId);
-  }, [productId, fetchProductById]);
-
-  // Updated default values function
-  // const setDefaultProductValues = () => {
-  //   if (!product?.variations?.length) return;
-
-  //   // Find first color with available stock
-  //   const initialColorObjWithStock = product.variations
-  //     .flatMap((v) => v.colors)
-  //     .find((c) => c.sizes?.some((s) => s.quantity > 0));
-
-  //   console.log("initialColorObj", initialColorObj);
-
-  //   const initialColorObj =
-  //     initialColorObjWithStock || product.variations[0].colors[0];
-
-  //   if (initialColorObj) {
-  //     const initialColor = initialColorObj.name;
-
-  //     // Find first size with available stock for this color
-  //     const initialSize = initialColorObj.sizes.find(
-  //       (s) => s.quantity > 0
-  //     )?.value;
-
-  //     const initialImage = initialColorObj.imageUrls[0];
-  //     console.log("initialImage", initialImage);
-  //     setSelectedColor(initialColor);
-  //     setSelectedSize(initialSize || "");
-  //     setSelectedImage(initialImage || "");
-  //     setSelectedQuantity(1);
-  //   }
-  // };
 
   const setDefaultProductValues = () => {
     if (!product?.variations?.length) return;
@@ -218,6 +186,10 @@ export const useSingleProduct = () => {
       setSelectedQuantity(1);
     }
   };
+  useEffect(() => {
+    fetchProductById(productId);
+    fetchRecommendedProducts(productId);
+  }, [productId]);
 
   useEffect(() => {
     if (product?.variations?.length > 0) {
@@ -227,6 +199,7 @@ export const useSingleProduct = () => {
 
   return {
     product,
+    recommendedProducts,
     isLoading,
     selectedImage,
     selectedColor,

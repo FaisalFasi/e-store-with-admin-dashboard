@@ -5,12 +5,14 @@ import ZoomImage from "@/components/shared/ZoomImage/ZoomImage";
 import { useSingleProduct } from "../../hooks/useSingleProduct";
 import ReviewCommentSection from "../../components/reviews/ReviewCommentSection/ReviewCommentSection";
 import { getUserData } from "../../utils/getUserData.js";
+import FeaturedProducts from "@/components/products/FeaturedProducts/FeaturedProducts";
 
 const SingleProductPage = () => {
   const { user } = getUserData();
 
   const {
     product,
+    recommendedProducts,
     isLoading,
     selectedImage,
     selectedColor,
@@ -28,6 +30,7 @@ const SingleProductPage = () => {
     setSelectedImage,
   } = useSingleProduct();
 
+  console.log("recommendedProducts", recommendedProducts);
   if (isLoading) {
     return <div className="text-center text-white">Loading...</div>;
   }
@@ -249,17 +252,10 @@ const SingleProductPage = () => {
         <div className="mt-12">
           <h3 className="text-2xl text-emerald-400 mb-4">Related Products</h3>
           <div className="flex gap-4">
-            {/* Related Products Placeholder */}
-            <div className="w-1/4 bg-gray-800 p-4 rounded-lg">
-              <img
-                src="https://placehold.co/300x400"
-                alt="Related Product"
-                className="w-full h-[200px] object-cover mb-4 rounded-lg"
-              />
-              <h4 className="text-gray-300">Product Name</h4>
-              <p className="text-gray-400">$XX.XX</p>
-            </div>
-            {/* Add more related products */}
+            {/* Related Recommended Products Placeholder */}
+            {/* {!isLoading && featuredProducts.length > 0 && (
+              <FeaturedProducts featuredProducts={featuredProducts} />
+            )} */}
           </div>
         </div>
 

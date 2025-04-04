@@ -14,6 +14,7 @@ import {
   processVariations,
 } from "../helpers/productHelpers/createProductHelper.js";
 import { handleError } from "../utils/handleError/handleError.js";
+import { __getRecommendedProducts } from "../helpers/productHelpers/recommendationHelper.js";
 
 export const createProduct = async (req, res) => {
   const session = await mongoose.startSession(); // Start a transaction
@@ -181,7 +182,9 @@ export const getHomepageProducts = async (req, res) => {
 // Enhanced getAllProducts
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find()
+    const products = await Product.find({
+      status: "draft",
+    })
       .populate(
         "category.parent category.child category.grandchild",
         "name slug"
@@ -234,16 +237,40 @@ export const getFeaturedProducts = async (req, res) => {
     let featuredProducts = await redis.get(cacheKey);
 
     if (!featuredProducts) {
+      // Initial fetch with full population
       featuredProducts = await Product.find({
         isFeatured: true,
         status: "active",
       })
-        .populate("defaultVariation", "price imageUrls")
+        .populate(
+          "category.parent category.child category.grandchild",
+          "name slug"
+        )
+        .populate({
+          path: "variations",
+          populate: {
+            path: "colors.sizes",
+            model: "ProductVariation",
+          },
+        })
         .lean();
 
-      await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600); // 1 hour cache
+      await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600);
     } else {
+      // Parse cached data
       featuredProducts = JSON.parse(featuredProducts);
+
+      // Re-populate variations using the stored IDs
+      featuredProducts = await Product.populate(featuredProducts, [
+        {
+          path: "variations",
+          model: "ProductVariation", // Double-check model name
+          populate: {
+            path: "colors.sizes",
+            model: "ProductVariation",
+          },
+        },
+      ]);
     }
 
     res.status(200).json({ success: true, products: featuredProducts });
@@ -254,26 +281,14 @@ export const getFeaturedProducts = async (req, res) => {
 
 // Enhanced getRecommendedProducts
 export const getRecommendedProducts = async (req, res) => {
-  try {
-    const recommendedProducts = await Product.aggregate([
-      { $match: { status: "active" } },
-      { $sample: { size: 8 } },
-      {
-        $project: {
-          name: 1,
-          slug: 1,
-          basePrice: 1,
-          defaultVariation: 1,
-          discounts: { $slice: ["$discounts", 1] },
-          images: { $arrayElemAt: ["$variations.colors.imageUrls", 0] },
-        },
-      },
-    ]);
+  __getRecommendedProducts(req, res);
+};
 
-    res.json({ success: true, products: recommendedProducts });
-  } catch (error) {
-    handleError(res, error, "getRecommendedProducts");
-  }
+// Cache invalidation helper (call this when products change)
+export const invalidateCategoryRecommendations = async (categoryId) => {
+  const cacheKey = `recs:cat:${categoryId}`;
+  await redis.del(cacheKey);
+  console.log(`Invalidated recommendations for category ${categoryId}`);
 };
 
 // Enhanced getProductByCategory
@@ -406,6 +421,12 @@ export const deleteProduct = async (req, res) => {
     // Execute all deletions
     await Promise.all(deletePromises);
     await session.commitTransaction();
+
+    await invalidateCategoryRecommendations(
+      product.category.grandchild ||
+        product.category.child ||
+        product.category.parent
+    );
 
     res.json({
       success: true,

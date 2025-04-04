@@ -180,6 +180,9 @@ productSchema.index({ tags: 1 });
 productSchema.index({ "discounts.expiry": 1 });
 productSchema.index({ status: 1 });
 productSchema.index({ "ratings.average": -1 });
+productSchema.index({ "category.parent": 1, status: 1 });
+productSchema.index({ "category.child": 1, status: 1 });
+productSchema.index({ "category.grandchild": 1, status: 1 });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

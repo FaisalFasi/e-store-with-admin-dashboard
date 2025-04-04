@@ -14,7 +14,10 @@ import { useProductStore } from "../../stores/useProductStore.js";
 const HomePage = () => {
   const {
     fetchAllProducts,
+
     products,
+    featuredProducts,
+    fetchFeaturedProducts,
     isLoading,
     currentPage,
     productsPerPage,
@@ -30,6 +33,7 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchAllProducts();
+    fetchFeaturedProducts();
   }, []);
 
   return (
@@ -70,8 +74,8 @@ const HomePage = () => {
           ))} */}
         </div>
 
-        {!isLoading && products.length > 0 && (
-          <FeaturedProducts featuredProducts={products} />
+        {!isLoading && featuredProducts.length > 0 && (
+          <FeaturedProducts featuredProducts={featuredProducts} />
         )}
       </div>
     </div>

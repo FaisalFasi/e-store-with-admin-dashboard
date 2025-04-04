@@ -44,6 +44,7 @@ const FeaturedProducts = ({ featuredProducts }) => {
   const isEndDisabled = currentIndex >= featuredProducts.length - itemsPerPage;
   const showNavigationButtons = featuredProducts.length > itemsPerPage;
 
+  console.log("featuredProducts", featuredProducts);
   return (
     <div className="py-12">
       <div className="container mx-auto px-4">
@@ -60,16 +61,16 @@ const FeaturedProducts = ({ featuredProducts }) => {
                 }%)`,
               }}
             >
-              {featuredProducts.length > 0 &&
+              {featuredProducts?.length > 0 &&
                 featuredProducts?.map((product) => {
-                  console.log("product--", product);
                   const productImageUrl =
-                    product?.variations[0].colors[0].imageUrls[0] ||
-                    "/public/images/imagePlaceholder.jpg";
-                  const productPrice =
-                    product?.variations[0].colors[0].sizes[0].price;
+                    product?.variations?.[0]?.colors?.[0]?.imageUrls?.[0] ||
+                    "/images/imagePlaceholder.jpg";
 
-                  console.log("productPrice--", productPrice);
+                  const productPrice =
+                    product?.variations?.[0]?.colors?.[0]?.sizes?.[0]?.price ||
+                    0;
+
                   return (
                     <div
                       key={product._id}
