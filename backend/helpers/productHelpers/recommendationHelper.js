@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import redis from "../../db/redis.js";
 import Product from "../../models/product.model.js";
 import { handleError } from "../../utils/handleError/handleError.js";
+import { populate } from "dotenv";
 
 export const __getRecommendedProducts = async (req, res) => {
   try {
@@ -120,34 +121,54 @@ async function getProductsFromDatabase(currentProductId, category, categoryId) {
 
   const products = await Product.find(query)
     .limit(10)
-    .select("name slug basePrice variations stockStatus")
+    .populate("category.parent category.child category.grandchild", "name slug")
+    .populate({
+      path: "variations",
+      model: "ProductVariation", // Double-check model name
+      populate: {
+        path: "colors.sizes",
+        model: "ProductVariation",
+      },
+    })
+    // .select("name slug basePrice variations stockStatus")
     .sort({ createdAt: -1 }) // Get newest products first
     .lean();
 
-  return products.map(formatProductData);
+  return products;
+  // return products.map(formatProductData);
 }
 
 async function getRandomProducts(excludeProductId) {
   return await Product.find({
-    status: "active",
+    status: "draft",
     _id: { $ne: new mongoose.Types.ObjectId(excludeProductId) },
   })
-    .limit(10)
-    .select("name  slug  basePrice  variations  stockStatus")
-    .sort({ createdAt: -1 })
-    .lean()
-    .then((products) => products.map(formatProductData));
+    // .limit(10)
+    // .select("name  slug  variations ")
+    // .sort({ createdAt: -1 })
+    .populate("category.parent category.child category.grandchild", "name slug")
+    .populate({
+      path: "variations",
+      model: "ProductVariation", // Double-check model name
+      populate: {
+        path: "colors.sizes",
+        model: "ProductVariation",
+      },
+    })
+    .lean();
+  // .then((products) => products.map(formatProductData));
 }
 // 3. Data Formatting
 function formatProductData(product) {
-  return {
-    _id: product._id,
-    name: product.name,
-    slug: product.slug,
-    price: product.basePrice,
-    inStock: product.stockStatus === "in_stock", // Added stock status
-    imageUrl: getProductImage(product),
-  };
+  return product;
+  // return {
+  //   _id: product._id,
+  //   name: product.name,
+  //   slug: product.slug,
+  //   price: product.basePrice,
+  //   inStock: product.stockStatus === "in_stock", // Added stock status
+  //   imageUrl: getProductImage(product),
+  // };
 }
 
 function getProductImage(product) {

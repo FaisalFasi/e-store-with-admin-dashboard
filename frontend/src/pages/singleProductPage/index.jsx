@@ -6,6 +6,7 @@ import { useSingleProduct } from "../../hooks/useSingleProduct";
 import ReviewCommentSection from "../../components/reviews/ReviewCommentSection/ReviewCommentSection";
 import { getUserData } from "../../utils/getUserData.js";
 import FeaturedProducts from "@/components/products/FeaturedProducts/FeaturedProducts";
+import ProductCarousel from "@/components/products/ProductCarousel/ProductCarousel";
 
 const SingleProductPage = () => {
   const { user } = getUserData();
@@ -253,9 +254,13 @@ const SingleProductPage = () => {
           <h3 className="text-2xl text-emerald-400 mb-4">Related Products</h3>
           <div className="flex gap-4">
             {/* Related Recommended Products Placeholder */}
-            {/* {!isLoading && featuredProducts.length > 0 && (
-              <FeaturedProducts featuredProducts={featuredProducts} />
-            )} */}
+            {recommendedProducts.length > 0 && (
+              <ProductCarousel
+                products={recommendedProducts}
+                title={"Recommended Products"}
+                titleColor="blue"
+              />
+            )}
           </div>
         </div>
 

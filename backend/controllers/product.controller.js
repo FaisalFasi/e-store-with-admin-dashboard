@@ -237,10 +237,9 @@ export const getFeaturedProducts = async (req, res) => {
     let featuredProducts = await redis.get(cacheKey);
 
     if (!featuredProducts) {
-      // Initial fetch with full population
       featuredProducts = await Product.find({
         isFeatured: true,
-        status: "active",
+        status: "draft",
       })
         .populate(
           "category.parent category.child category.grandchild",
@@ -254,11 +253,14 @@ export const getFeaturedProducts = async (req, res) => {
           },
         })
         .lean();
+      console.log("featuredProducts", featuredProducts);
 
       await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600);
     } else {
       // Parse cached data
       featuredProducts = JSON.parse(featuredProducts);
+
+      console.log("featuredProducts-----", featuredProducts);
 
       // Re-populate variations using the stored IDs
       featuredProducts = await Product.populate(featuredProducts, [
