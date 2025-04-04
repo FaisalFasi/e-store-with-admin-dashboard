@@ -247,6 +247,8 @@ export const getFeaturedProducts = async (req, res) => {
         )
         .populate({
           path: "variations",
+          model: "ProductVariation", // Double-check model name
+
           populate: {
             path: "colors.sizes",
             model: "ProductVariation",
@@ -259,20 +261,6 @@ export const getFeaturedProducts = async (req, res) => {
     } else {
       // Parse cached data
       featuredProducts = JSON.parse(featuredProducts);
-
-      console.log("featuredProducts-----", featuredProducts);
-
-      // Re-populate variations using the stored IDs
-      featuredProducts = await Product.populate(featuredProducts, [
-        {
-          path: "variations",
-          model: "ProductVariation", // Double-check model name
-          populate: {
-            path: "colors.sizes",
-            model: "ProductVariation",
-          },
-        },
-      ]);
     }
 
     res.status(200).json({ success: true, products: featuredProducts });

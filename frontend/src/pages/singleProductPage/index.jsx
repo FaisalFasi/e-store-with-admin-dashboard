@@ -31,7 +31,6 @@ const SingleProductPage = () => {
     setSelectedImage,
   } = useSingleProduct();
 
-  console.log("recommendedProducts", recommendedProducts);
   if (isLoading) {
     return <div className="text-center text-white">Loading...</div>;
   }
@@ -251,8 +250,8 @@ const SingleProductPage = () => {
 
         {/* Related Products */}
         <div className="mt-12">
-          <h3 className="text-2xl text-emerald-400 mb-4">Related Products</h3>
-          <div className="flex gap-4">
+          {/* <div className="flex gap-4"> */}
+          <div className="relative z-10 max-w-7xl mx-auto  py-8 ">
             {/* Related Recommended Products Placeholder */}
             {recommendedProducts.length > 0 && (
               <ProductCarousel

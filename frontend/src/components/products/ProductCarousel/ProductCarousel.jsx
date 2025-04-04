@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
+import { Link } from "react-router-dom";
 
 // products = [],
 //   title = "Products",
@@ -13,7 +14,7 @@ const ProductCarousel = ({
   title = "Products",
   titleColor = "emerald", // featured: emerald, recommended : blue,New arrival: purple,Sale items: red,recently viewed: amber
   itemLinkPath = "/products",
-  showAddToCart = false,
+  showAddToCart = true,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(4);
@@ -74,7 +75,7 @@ const ProductCarousel = ({
     <div className="py-12">
       <div className="container mx-auto px-4">
         <h2
-          className={`text-center text-5xl sm:text-6xl font-bold text-${titleColor}-400 mb-4`}
+          className={`text-center text-4xl md:text-6xl font-bold text-${titleColor}-400 mb-4`}
         >
           {title}
         </h2>
@@ -122,13 +123,15 @@ const ProductCarousel = ({
                             </p>
                           </div>
                           {showAddToCart && (
-                            <button
-                              onClick={() => addToCart(product)}
-                              className={`w-full bg-${titleColor}-600 hover:bg-${titleColor}-500 text-white font-semibold py-2 px-4 rounded transition-colors duration-300 flex items-center justify-center`}
+                            <Link
+                              to={`${itemLinkPath}/${
+                                product._id || product.id
+                              }`}
+                              className={`w-full bg-${titleColor}-600 hover:bg-${titleColor}-500 text-white bg-emerald-700 hover:bg-emerald-600 font-semibold py-2 px-4 rounded transition-colors duration-300 flex items-center justify-center`}
                             >
                               <ShoppingCart className="w-5 h-5 mr-2" />
-                              Add to Cart
-                            </button>
+                              Goto Cart
+                            </Link>
                           )}
                         </div>
                       </div>
@@ -150,7 +153,7 @@ const ProductCarousel = ({
                 className={`absolute top-1/2 -left-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
                   isStartDisabled
                     ? "bg-gray-400 cursor-not-allowed"
-                    : `bg-${titleColor}-600 hover:bg-${titleColor}-500`
+                    : "bg-emerald-600 hover:bg-emerald-500"
                 }`}
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -162,7 +165,7 @@ const ProductCarousel = ({
                 className={`absolute top-1/2 -right-4 transform -translate-y-1/2 p-2 rounded-full transition-colors duration-300 ${
                   isEndDisabled
                     ? "bg-gray-400 cursor-not-allowed"
-                    : `bg-${titleColor}-600 hover:bg-${titleColor}-500`
+                    : "bg-emerald-600 hover:bg-emerald-500"
                 }`}
               >
                 <ChevronRight className="w-6 h-6" />

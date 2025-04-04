@@ -10,6 +10,7 @@ import { useUserStore } from "../../stores/useUserStore";
 import { useProductStoreData } from "../../hooks/useProductStoreData.js";
 import ProductCard from "../../components/products/ProductCard/ProductCard.jsx";
 import { useProductStore } from "../../stores/useProductStore.js";
+import ProductCarousel from "@/components/products/ProductCarousel/ProductCarousel";
 
 const HomePage = () => {
   const {
@@ -73,10 +74,16 @@ const HomePage = () => {
             <CategoryItem category={category} key={category.name} />
           ))} */}
         </div>
-
         {!isLoading && featuredProducts.length > 0 && (
-          <FeaturedProducts featuredProducts={featuredProducts} />
+          <ProductCarousel
+            products={featuredProducts}
+            title={"Featured Products"}
+            titleColor="emerald"
+          />
         )}
+        {/* {!isLoading && featuredProducts.length > 0 && (
+          <FeaturedProducts featuredProducts={featuredProducts} />
+        )} */}
       </div>
     </div>
   );
