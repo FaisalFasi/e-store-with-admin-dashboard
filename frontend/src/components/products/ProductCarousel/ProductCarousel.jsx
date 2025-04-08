@@ -130,7 +130,7 @@ const ProductCarousel = ({
                               className={`w-full bg-${titleColor}-600 hover:bg-${titleColor}-500 text-white bg-emerald-700 hover:bg-emerald-600 font-semibold py-2 px-4 rounded transition-colors duration-300 flex items-center justify-center`}
                             >
                               <ShoppingCart className="w-5 h-5 mr-2" />
-                              Goto Cart
+                              Goto add Cart
                             </Link>
                           )}
                         </div>

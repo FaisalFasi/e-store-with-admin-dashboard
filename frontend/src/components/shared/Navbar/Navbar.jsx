@@ -25,7 +25,7 @@ const Navbar = () => {
             to="/"
             className="text-xl md:text-2xl font-bold text-emerald-400 items-center space-x-2 flex"
           >
-            E-Commerce
+            E-Store
           </Link>
 
           {openSubscribePopup && (
