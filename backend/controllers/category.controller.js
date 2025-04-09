@@ -236,6 +236,9 @@ export const setDefaultCategories = async () => {
   try {
     // Check the settings to see if default categories are already set
     let settings = await Settings.findOne();
+    // uncomment once to reset settings
+    settings = new Settings({ isDefaultCategoriesSet: false });
+
     if (settings?.isDefaultCategoriesSet) {
       console.log("Default categories are already set.");
       return;
