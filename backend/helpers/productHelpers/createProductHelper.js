@@ -43,38 +43,69 @@ export const processSizes = async (sizes, vIndex) => {
   );
 };
 
+// export const createProductVariations = async (
+//   productId,
+//   variations,
+//   session
+// ) => {
+//   const variationIds = [];
+//   let defaultVariationId = null;
+
+//   for (const [index, variationData] of variations.entries()) {
+//     const variation = new ProductVariation({
+//       productId,
+//       colors: [
+//         {
+//           color: variationData.color.color,
+//           name: variationData.color.name,
+//           imageUrls: variationData.color.imageUrls,
+//           sizes: variationData.color.sizes,
+//           isDefault: index === 0,
+//         },
+//       ],
+//       metadata: variationData.metadata || {},
+//     });
+
+//     await variation.save({ session });
+//     variationIds.push(variation._id);
+
+//     if (index === 0) {
+//       defaultVariationId = variation._id;
+//     }
+//   }
+
+//   return { variationIds, defaultVariationId };
+// };
+
+// Updated createProductVariations helper
 export const createProductVariations = async (
   productId,
   variations,
+  currency,
   session
 ) => {
-  const variationIds = [];
-  let defaultVariationId = null;
-
-  for (const [index, variationData] of variations.entries()) {
-    const variation = new ProductVariation({
+  const variationDocs = await ProductVariation.insertMany(
+    variations.map((variation) => ({
       productId,
-      colors: [
-        {
-          color: variationData.color.color,
-          name: variationData.color.name,
-          imageUrls: variationData.color.imageUrls,
-          sizes: variationData.color.sizes,
-          isDefault: index === 0,
-        },
-      ],
-      metadata: variationData.metadata || {},
-    });
+      colors: variation.colors.map((color) => ({
+        ...color,
+        sizes: color.sizes.map((size) => ({
+          ...size,
+          price: {
+            amount: Math.round(size.price * 100), // Convert to cents
+            currency: currency, // Use product's currency
+          },
+        })),
+      })),
+      status: "active",
+    })),
+    { session }
+  );
 
-    await variation.save({ session });
-    variationIds.push(variation._id);
-
-    if (index === 0) {
-      defaultVariationId = variation._id;
-    }
-  }
-
-  return { variationIds, defaultVariationId };
+  return {
+    variationIds: variationDocs.map((doc) => doc._id),
+    defaultVariationId: variationDocs[0]._id, // Or your logic to determine default
+  };
 };
 
 export const generateSlug = (name) => {

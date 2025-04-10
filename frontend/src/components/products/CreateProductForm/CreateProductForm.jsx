@@ -7,11 +7,11 @@ import { useProductStore } from "../../../stores/useProductStore";
 import { ProductVariations } from "../ProductVariations/ProductVariations";
 import { ProductFormFields } from "../ProductFormFields/ProductFormFields";
 import Button from "../../shared/Button/Button";
+import { min } from "lodash";
 
 const CreateProductForm = () => {
   const { createProduct, loading } = useProductStore();
   const {
-    categories,
     newProduct,
     setNewProduct,
     fileInputRef,
@@ -19,23 +19,147 @@ const CreateProductForm = () => {
     handleCategoryChange,
     handleChildCategoryChange,
     handleGrandChildCategoryChange,
+    handleGreatGrandChildCategoryChange,
     handleInputChange,
     handleVariationChange,
     addVariation,
     removeVariation,
     removeImage,
-    initailProductState,
+    categories,
     handleSizeChange,
     addSizeToColor,
     removeSizeFromColor,
     handleSizeImageChange,
     removeSizeImage,
   } = useProductForm();
+  console.log("categoryData", categoryData);
+  // const inputFields = [
+  //   {
+  //     name: "name",
+  //     label: "Product Name", // Add asterisk for required field
+  //     type: "text",
+  //     value: newProduct?.name,
+  //     placeholder: "Enter product name",
+  //     required: true,
+  //   },
+  //   {
+  //     name: "description",
+  //     label: "Description", // Add asterisk for required field
+  //     type: "textarea",
+  //     value: newProduct?.description,
+  //     placeholder: "Enter product description",
+  //     rows: 3,
+  //     required: false,
+  //   },
+  //   {
+  //     name: "basePrice",
+  //     label: "Base Price",
+  //     type: "number",
+  //     value: newProduct?.basePrice,
+  //     placeholder: "Enter base price",
+  //     required: true,
+  //   },
+  //   {
+  //     name: "stock",
+  //     label: "Initial Stock",
+  //     type: "number",
+  //     value: newProduct?.stock,
+  //     placeholder: "Enter initial stock",
+  //     required: true,
+  //   },
+  //   {
+  //     name: "tags",
+  //     label: "Tags (comma separated)",
+  //     type: "text",
+  //     value: newProduct?.tags?.join(", ") || "", // Keep it as a string
+  //     placeholder: "Product tags i.e. tag1, tag2, tag3",
+  //     required: false,
+  //     onChange: (e) => {
+  //       handleInputChange("tags", e.target.value); // Store as raw string while typing
+  //     },
+  //   },
+
+  //   {
+  //     name: "category",
+  //     label: "Category", // Add asterisk for required field
+  //     type: "select",
+  //     value: newProduct?.category,
+  //     options: categories.map((category) => ({
+  //       value: category._id,
+  //       label: category.name,
+  //     })),
+  //     onChange: handleCategoryChange,
+  //     placeholder: "Select product category",
+  //     required: true,
+  //   },
+  //   ...(categoryData.subCategories.length > 0
+  //     ? [
+  //         {
+  //           name: "subCategory",
+  //           label: "Sub-category", // No asterisk if not required
+  //           type: "select",
+  //           value: newProduct?.subCategory,
+  //           options: categoryData.subCategories.map((subCategory) => ({
+  //             value: subCategory._id,
+  //             label: subCategory.name,
+  //           })),
+  //           onChange: handleChildCategoryChange,
+  //           required: true, // Explicitly mark as not required
+  //         },
+  //       ]
+  //     : []),
+  //   ...(categoryData.grandChildCategories.length > 0
+  //     ? [
+  //         {
+  //           name: "grandChildCategory",
+  //           label: "Grand Sub-category", // No asterisk if not required
+  //           type: "select",
+  //           value: newProduct?.grandChildCategory,
+  //           options: categoryData.grandChildCategories.map(
+  //             (grandChildCategory) => ({
+  //               value: grandChildCategory._id,
+  //               label: grandChildCategory.name,
+  //             })
+  //           ),
+  //           onChange: handleGrandChildCategoryChange,
+  //           required: true, // Explicitly mark as not required
+  //         },
+  //       ]
+  //     : []),
+  //   {
+  //     name: "isFeatured",
+  //     label: "Featured", // Add asterisk for required field
+  //     type: "select",
+  //     value: newProduct?.isFeatured,
+  //     options: [
+  //       { value: true, label: "Yes" },
+  //       { value: false, label: "No" },
+  //     ],
+
+  //     onChange: (e) => handleInputChange("isFeatured", e.target.value),
+  //     placeholder: "Select product featured status",
+  //     required: true,
+  //   },
+  //   {
+  //     name: "status",
+  //     label: "Status", // Add asterisk for required field
+  //     type: "select",
+  //     value: newProduct?.status,
+  //     options: [
+  //       { value: "draft", label: "Draft" },
+  //       { value: "active", label: "Active" },
+  //       { value: "inactive", label: "Inactive" },
+  //     ],
+  //     onChange: (e) => handleInputChange("status", e.target.value),
+  //     placeholder: "Select product status",
+  //     required: true,
+  //   },
+  // ];
 
   const inputFields = [
     {
       name: "name",
-      label: "Product Name", // Add asterisk for required field
+      label: "Product Name",
       type: "text",
       value: newProduct?.name,
       placeholder: "Enter product name",
@@ -43,7 +167,7 @@ const CreateProductForm = () => {
     },
     {
       name: "description",
-      label: "Description", // Add asterisk for required field
+      label: "Description",
       type: "textarea",
       value: newProduct?.description,
       placeholder: "Enter product description",
@@ -51,12 +175,13 @@ const CreateProductForm = () => {
       required: false,
     },
     {
-      name: "basePrice",
+      name: "pricing.basePrice",
       label: "Base Price",
       type: "number",
-      value: newProduct?.basePrice,
+      value: newProduct?.pricing?.basePrice,
       placeholder: "Enter base price",
       required: true,
+      onChange: (e) => handleInputChange("pricing.basePrice", e.target.value),
     },
     {
       name: "stock",
@@ -65,24 +190,24 @@ const CreateProductForm = () => {
       value: newProduct?.stock,
       placeholder: "Enter initial stock",
       required: true,
+      min: 0,
     },
     {
       name: "tags",
       label: "Tags (comma separated)",
       type: "text",
-      value: newProduct?.tags?.join(", ") || "", // Keep it as a string
+      value: newProduct?.tags?.join(", ") || "",
       placeholder: "Product tags i.e. tag1, tag2, tag3",
       required: false,
       onChange: (e) => {
-        handleInputChange("tags", e.target.value); // Store as raw string while typing
+        handleInputChange("tags", e.target.value);
       },
     },
-
     {
-      name: "category",
-      label: "Category", // Add asterisk for required field
+      name: "category.l1",
+      label: "Category",
       type: "select",
-      value: newProduct?.category,
+      value: newProduct?.category?.l1,
       options: categories.map((category) => ({
         value: category._id,
         label: category.name,
@@ -91,57 +216,70 @@ const CreateProductForm = () => {
       placeholder: "Select product category",
       required: true,
     },
-    ...(categoryData.subCategories.length > 0
+    ...(categoryData.l2?.length > 0
       ? [
           {
-            name: "subCategory",
-            label: "Sub-category", // No asterisk if not required
+            name: "category.l2",
+            label: "Sub-category",
             type: "select",
-            value: newProduct?.subCategory,
-            options: categoryData.subCategories.map((subCategory) => ({
+            value: newProduct?.category?.l2,
+            options: categoryData.l2.map((subCategory) => ({
               value: subCategory._id,
               label: subCategory.name,
             })),
             onChange: handleChildCategoryChange,
-            required: true, // Explicitly mark as not required
+            required: false,
           },
         ]
       : []),
-    ...(categoryData.grandChildCategories.length > 0
+    ...(categoryData.l3?.length > 0
       ? [
           {
-            name: "grandChildCategory",
-            label: "Grand Sub-category", // No asterisk if not required
+            name: "category.l3",
+            label: "Grand Sub-category",
             type: "select",
-            value: newProduct?.grandChildCategory,
-            options: categoryData.grandChildCategories.map(
-              (grandChildCategory) => ({
-                value: grandChildCategory._id,
-                label: grandChildCategory.name,
-              })
-            ),
+            value: newProduct?.category?.l3,
+            options: categoryData.l3.map((grandChildCategory) => ({
+              value: grandChildCategory._id,
+              label: grandChildCategory.name,
+            })),
             onChange: handleGrandChildCategoryChange,
-            required: true, // Explicitly mark as not required
+            required: false,
+          },
+        ]
+      : []),
+    ...(categoryData.l4?.length > 0
+      ? [
+          {
+            name: "category.l4",
+            label: "Great Grand Sub-category",
+            type: "select",
+            value: newProduct?.category?.l4,
+            options: categoryData.l4.map((greatGrandChildCategory) => ({
+              value: greatGrandChildCategory._id,
+              label: greatGrandChildCategory.name,
+            })),
+            onChange: handleGreatGrandChildCategoryChange,
+            required: false,
           },
         ]
       : []),
     {
       name: "isFeatured",
-      label: "Featured", // Add asterisk for required field
+      label: "Featured",
       type: "select",
       value: newProduct?.isFeatured,
       options: [
         { value: true, label: "Yes" },
         { value: false, label: "No" },
       ],
-
       onChange: (e) => handleInputChange("isFeatured", e.target.value),
       placeholder: "Select product featured status",
       required: true,
     },
     {
       name: "status",
-      label: "Status", // Add asterisk for required field
+      label: "Status",
       type: "select",
       value: newProduct?.status,
       options: [

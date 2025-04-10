@@ -1,7 +1,8 @@
 import InputField from "../../shared/InputField/InputField";
 
-// components/ProductVariations.js
 export const ProductVariations = (props) => {
+  const { currency = "USD" } = props;
+
   return (
     <div className="space-y-6">
       {props?.variations?.map((variation, vIndex) => (
@@ -35,16 +36,8 @@ export const ProductVariations = (props) => {
                 props.handleVariationChange(vIndex, "color", e.target.value)
               }
             />
-
-            {/* <input
-              value={variation.colorName}
-              onChange={(e) =>
-                props.handleVariationChange(vIndex, "colorName", e.target.value)
-              }
-              placeholder="Color name i.e. Red, Blue, etc."
-              className="w-full p-2 mb-4 border rounded text-black"
-            /> */}
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Color Name <span className="text-red-500 ">*</span>
@@ -123,20 +116,22 @@ export const ProductVariations = (props) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Price
+                    Price ({currency})
                   </label>
                   <input
                     type="number"
-                    value={size.price || ""}
-                    onChange={(e) =>
-                      props.handleSizeChange(
-                        vIndex,
-                        sIndex,
-                        "price",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Price in USD"
+                    value={size.price?.amount || ""}
+                    onChange={(e) => {
+                      const amount = parseFloat(e.target.value) || 0;
+
+                      props.handleSizeChange(vIndex, sIndex, "price", {
+                        amount: amount,
+                        currency: currency,
+                      });
+                    }}
+                    min={0}
+                    step={1}
+                    placeholder={`Price in ${currency}`}
                     className="w-full p-2 mb-2 border rounded"
                   />
                 </div>
@@ -152,13 +147,38 @@ export const ProductVariations = (props) => {
                         vIndex,
                         sIndex,
                         "quantity",
-                        e.target.value
+                        parseInt(e.target.value) || 0
                       )
                     }
+                    min={0}
+                    max={10000}
+                    step={1}
                     placeholder="Quantity i.e. 10, 20, 30"
                     className="w-full p-2 mb-2 border rounded"
                   />
                 </div>
+
+                {/* Size Images */}
+                {/* <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Size Images
+                  </label>
+                  <InputField
+                    type="file"
+                    multiple
+                    onChange={(e) =>
+                      props.handleSizeImageChange(
+                        vIndex,
+                        sIndex,
+                        e.target.files
+                      )
+                    }
+                    selectedImages={size.images}
+                    handleImageRemove={(imgIndex) =>
+                      props.removeSizeImage(vIndex, sIndex, imgIndex)
+                    }
+                  />
+                </div> */}
               </div>
             ))}
             <button

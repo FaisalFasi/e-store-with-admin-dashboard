@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const sizeSchema = new mongoose.Schema({
-  value: {
+  size: {
     type: String,
     required: true,
     trim: true,
@@ -14,11 +14,21 @@ const sizeSchema = new mongoose.Schema({
     index: true, // ➡️ Faster stock-level queries
   },
   price: {
-    type: Number,
-    required: true,
-    min: 0,
-    set: (v) => Math.round(v * 100), // ➡️ Store in cents/paisa to avoid floating-point errors
+    amount: {
+      type: Number,
+      required: true,
+      min: 0,
+      set: (v) => Math.round(v * 100), // Store in cents/paisa
+    },
+
+    currency: {
+      type: String,
+      required: true,
+      enum: ["USD", "EUR", "GBP", "PKR"], // Match your product currency options
+      default: "USD",
+    },
   },
+
   sku: {
     type: String,
     required: true,
@@ -50,7 +60,7 @@ const colorSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  name: {
+  colorName: {
     type: String,
     required: true,
     trim: true,

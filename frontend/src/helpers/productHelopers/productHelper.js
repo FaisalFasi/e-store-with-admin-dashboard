@@ -27,27 +27,26 @@ export const variationFields = [
     required: true,
   },
 ];
-export const initializeVariation = {
-  size: "",
-  color: "",
-  quantity: 1,
-  price: "",
-  images: [],
-};
 
 export const initialProductState = {
   name: "",
   description: "",
-  category: {
-    parent: "",
-    child: null,
-    grandchild: null,
+  brand: "",
+  pricing: {
+    basePrice: 0,
+    currency: "USD",
   },
-  basePrice: 0,
+  category: {
+    l1: "",
+    l2: "",
+    l3: "",
+    l4: "",
+  },
   stock: 0,
   tags: [],
   status: "draft",
   isFeatured: false,
+  images: [],
   variations: [
     {
       color: "",
@@ -55,11 +54,13 @@ export const initialProductState = {
       colorImages: [],
       sizes: [
         {
-          value: "",
-          price: 0,
+          size: "",
+          price: { amount: 0, currency: "USD" },
           quantity: 0,
         },
       ],
     },
   ],
+  metaTitle: "",
+  metaDescription: "",
 };
