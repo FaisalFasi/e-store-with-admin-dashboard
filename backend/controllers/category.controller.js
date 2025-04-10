@@ -7,9 +7,10 @@ import {
 } from "../helpers/validationHelper/categoryValidationHelper.js";
 import cloudinary from "../lib/cloudinary.js";
 import fs from "fs/promises";
-import { insertCategoryWithSubcategories } from "../helpers/defaultCategoriesHelper/defaultCategoriesHelper.js";
+import { __setDefaultCategories } from "../helpers/defaultCategoriesHelper/defaultCategoriesHelper.js";
 import { defaultCategories } from "../helpers/defaultCategoriesHelper/categoriesList.js";
 import Settings from "../models/settings.model.js";
+import { handleError } from "../utils/handleError/handleError.js";
 
 export const createCategory = async (req, res) => {
   const {
@@ -232,61 +233,11 @@ export const deleteCategoryTable = async (req, res) => {
 // deleteCategoryTable();
 
 // Function to initialize and insert the default categories
-export const setDefaultCategories = async () => {
+export const setDefaultCategories = async (req, res) => {
   try {
-    // Check the settings to see if default categories are already set
-    let settings = await Settings.findOne();
-    // uncomment once to reset settings
-    settings = new Settings({ isDefaultCategoriesSet: false });
-
-    if (settings?.isDefaultCategoriesSet) {
-      console.log("Default categories are already set.");
-      return;
-    }
-
-    // Fetch all existing categories from the database
-    const existingCategories = await Category.find({});
-
-    for (const defaultCategory of defaultCategories) {
-      // Check if the category already exists by name
-      const existingCategory = existingCategories.find(
-        (category) => category.name === defaultCategory.name
-      );
-
-      if (existingCategory) {
-        // Update the category if its fields differ from the default category
-        const isDifferent = Object.keys(defaultCategory).some(
-          (key) =>
-            JSON.stringify(existingCategory[key]) !==
-            JSON.stringify(defaultCategory[key])
-        );
-
-        if (isDifferent) {
-          await Category.updateOne(
-            { _id: existingCategory._id }, // Use the category ID to update
-            { $set: defaultCategory }
-          );
-          console.log(`Updated category: ${defaultCategory.name}`);
-        }
-      } else {
-        // Insert the new category if it doesn't exist
-        await insertCategoryWithSubcategories(defaultCategory);
-        console.log(`Inserted new category: ${defaultCategory.name}`);
-      }
-    }
-
-    // Set the flag in the settings collection to indicate default categories are initialized
-    if (!settings) {
-      settings = new Settings({ isDefaultCategoriesSet: true });
-    } else {
-      settings.isDefaultCategoriesSet = true;
-    }
-    await settings.save();
-
-    console.log("Default categories set successfully.");
+    __setDefaultCategories();
   } catch (error) {
-    // Improved error handling
-    console.error("Error setting default categories:", error.message);
-    throw new Error(error.message);
+    console.error("Error setting default categories", error.message);
+    handleError(res, error, "Categories creation error", 500);
   }
 };

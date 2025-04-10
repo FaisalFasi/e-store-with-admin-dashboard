@@ -1,49 +1,165 @@
 import Category from "../../models/category.model.js";
+import Settings from "../../models/settings.model.js";
+import { defaultCategories } from "./categoriesList.js";
 
-// Recursive function to insert categories and subcategories
-export const insertCategoryWithSubcategories = async (category) => {
-  try {
-    const existingCategory = await Category.findOne({
-      $or: [{ slug: category.slug }, { name: category.name }],
-    });
+const buildFlatCategoryList = (categories, parentId = null, depth = 0) => {
+  let flatList = [];
 
-    if (existingCategory) {
-      console.log(
-        `Category "${category.name}" already exists, skipping insertion.`
+  categories.forEach((category) => {
+    const categoryNode = {
+      ...category,
+      parentCategory: parentId,
+      depth: depth,
+      // Remove subCategories as we'll handle relationships via parentCategory
+    };
+
+    flatList.push(categoryNode);
+
+    if (category.subCategories?.length > 0) {
+      flatList = flatList.concat(
+        buildFlatCategoryList(category.subCategories, category.slug, depth + 1)
       );
+    }
+  });
+
+  return flatList;
+};
+
+export const __setDefaultCategories = async () => {
+  try {
+    const settings = await Settings.findOne();
+    await Settings.updateOne(
+      {},
+      { $set: { isDefaultCategoriesSet: false } },
+      { upsert: true }
+    );
+    if (settings?.isDefaultCategoriesSet) {
+      console.log("Categories already initialized");
       return;
     }
 
-    // Create the category document
-    const newCategory = new Category({
-      name: category.name,
-      slug: category.slug,
-      parentCategory: category.parentCategory
-        ? category.parentCategory._id
-        : null,
-      status: category.status,
-      sortOrder: category.sortOrder,
-      metaTitle: category.metaTitle,
-      metaDescription: category.metaDescription,
-      image: category.image,
+    // Build a flat list of all categories with parent references
+    const allCategoriesFlat = buildFlatCategoryList(defaultCategories);
+
+    // Create a slug-to-ID mapping object for parent references
+    const slugToIdMap = {};
+
+    // First pass: insert all categories without parent references
+    const bulkOps = allCategoriesFlat.map((cat) => ({
+      updateOne: {
+        filter: { slug: cat.slug },
+        update: {
+          $setOnInsert: {
+            name: cat.name,
+            slug: cat.slug,
+            icon: cat.icon,
+            // other fields...
+            depth: cat.depth,
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    // Execute bulk operation
+    await Category.bulkWrite(bulkOps);
+
+    // Second pass: get all IDs and build the slug-to-ID map
+    const allCategoriesInDB = await Category.find({});
+    allCategoriesInDB.forEach((cat) => {
+      slugToIdMap[cat.slug] = cat._id;
     });
 
-    // Save the parent category
-    const savedCategory = await newCategory.save();
+    // Third pass: update parent references
+    const parentUpdateOps = allCategoriesFlat
+      .filter((cat) => cat.parentCategory)
+      .map((cat) => ({
+        updateOne: {
+          filter: { _id: slugToIdMap[cat.slug] },
+          update: {
+            $set: { parentCategory: slugToIdMap[cat.parentCategory] },
+          },
+        },
+      }));
 
-    // Recursively insert subcategories if any
-    if (category.subCategories && category.subCategories.length > 0) {
-      const subCategoryPromises = category.subCategories.map((subCategory) => {
-        subCategory.parentCategory = savedCategory; // Set parent category for subcategory
-        return insertCategoryWithSubcategories(subCategory, savedCategory); // Recursively insert subcategories
-      });
-      await Promise.all(subCategoryPromises); // Insert subcategories in parallel
+    if (parentUpdateOps.length > 0) {
+      await Category.bulkWrite(parentUpdateOps);
     }
 
+    // Mark as complete
+    await Settings.updateOne(
+      {},
+      { $set: { isDefaultCategoriesSet: true } },
+      { upsert: true }
+    );
+
     console.log(
-      `Category "${savedCategory.name}" and its subcategories (if any) inserted successfully!`
+      `Successfully initialized ${allCategoriesFlat.length} categories`
     );
   } catch (error) {
-    console.error("Error inserting category:", error);
+    console.error("Initialization failed:", error);
   }
 };
+
+// import Category from "../../models/category.model.js";
+// import Settings from "../../models/settings.model.js";
+// import { defaultCategories } from "./categoriesList.js";
+
+// const upsertCategoryTree = async (categoryData, parentId = null) => {
+//   // 1. Check if category exists
+//   let categoryDoc = await Category.findOne({ slug: categoryData.slug });
+
+//   // 2. If doesn't exist, create it
+//   if (!categoryDoc) {
+//     categoryDoc = await Category.create({
+//       ...categoryData,
+//       parentCategory: parentId,
+//       depth: parentId ? (await Category.findById(parentId)).depth + 1 : 0,
+//     });
+//     console.log(`Created category: ${categoryData.slug}`);
+//   } else {
+//     console.log(`Skipped existing category: ${categoryData.slug}`);
+//   }
+
+//   // 3. Process subcategories
+//   if (categoryData.subCategories?.length > 0) {
+//     await Promise.all(
+//       categoryData.subCategories.map((subCategory) =>
+//         upsertCategoryTree(subCategory, categoryDoc._id)
+//       )
+//     );
+//   }
+
+//   return categoryDoc;
+// };
+
+// // Initialize categories (optimized)
+// export const __setDefaultCategories = async () => {
+//   try {
+//     await Settings.updateOne(
+//       {},
+//       { $set: { isDefaultCategoriesSet: false } },
+//       { upsert: true }
+//     );
+
+//     const settings = await Settings.findOne();
+//     if (settings.isDefaultCategoriesSet) {
+//       console.log("Categories already initialized");
+//       return;
+//     }
+
+//     // Clear existing categories (optional)
+//     await Category.deleteMany({});
+
+//     // Insert the complete tree
+//     await Promise.all(
+//       defaultCategories.map((category) => upsertCategoryTree(category))
+//     );
+
+//     // Mark as complete
+//     await Settings.updateOne({}, { $set: { isDefaultCategoriesSet: true } });
+//     console.log("All categories and subcategories initialized successfully");
+//   } catch (error) {
+//     console.error("Initialization failed:", error);
+//   }
+// };

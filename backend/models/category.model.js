@@ -7,7 +7,7 @@ const categorySchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
+      // unique: true,
     },
     slug: {
       type: String,
@@ -27,19 +27,12 @@ const categorySchema = new mongoose.Schema(
     image: {
       type: String,
       default: "",
-      validate: {
-        validator: (v) =>
-          v === "" || /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(v),
-        message: "Invalid image URL format",
-      },
+      // validate: {
+      //   validator: (v) =>
+      //     v === "" || /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(v),
+      //   message: "Invalid image URL format",
+      // },
     },
-
-    //   When to use: Only provide this if your category is a child of a category. If it's a top-level category, leave it out or set it to null (which is the default).
-    // parentCategory: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Category",
-    //   default: null, // for top-level categories
-    // },
 
     parentCategory: {
       type: mongoose.Schema.Types.ObjectId,
@@ -73,7 +66,6 @@ const categorySchema = new mongoose.Schema(
 // Indexes
 categorySchema.index({ parentCategory: 1 });
 categorySchema.index({ slug: 1 }, { unique: true });
-categorySchema.index({ name: 1 }, { unique: true });
 categorySchema.index({ status: 1 });
 categorySchema.index({ sortOrder: 1 });
 categorySchema.index({ depth: 1 });
