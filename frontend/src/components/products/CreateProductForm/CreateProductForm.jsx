@@ -32,7 +32,6 @@ const CreateProductForm = () => {
     handleSizeImageChange,
     removeSizeImage,
   } = useProductForm();
-  console.log("categoryData", categoryData);
   // const inputFields = [
   //   {
   //     name: "name",
@@ -156,6 +155,9 @@ const CreateProductForm = () => {
   //   },
   // ];
 
+  console.log("newProduct", newProduct);
+  console.log("categoryData", categoryData);
+
   const inputFields = [
     {
       name: "name",
@@ -223,7 +225,7 @@ const CreateProductForm = () => {
             label: "Sub-category",
             type: "select",
             value: newProduct?.category?.l2,
-            options: categoryData.l2.map((subCategory) => ({
+            options: categoryData?.l2?.map((subCategory) => ({
               value: subCategory._id,
               label: subCategory.name,
             })),

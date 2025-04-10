@@ -12,12 +12,6 @@ export const useProductForm = () => {
     l2: [], // Level 2 subcategories
     l3: [], // Level 3 grandchild categories
     l4: [], // Level 4 great-grandchild categories
-    selected: {
-      l1: "",
-      l2: "",
-      l3: "",
-      l4: "",
-    },
   });
   console.log("Category data:", categories);
 
@@ -27,27 +21,6 @@ export const useProductForm = () => {
       basePrice: 0,
       currency: "USD",
     },
-    category: {
-      l1: "",
-      l2: "",
-      l3: "",
-      l4: "",
-    },
-
-    variations: [
-      {
-        color: "",
-        colorName: "",
-        colorImages: [],
-        sizes: [
-          {
-            size: "",
-            price: { amount: 0, currency: "USD" },
-            quantity: 0,
-          },
-        ],
-      },
-    ],
   });
 
   // Handle input changes for both top-level and nested fields
@@ -72,111 +45,77 @@ export const useProductForm = () => {
     }
   };
 
-  // Initialize form with default categories when categories load
   useEffect(() => {
     if (categories.length > 0) {
-      console.log("All categories:", categories);
+      // Get all root categories (depth 0)
+      const rootCategories = categories.filter((cat) => cat.depth === 0);
+      const firstRootCategory = rootCategories[0];
 
-      // Find L1 categories (depth === 0)
-      const l1Categories = categories.filter((cat) => cat.depth === 0);
-      const defaultL1 = l1Categories[0]?._id || "";
+      // Get all immediate subcategories for L1
+      const l2Categories = firstRootCategory?.subCategories || [];
 
-      // Find L2 categories (direct subCategories of defaultL1)
-      const defaultL1Category = l1Categories[0];
-      const l2Categories = defaultL1Category?.subCategories || [];
-      const defaultL2 = l2Categories[0]?._id || "";
-
-      // Find L3 categories (subCategories of default L2)
-      const defaultL2Category = l2Categories[0];
-      const l3Categories = defaultL2Category?.subCategories || [];
-      const defaultL3 = l3Categories[0]?._id || "";
-
-      // Find L4 categories (subCategories of default L3)
-      const defaultL3Category = l3Categories[0];
-      const l4Categories = defaultL3Category?.subCategories || [];
-      const defaultL4 = l4Categories[0]?._id || "";
-
-      console.log("Initial category setup:", {
-        l1: l1Categories,
-        l2: l2Categories,
-        l3: l3Categories,
-        l4: l4Categories,
-      });
+      // Get all nested subcategories for L3 and L4
+      const l3Categories = l2Categories.flatMap((l2) => l2.subCategories || []);
+      const l4Categories = l3Categories.flatMap((l3) => l3.subCategories || []);
 
       setCategoryData({
-        l1: l1Categories,
-        l2: l2Categories,
-        l3: l3Categories,
-        l4: l4Categories,
-        selected: {
-          l1: defaultL1,
-          l2: defaultL2,
-          l3: defaultL3,
-          l4: defaultL4,
-        },
+        l1: rootCategories, // All root categories
+        l2: l2Categories, // All direct subcategories of first root
+        l3: l3Categories, // All grandchild categories
+        l4: l4Categories, // All great-grandchild categories
       });
 
       setNewProduct((prev) => ({
         ...prev,
         category: {
-          l1: defaultL1,
-          l2: defaultL2,
-          l3: defaultL3,
-          l4: defaultL4,
+          l1: firstRootCategory._id,
+          l2: l2Categories[0]?._id || "",
+          l3: l3Categories[0]?._id || "",
+          l4: l4Categories[0]?._id || "",
         },
       }));
     }
   }, [categories]);
-  // Category change handlers
-  const handleCategoryChange = async (e) => {
-    const l1Id = e.target.value;
-    const selectedL1 = categories.find((cat) => cat._id === l1Id);
+
+  // Updated category change handler
+  const handleCategoryChange = (e) => {
+    const selectedCategoryId = e.target.value;
+    const selectedL1 = categories.find((cat) => cat._id === selectedCategoryId);
+
     const l2Categories = selectedL1?.subCategories || [];
+    const l3Categories = l2Categories.flatMap((l2) => l2.subCategories || []);
+    const l4Categories = l3Categories.flatMap((l3) => l3.subCategories || []);
 
     setCategoryData((prev) => ({
       ...prev,
       l2: l2Categories,
-      l3: [],
-      l4: [],
-      selected: {
-        l1: l1Id,
-        l2: l2Categories[0]?._id || "",
-        l3: "",
-        l4: "",
-      },
+      l3: l3Categories,
+      l4: l4Categories,
     }));
 
     setNewProduct((prev) => ({
       ...prev,
       category: {
-        l1: l1Id,
+        l1: selectedCategoryId,
         l2: l2Categories[0]?._id || "",
-        l3: "",
-        l4: "",
+        l3: l3Categories[0]?._id || "",
+        l4: l4Categories[0]?._id || "",
       },
     }));
   };
 
-  const handleChildCategoryChange = async (e) => {
+  // Updated child category handler
+  const handleChildCategoryChange = (e) => {
     const l2Id = e.target.value;
-    const selectedL1 = categories.find((cat) =>
-      cat.subCategories?.some((sub) => sub._id === l2Id)
-    );
-    const selectedL2 = selectedL1?.subCategories?.find(
-      (cat) => cat._id === l2Id
-    );
+    const selectedL2 = categoryData.l2.find((cat) => cat._id === l2Id);
+
     const l3Categories = selectedL2?.subCategories || [];
+    const l4Categories = l3Categories.flatMap((l3) => l3.subCategories || []);
 
     setCategoryData((prev) => ({
       ...prev,
       l3: l3Categories,
-      l4: [],
-      selected: {
-        ...prev.selected,
-        l2: l2Id,
-        l3: l3Categories[0]?._id || "",
-        l4: "",
-      },
+      l4: l4Categories,
     }));
 
     setNewProduct((prev) => ({
@@ -185,36 +124,21 @@ export const useProductForm = () => {
         ...prev.category,
         l2: l2Id,
         l3: l3Categories[0]?._id || "",
-        l4: "",
+        l4: l4Categories[0]?._id || "",
       },
     }));
   };
 
-  const handleGrandChildCategoryChange = async (e) => {
+  // Updated grandchild category handler
+  const handleGrandChildCategoryChange = (e) => {
     const l3Id = e.target.value;
+    const selectedL3 = categoryData.l3.find((cat) => cat._id === l3Id);
 
-    // Find the parent L2 category that contains this L3
-    const selectedL1 = categories.find((cat) =>
-      cat.subCategories?.some((l2) =>
-        l2.subCategories?.some((l3) => l3._id === l3Id)
-      )
-    );
-
-    const selectedL2 = selectedL1?.subCategories?.find((l2) =>
-      l2.subCategories?.some((l3) => l3._id === l3Id)
-    );
-
-    const selectedL3 = selectedL2?.subCategories?.find((l3) => l3._id === l3Id);
     const l4Categories = selectedL3?.subCategories || [];
 
     setCategoryData((prev) => ({
       ...prev,
       l4: l4Categories,
-      selected: {
-        ...prev.selected,
-        l3: l3Id,
-        l4: l4Categories[0]?._id || "",
-      },
     }));
 
     setNewProduct((prev) => ({
@@ -227,16 +151,9 @@ export const useProductForm = () => {
     }));
   };
 
+  // Keep the existing handleGreatGrandChildCategoryChange
   const handleGreatGrandChildCategoryChange = (e) => {
     const l4Id = e.target.value;
-
-    setCategoryData((prev) => ({
-      ...prev,
-      selected: {
-        ...prev.selected,
-        l4: l4Id,
-      },
-    }));
 
     setNewProduct((prev) => ({
       ...prev,
