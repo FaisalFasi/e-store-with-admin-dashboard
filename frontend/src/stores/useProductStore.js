@@ -16,6 +16,12 @@ export const useProductStore = create((set, get) => ({
   setFeaturedProducts: (featuredProducts) => set({ featuredProducts }),
 
   createProduct: async (formData) => {
+    // how i can get value from FormData by entries ?
+    // i said get not append here is formData
+
+    const formDataObject = Object.fromEntries(formData.entries());
+    console.log("Form data in createProduct:", formDataObject);
+
     try {
       set({ loading: true });
 
@@ -24,6 +30,7 @@ export const useProductStore = create((set, get) => ({
           "Content-Type": "multipart/form-data",
         },
       });
+      console.log("Response from createProduct:", response);
 
       // here we are using the prevState to update the products array and add the new product to it without mutating the state directly using the spread operator to copy the previous state and then add the new product to it using the response.data which is the new product that was created in the backend and returned to us as a response from the server after creating the product in the database and then we set the loading to false
       set((prevState) => ({

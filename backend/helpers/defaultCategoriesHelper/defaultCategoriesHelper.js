@@ -28,11 +28,11 @@ const buildFlatCategoryList = (categories, parentId = null, depth = 0) => {
 export const __setDefaultCategories = async () => {
   try {
     const settings = await Settings.findOne();
-    await Settings.updateOne(
-      {},
-      { $set: { isDefaultCategoriesSet: false } },
-      { upsert: true }
-    );
+    // await Settings.updateOne(
+    //   {},
+    //   { $set: { isDefaultCategoriesSet: false } },
+    //   { upsert: true }
+    // );
     if (settings?.isDefaultCategoriesSet) {
       console.log("Categories already initialized");
       return;

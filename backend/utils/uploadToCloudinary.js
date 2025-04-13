@@ -12,6 +12,12 @@ export const uploadToCloudinary = async (requestedFiles, folder) => {
         // Clean up temporary file
         if (result) await fs.unlink(file.path);
 
+        // Check if the upload was successful
+        if (!result || !result.secure_url) {
+          throw new Error("Image upload failed");
+        }
+        // Return the URL of the uploaded image
+
         return result.secure_url; // Return the URL of the uploaded image
       } catch (error) {
         console.error(`Error uploading ${file.filename}:`, error);

@@ -32,9 +32,10 @@ export const initialProductState = {
   name: "",
   description: "",
   brand: "",
-  pricing: {
+  price: {
     basePrice: 0,
     currency: "USD",
+    discount: 0,
   },
   category: {
     l1: "",
@@ -47,6 +48,9 @@ export const initialProductState = {
   status: "draft",
   isFeatured: false,
   images: [],
+  metaTitle: "",
+  metaDescription: "",
+
   variations: [
     {
       color: "",
@@ -61,6 +65,4 @@ export const initialProductState = {
       ],
     },
   ],
-  metaTitle: "",
-  metaDescription: "",
 };

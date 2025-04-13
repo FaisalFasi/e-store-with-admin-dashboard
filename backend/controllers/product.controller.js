@@ -3,10 +3,9 @@ import redis from "../db/redis.js";
 import cloudinary from "../lib/cloudinary.js";
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
-import fs from "fs/promises";
+
 import { imageValidationHelper } from "../helpers/validationHelper/imageValidationHelper.js";
 import ProductVariation from "../models/productVariation.model.js";
-import { get_uuid } from "../utils/uuidGenerator.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import {
   createProductVariations,
@@ -15,212 +14,76 @@ import {
 } from "../helpers/productHelpers/createProductHelper.js";
 import { handleError } from "../utils/handleError/handleError.js";
 import { __getRecommendedProducts } from "../helpers/productHelpers/recommendationHelper.js";
-
-// export const createProduct = async (req, res) => {
-//   const session = await mongoose.startSession(); // Start a transaction
-//   session.startTransaction();
-
-//   try {
-//     const {
-//       name,
-//       description,
-//       category,
-//       basePrice: pricing,
-//       stock,
-//       status = "draft",
-//       tags = [],
-//       additionalDetails = {},
-//       discounts = [],
-//       isFeatured = false,
-//       metaTitle,
-//       metaDescription,
-//       brand,
-//     } = req.body;
-
-//     const parsedCategory = JSON.parse(category);
-//     console.log("Parsed category ", parsedCategory);
-
-//     if (
-//       !name ||
-//       !parsedCategory?.l1 ||
-//       !pricing?.basePrice ||
-//       stock === undefined
-//     ) {
-//       return res.status(400).json({
-//         message:
-//           "Missing required fields: name, category, pricing.basePrice, stock",
-//       });
-//     }
-
-//     // Validate required fields
-//     if (!name || !parsedCategory?.parent || !pricing || stock === undefined) {
-//       return res.status(400).json({
-//         message:
-//           "Missing required fields: name, category.parent, basePrice, stock",
-//       });
-//     }
-
-//     // Validate category structure
-//     if (!mongoose.Types.ObjectId.isValid(parsedCategory.parent)) {
-//       return res.status(400).json({ message: "Invalid parent category ID" });
-//     }
-
-//     // Process files
-//     const requestedFiles = req.files || [];
-//     const validImage = imageValidationHelper(requestedFiles);
-//     if (!validImage.valid) {
-//       return res.status(400).json({ message: validImage.message });
-//     }
-
-//     const variations = JSON.parse(req.body.variations);
-
-//     // Process variations and upload images
-//     const processedVariations = await processVariations(
-//       variations,
-//       requestedFiles
-//     );
-
-//     const productData = {
-//       name,
-//       slug: generateSlug(name),
-//       description: description || "",
-//       category: {
-//         parent: parsedCategory.parent,
-//         child: parsedCategory.child || null,
-//         grandchild: parsedCategory.grandchild || null,
-//       },
-//       basePrice: parseFloat(pricing),
-//       stock: parseInt(stock),
-//       status,
-//       tags: tags.slice(0, 10), // Enforce max 10 tags
-//       additionalDetails,
-//       discounts: discounts.map((d) => ({
-//         type: d.type,
-//         value: parseFloat(d.value),
-//         expiry: d.expiry ? new Date(d.expiry) : null,
-//       })),
-//       isFeatured,
-//       metaTitle: metaTitle || "",
-//       metaDescription: metaDescription || "",
-//     }; // Handle featured image
-
-//     if (requestedFiles.featuredImage) {
-//       const featuredImage = await uploadToCloudinary(
-//         [requestedFiles.featuredImage],
-//         "products/featured"
-//       );
-//       productData.featuredImage = featuredImage[0];
-//     }
-
-//     const product = new Product(productData);
-//     await product.save({ session });
-
-//     // Process and link variations
-//     if (variations.length > 0) {
-//       const { variationIds, defaultVariationId } =
-//         await createProductVariations(
-//           product._id,
-//           processedVariations,
-//           session
-//         );
-
-//       product.variations = variationIds;
-//       product.defaultVariation = defaultVariationId;
-//       await product.save({ session });
-//     }
-
-//     await session.commitTransaction();
-//     session.endSession();
-
-//     // Return created product with populated fields
-//     const createdProduct = await Product.findById(product._id)
-//       .populate("variations")
-//       .populate("category.parent")
-//       .populate("category.child")
-//       .populate("category.grandchild");
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Product created successfully!",
-//       createProduct: product,
-//       product: createdProduct,
-//     });
-//   } catch (error) {
-//     await session.abortTransaction();
-//     session.endSession();
-//     handleError(res, error, "createProduct");
-//   }
-// };
-
-// Enhanced getHomepageProducts
+import Category from "../models/category.model.js";
 
 export const createProduct = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
+    // 1. INPUT EXTRACTION AND VALIDATION =============================
     const {
       name,
       description,
       category,
-      pricing,
+      price,
       stock,
       status = "draft",
       tags = [],
       additionalDetails = {},
       isFeatured = false,
-      metaTitle,
-      metaDescription,
+      metaTitle = "",
+      metaDescription = "",
       brand,
       variations: variationsInput = [],
     } = req.body;
 
-    // 1. VALIDATION PHASE ============================================
-    // Parse and validate category structure
-    const parsedCategory = JSON.parse(category);
-    if (!parsedCategory?.l1) {
-      throw new Error("At least level 1 category (l1) is required");
+    const requestedFiles = req.files || [];
+
+    // Validate required fields
+    if (!name || !category || !brand || !price || !stock || !requestedFiles) {
+      return handleError(res, "All fields are required", "createProduct", 400);
     }
 
-    // Validate all category levels exist and have correct hierarchy
+    // 2. DATA PARSING AND VALIDATION =================================
+    // Parse and validate category
+    let parsedCategory;
+    try {
+      parsedCategory = JSON.parse(category);
+      if (!parsedCategory?.l1) {
+        return handleError(
+          res,
+          "At least level 1 category (l1) is required",
+          "createProduct",
+          400
+        );
+      }
+    } catch (e) {
+      return handleError(res, "Invalid category format", "createProduct", 400);
+    }
+
+    // Validate category hierarchy
     await validateCategoryHierarchy(parsedCategory, session);
 
-    // Validate pricing structure
-    if (!pricing?.basePrice) {
-      throw new Error("Base price is required");
+    // Parse and validate price
+    let parsedPrice;
+    try {
+      parsedPrice = JSON.parse(price);
+
+      if (!parsedPrice?.basePrice) {
+        return handleError(res, "Base price is required", "createProduct", 400);
+      }
+    } catch (e) {
+      return handleError(res, "Invalid price format", "createProduct", 400);
     }
 
-    console.log(
-      "Name: ",
-      name,
-      "Category: ",
-      parsedCategory,
-      "Pricing: ",
-      pricing,
-      "Stock: ",
-      stock,
-      "Status: ",
-      status,
-      "Tags: ",
-      tags,
-      "Additional Details: ",
-      additionalDetails,
-      "Is Featured: ",
-      isFeatured,
-      "Meta Title: ",
-      metaTitle,
-      "Meta Description: ",
-      metaDescription,
-      "Brand: ",
-      brand
-    );
-
-    // Process and validate files
-    const requestedFiles = req.files || [];
+    // Validate images
     const { valid, message } = imageValidationHelper(requestedFiles);
-    if (!valid) throw new Error(message);
+    if (!valid) {
+      return handleError(res, message, "createProduct", 400);
+    }
 
-    // 2. DATA PREPARATION PHASE ======================================
+    // 3. DATA PREPARATION ============================================
     // Base product data
     const productData = {
       name,
@@ -233,12 +96,16 @@ export const createProduct = async (req, res) => {
         l3: parsedCategory.l3 || undefined,
         l4: parsedCategory.l4 || undefined,
       },
+      variations: [],
+      defaultVariation: null,
       price: {
-        base: Math.round(pricing.basePrice * 100), // Store in cents
-        currency: pricing.currency || "USD",
-        discount: pricing.discount || undefined,
+        basePrice: Math.round(parsedPrice.basePrice * 100), // Store in cents
+        currency: parsedPrice.currency || "USD",
+        discount: parsedPrice.discount || undefined,
       },
-      stock: parseInt(stock, 10),
+      //  parseInt will convert string to number
+      // and if it is not a number then it will return NaN
+      totalStock: parseInt(stock, 10) || 0,
       status,
       tags: [...new Set(tags.slice(0, 10))], // Deduplicate and limit tags
       additionalDetails,
@@ -247,14 +114,17 @@ export const createProduct = async (req, res) => {
       metaDescription: metaDescription || "",
     };
 
-    // Process and upload images
+    // Process and upload main product images
     if (requestedFiles.images) {
+      const imagesToUpload = Array.isArray(requestedFiles.images)
+        ? requestedFiles.images
+        : [requestedFiles.images];
+
       const uploadedImages = await uploadToCloudinary(
-        Array.isArray(requestedFiles.images)
-          ? requestedFiles.images
-          : [requestedFiles.images],
-        "products/images"
+        imagesToUpload,
+        "products/images-main"
       );
+
       productData.images = uploadedImages.map((img, index) => ({
         url: img.url,
         alt: `${name} image ${index + 1}`,
@@ -262,93 +132,116 @@ export const createProduct = async (req, res) => {
       }));
     }
 
-    // 3. DATABASE OPERATIONS PHASE ===================================
-    // Create the product
+    // 4. DATABASE OPERATIONS =========================================
+    // Create the base product
     const product = new Product(productData);
     await product.save({ session });
 
     // Process variations if they exist
     if (variationsInput.length > 0) {
-      const parsedVariations = JSON.parse(variationsInput);
+      let parsedVariations;
+      try {
+        parsedVariations = JSON.parse(variationsInput);
+      } catch (e) {
+        handleError(res, "Invalid variations format", "createProduct", 400);
+        return;
+      }
+
+      // Process variations (upload images, validate structure)
+      const processedVariations = await processVariations(
+        parsedVariations,
+        requestedFiles
+      );
+
+      // Create variations in database
       const { variationIds, defaultVariationId } =
         await createProductVariations(
           product._id,
-          parsedVariations,
-          product.price.currency, // Pass the product's currency to variations
+          processedVariations,
+          product.price.currency,
           session
         );
 
+      // Update product with variation references
       product.variations = variationIds;
       product.defaultVariation = defaultVariationId;
       await product.save({ session });
     }
 
-    await session.commitTransaction();
-
-    // 4. RESPONSE PREPARATION PHASE ==================================
+    // 5. FINAL RESPONSE PREPARATION ==================================
     const createdProduct = await Product.findById(product._id)
       .populate({
         path: "variations",
         populate: { path: "colors.sizes" },
       })
-      .populate("category.l1 category.l2 category.l3 category.l4");
+      .populate("category.l1 category.l2 category.l3 category.l4")
+      .session(session);
 
-    res.status(201).json({
+    await session.commitTransaction();
+
+    return res.status(201).json({
       success: true,
       product: createdProduct,
     });
   } catch (error) {
     await session.abortTransaction();
 
-    // Handle specific error types
-    if (error.name === "ValidationError") {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-        errors: error.errors,
-      });
-    }
+    console.error("Product creation failed:", {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+    });
 
-    // Handle custom error messages
-    const userMessage = error.message.includes("Category validation")
-      ? "Invalid category hierarchy"
-      : error.message;
-
-    res.status(400).json({
+    const statusCode = error.name === "ValidationError" ? 400 : 500;
+    return res.status(statusCode).json({
       success: false,
-      message: userMessage,
+      message: `Product creation failed: ${error.message}`,
+      ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
     });
   } finally {
-    session.endSession();
+    await session.endSession();
   }
 };
-
-// Helper function to validate category hierarchy
-const validateCategoryHierarchy = async (category, session) => {
-  const validateLevel = async (id, level, parentId = null) => {
-    if (!id) return;
+const validateCategoryHierarchy = async (categoryIds, session) => {
+  // 1. Validate each category exists and has correct depth
+  const getValidatedCategory = async (id, expectedDepth) => {
+    if (!id) return null;
 
     const cat = await Category.findById(id).session(session);
-    if (!cat) throw new Error(`Category ${id} not found for level ${level}`);
-
-    if (
-      level > 1 &&
-      (!parentId || cat.parentCategory.toString() !== parentId)
-    ) {
+    if (!cat) throw new Error(`Category ${id} not found`);
+    if (cat.depth !== expectedDepth) {
       throw new Error(
-        `Category level ${level} must be child of level ${level - 1}`
+        `Category ${id} must be a level ${expectedDepth + 1} category`
       );
     }
-
-    return cat._id.toString();
+    return cat;
   };
 
-  const l1Id = await validateLevel(category.l1, 1);
-  const l2Id = await validateLevel(category.l2, 2, l1Id);
-  const l3Id = await validateLevel(category.l3, 3, l2Id);
-  await validateLevel(category.l4, 4, l3Id);
-};
+  // 2. Check each level
+  const l1 = await getValidatedCategory(categoryIds.l1, 0); // Depth 0 = L1
+  const l2 = await getValidatedCategory(categoryIds.l2, 1); // Depth 1 = L2
+  const l3 = await getValidatedCategory(categoryIds.l3, 2); // Depth 2 = L3
+  const l4 = await getValidatedCategory(categoryIds.l4, 3); // Depth 3 = L4
 
+  // 3. Verify parent-child relationships
+  if (l2 && l2.parentCategory?.toString() !== l1?._id.toString()) {
+    throw new Error(`L2 category must be a child of the selected L1 category`);
+  }
+  if (l3 && l3.parentCategory?.toString() !== l2?._id.toString()) {
+    throw new Error(`L3 category must be a child of the selected L2 category`);
+  }
+  if (l4 && l4.parentCategory?.toString() !== l3?._id.toString()) {
+    throw new Error(`L4 category must be a child of the selected L3 category`);
+  }
+
+  // 4. Return validated IDs
+  return {
+    l1: l1?._id,
+    l2: l2?._id || undefined,
+    l3: l3?._id || undefined,
+    l4: l4?._id || undefined,
+  };
+};
 export const getHomepageProducts = async (req, res) => {
   try {
     const { page = 1, limit = 20, category, sort = "-createdAt" } = req.query;
@@ -393,12 +286,9 @@ export const getHomepageProducts = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const products = await Product.find({
-      status: "draft",
+      status: "active",
     })
-      .populate(
-        "category.parent category.child category.grandchild",
-        "name slug"
-      )
+      .populate("category.l1 category.l2 category.l3 category.l4", "name slug")
       .populate({
         path: "variations",
         populate: {
@@ -409,7 +299,7 @@ export const getAllProducts = async (req, res) => {
 
     res.json({ success: true, products });
   } catch (error) {
-    handleError(res, error, "getAllProducts");
+    handleError(res, error, "getAllProducts", 500);
   }
 };
 
@@ -436,7 +326,7 @@ export const getProductById = async (req, res) => {
     res.json({ success: true, product });
   } catch (error) {
     console.error("Error in getProductById:", error);
-    handleError(res, error, "getProductById");
+    handleError(res, error, "getProductById", 500);
   }
 };
 
@@ -465,7 +355,6 @@ export const getFeaturedProducts = async (req, res) => {
           },
         })
         .lean();
-      console.log("featuredProducts", featuredProducts);
 
       await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600);
     } else {
@@ -488,7 +377,6 @@ export const getRecommendedProducts = async (req, res) => {
 export const invalidateCategoryRecommendations = async (categoryId) => {
   const cacheKey = `recs:cat:${categoryId}`;
   await redis.del(cacheKey);
-  console.log(`Invalidated recommendations for category ${categoryId}`);
 };
 
 // Enhanced getProductByCategory

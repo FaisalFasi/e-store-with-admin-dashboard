@@ -27,13 +27,21 @@ const sizeSchema = new mongoose.Schema({
       enum: ["USD", "EUR", "GBP", "PKR"], // Match your product currency options
       default: "USD",
     },
+    discount: {
+      type: Number,
+      min: 0,
+      max: 100,
+    },
   },
 
   sku: {
     type: String,
     required: true,
     unique: true,
-    immutable: true, // ➡️ Prevent accidental updates
+    immutable: true,
+    match: /^[A-Z0-9-]+$/,
+    trim: true,
+    // Remove the default from here since we're generating it in code
   },
   barcode: {
     type: String,
@@ -67,10 +75,11 @@ const colorSchema = new mongoose.Schema({
     index: true, // ➡️ Faster color-based filtering
   },
   sizes: [sizeSchema],
+
   imageUrls: {
     type: [String],
     required: true,
-    validate: [(val) => val.length > 0, "At least one image is required"], // ➡️ Ensures non-empty array
+    validate: [(val) => val.length > 0, "At least one image URL is required."],
   },
   isDefault: {
     type: Boolean,
@@ -112,12 +121,12 @@ const variationSchema = new mongoose.Schema(
 
 // ➡️ Improved SKU generation (more collision-resistant)
 variationSchema.pre("save", function (next) {
-  const productPrefix = this.productId.toString().slice(-5); // Last 5 chars of ID
+  const productPrefix = this.productId?.toString().slice(-5); // Last 5 chars of ID
   this.colors.forEach((color) => {
-    color.sizes.forEach((size) => {
+    color?.sizes?.forEach((size) => {
       if (!size.sku) {
-        size.sku = `${productPrefix}-${color.name.slice(0, 3)}-${
-          size.value
+        size.sku = `${productPrefix}-${color?.colorName?.slice(0, 3)}-${
+          size.size
         }`.toUpperCase();
       }
     });
@@ -133,8 +142,8 @@ sizeSchema.pre("save", function (next) {
 
 // Indexes for critical queries
 variationSchema.index({ productId: 1, status: 1 }); // Find active variations for a product
-variationSchema.index({ "colors.name": 1, status: 1 }); // Filter by color name
-variationSchema.index({ "colors.sizes.value": 1 }); // Find products by size
+variationSchema.index({ "colors.colorName": 1, status: 1 }); // Filter by color name
+variationSchema.index({ "colors.sizes.size": 1 }); // Find products by size
 
 const ProductVariation = mongoose.model("ProductVariation", variationSchema);
 export default ProductVariation;

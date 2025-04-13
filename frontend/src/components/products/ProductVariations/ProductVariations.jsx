@@ -97,18 +97,19 @@ export const ProductVariations = (props) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Size Value
+                    Size
                   </label>
                   <input
-                    value={size.value}
-                    onChange={(e) =>
+                    value={size?.size}
+                    onChange={(e) => {
+                      console.log("Size value changed:", e.target.value);
                       props.handleSizeChange(
                         vIndex,
                         sIndex,
-                        "value",
+                        "size",
                         e.target.value
-                      )
-                    }
+                      );
+                    }}
                     placeholder="Size value i.e. 32, 34, or S, M, L, XL"
                     className="w-full p-2 mb-2 border rounded"
                   />
@@ -157,28 +158,6 @@ export const ProductVariations = (props) => {
                     className="w-full p-2 mb-2 border rounded"
                   />
                 </div>
-
-                {/* Size Images */}
-                {/* <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Size Images
-                  </label>
-                  <InputField
-                    type="file"
-                    multiple
-                    onChange={(e) =>
-                      props.handleSizeImageChange(
-                        vIndex,
-                        sIndex,
-                        e.target.files
-                      )
-                    }
-                    selectedImages={size.images}
-                    handleImageRemove={(imgIndex) =>
-                      props.removeSizeImage(vIndex, sIndex, imgIndex)
-                    }
-                  />
-                </div> */}
               </div>
             ))}
             <button

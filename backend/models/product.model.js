@@ -32,21 +32,16 @@ const productSchema = new mongoose.Schema(
       l3: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }, // Grandchild (optional)
       l4: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }, // Great-Grandchild (optional)
     },
-
+    isFeatured: { type: Boolean, default: false }, // Featured product flag
     // Pricing (Structured for precision)
     price: {
       basePrice: { type: Number, required: true, min: 0 }, // Store in smallest unit (cents/paisa)
       currency: { type: String, default: "USD", enum: ["USD", "EUR", "PKR"] },
-      discount: { type: Number, min: 0, max: 100 }, // Percentage (0-100)
+      discount: { type: Number, min: 0, max: 100, default: 0 }, // Percentage (0-100)
     },
 
     // Inventory (Optimized)
-    stock: { type: Number, required: true, min: 0, index: true },
-    sku: { type: String, unique: true, trim: true },
-
-    // Media (Efficient storage)
-    images: [{ url: String, alt: String, order: Number }],
-
+    totalStock: { type: Number, min: 0, index: true },
     // Status & Metadata
     status: {
       type: String,
@@ -54,7 +49,25 @@ const productSchema = new mongoose.Schema(
       default: "draft",
       index: true,
     },
+    variations: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ProductVariation",
+      },
+    ],
+    defaultVariation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ProductVariation",
+    },
+
+    images: {
+      type: [String],
+    },
+
     tags: [{ type: String, lowercase: true, maxlength: 30 }],
+    metaTitle: { type: String, maxlength: 60 },
+    metaDescription: { type: String, maxlength: 160 },
+
     ratings: {
       average: { type: Number, min: 0, max: 5 },
       count: { type: Number, default: 0 },
@@ -87,7 +100,10 @@ productSchema.index({ "category.l1": 1, status: 1 }); // Fast filtering by top-l
 productSchema.index({ "category.l2": 1, status: 1 }); // Fast filtering by 2nd level
 productSchema.index({ "category.l3": 1, status: 1 }); // Fast filtering by 3rd level
 productSchema.index({ "category.l4": 1, status: 1 }); // Fast filtering by 4th level
-productSchema.index({ name: "text", description: "text", tags: "text" }); // Full-text search
+productSchema.index({ name: 1, status: 1 }); // Fast filtering by name
+// images order index
+productSchema.index({ "images.order": 1 }); // Fast sorting by image order
+productSchema.index({ name: "text", description: "text" });
 
 // ✅ **Validation (Ensures Correct Nesting)**
 productSchema.pre("save", async function (next) {

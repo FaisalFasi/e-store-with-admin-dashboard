@@ -27,11 +27,6 @@ const categorySchema = new mongoose.Schema(
     image: {
       type: String,
       default: "",
-      // validate: {
-      //   validator: (v) =>
-      //     v === "" || /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/.test(v),
-      //   message: "Invalid image URL format",
-      // },
     },
 
     parentCategory: {
@@ -65,7 +60,6 @@ const categorySchema = new mongoose.Schema(
 
 // Indexes
 categorySchema.index({ parentCategory: 1 });
-categorySchema.index({ slug: 1 }, { unique: true });
 categorySchema.index({ status: 1 });
 categorySchema.index({ sortOrder: 1 });
 categorySchema.index({ depth: 1 });

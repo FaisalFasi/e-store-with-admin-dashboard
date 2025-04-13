@@ -7,7 +7,6 @@ import { useProductStore } from "../../../stores/useProductStore";
 import { ProductVariations } from "../ProductVariations/ProductVariations";
 import { ProductFormFields } from "../ProductFormFields/ProductFormFields";
 import Button from "../../shared/Button/Button";
-import { min } from "lodash";
 
 const CreateProductForm = () => {
   const { createProduct, loading } = useProductStore();
@@ -32,131 +31,6 @@ const CreateProductForm = () => {
     handleSizeImageChange,
     removeSizeImage,
   } = useProductForm();
-  // const inputFields = [
-  //   {
-  //     name: "name",
-  //     label: "Product Name", // Add asterisk for required field
-  //     type: "text",
-  //     value: newProduct?.name,
-  //     placeholder: "Enter product name",
-  //     required: true,
-  //   },
-  //   {
-  //     name: "description",
-  //     label: "Description", // Add asterisk for required field
-  //     type: "textarea",
-  //     value: newProduct?.description,
-  //     placeholder: "Enter product description",
-  //     rows: 3,
-  //     required: false,
-  //   },
-  //   {
-  //     name: "basePrice",
-  //     label: "Base Price",
-  //     type: "number",
-  //     value: newProduct?.basePrice,
-  //     placeholder: "Enter base price",
-  //     required: true,
-  //   },
-  //   {
-  //     name: "stock",
-  //     label: "Initial Stock",
-  //     type: "number",
-  //     value: newProduct?.stock,
-  //     placeholder: "Enter initial stock",
-  //     required: true,
-  //   },
-  //   {
-  //     name: "tags",
-  //     label: "Tags (comma separated)",
-  //     type: "text",
-  //     value: newProduct?.tags?.join(", ") || "", // Keep it as a string
-  //     placeholder: "Product tags i.e. tag1, tag2, tag3",
-  //     required: false,
-  //     onChange: (e) => {
-  //       handleInputChange("tags", e.target.value); // Store as raw string while typing
-  //     },
-  //   },
-
-  //   {
-  //     name: "category",
-  //     label: "Category", // Add asterisk for required field
-  //     type: "select",
-  //     value: newProduct?.category,
-  //     options: categories.map((category) => ({
-  //       value: category._id,
-  //       label: category.name,
-  //     })),
-  //     onChange: handleCategoryChange,
-  //     placeholder: "Select product category",
-  //     required: true,
-  //   },
-  //   ...(categoryData.subCategories.length > 0
-  //     ? [
-  //         {
-  //           name: "subCategory",
-  //           label: "Sub-category", // No asterisk if not required
-  //           type: "select",
-  //           value: newProduct?.subCategory,
-  //           options: categoryData.subCategories.map((subCategory) => ({
-  //             value: subCategory._id,
-  //             label: subCategory.name,
-  //           })),
-  //           onChange: handleChildCategoryChange,
-  //           required: true, // Explicitly mark as not required
-  //         },
-  //       ]
-  //     : []),
-  //   ...(categoryData.grandChildCategories.length > 0
-  //     ? [
-  //         {
-  //           name: "grandChildCategory",
-  //           label: "Grand Sub-category", // No asterisk if not required
-  //           type: "select",
-  //           value: newProduct?.grandChildCategory,
-  //           options: categoryData.grandChildCategories.map(
-  //             (grandChildCategory) => ({
-  //               value: grandChildCategory._id,
-  //               label: grandChildCategory.name,
-  //             })
-  //           ),
-  //           onChange: handleGrandChildCategoryChange,
-  //           required: true, // Explicitly mark as not required
-  //         },
-  //       ]
-  //     : []),
-  //   {
-  //     name: "isFeatured",
-  //     label: "Featured", // Add asterisk for required field
-  //     type: "select",
-  //     value: newProduct?.isFeatured,
-  //     options: [
-  //       { value: true, label: "Yes" },
-  //       { value: false, label: "No" },
-  //     ],
-
-  //     onChange: (e) => handleInputChange("isFeatured", e.target.value),
-  //     placeholder: "Select product featured status",
-  //     required: true,
-  //   },
-  //   {
-  //     name: "status",
-  //     label: "Status", // Add asterisk for required field
-  //     type: "select",
-  //     value: newProduct?.status,
-  //     options: [
-  //       { value: "draft", label: "Draft" },
-  //       { value: "active", label: "Active" },
-  //       { value: "inactive", label: "Inactive" },
-  //     ],
-  //     onChange: (e) => handleInputChange("status", e.target.value),
-  //     placeholder: "Select product status",
-  //     required: true,
-  //   },
-  // ];
-
-  console.log("newProduct", newProduct);
-  console.log("categoryData", categoryData);
 
   const inputFields = [
     {
@@ -165,6 +39,14 @@ const CreateProductForm = () => {
       type: "text",
       value: newProduct?.name,
       placeholder: "Enter product name",
+      required: true,
+    },
+    {
+      name: "brand",
+      label: "Product Brand",
+      type: "text",
+      value: newProduct?.brand,
+      placeholder: "Enter product brand",
       required: true,
     },
     {
@@ -177,13 +59,13 @@ const CreateProductForm = () => {
       required: false,
     },
     {
-      name: "pricing.basePrice",
+      name: "price.basePrice",
       label: "Base Price",
       type: "number",
-      value: newProduct?.pricing?.basePrice,
+      value: newProduct?.price?.basePrice,
       placeholder: "Enter base price",
       required: true,
-      onChange: (e) => handleInputChange("pricing.basePrice", e.target.value),
+      onChange: (e) => handleInputChange("price.basePrice", e.target.value),
     },
     {
       name: "stock",
@@ -306,7 +188,7 @@ const CreateProductForm = () => {
       !firstVariation.colorName ||
       firstVariation.colorImages.length === 0 ||
       firstVariation.sizes.some(
-        (size) => !size.value || size.price <= 0 || size.quantity < 0
+        (size) => !size.size || size.price.amount <= 0 || size.quantity < 0
       )
     ) {
       toast.error("First variation must be completely filled");
@@ -318,17 +200,29 @@ const CreateProductForm = () => {
     // Append main product fields
     formData.append("name", newProduct.name);
     formData.append("description", newProduct.description);
-    formData.append("basePrice", newProduct.basePrice);
     formData.append("stock", newProduct.stock);
-    formData.append("tags", JSON.stringify(newProduct.tags)); // Ensure tags are sent as a JSON string
-    formData.append(
-      "category",
-      JSON.stringify({
-        parent: newProduct.category,
-        child: newProduct.subCategory,
-        grandchild: newProduct.grandChildCategory,
-      })
-    );
+    formData.append("isFeatured", newProduct.isFeatured);
+    formData.append("status", newProduct.status);
+    formData.append("brand", newProduct.brand);
+    formData.append("metaTitle", newProduct.metaTitle);
+    formData.append("metaDescription", newProduct.metaDescription);
+
+    // Append complex objects as JSON strings
+    formData.append("price", JSON.stringify(newProduct.price));
+
+    // formData.append("pricing", JSON.stringify(newProduct.pricing));
+    formData.append("tags", JSON.stringify(newProduct.tags));
+    formData.append("images", JSON.stringify(newProduct.images || []));
+
+    const categoryData = {
+      l1: newProduct.category.l1 || "",
+      l2: newProduct.category.l2 || "",
+      l3: newProduct.category.l3 || "",
+      l4: newProduct.category.l4 || "",
+    };
+    formData.append("category", JSON.stringify(categoryData));
+
+    // formData.append("category", JSON.stringify(categoryData));
 
     // Process variations
     const variations = await Promise.all(
@@ -336,11 +230,18 @@ const CreateProductForm = () => {
         // Convert Blob URLs to File objects
         const colorImages = await Promise.all(
           variation.colorImages.map(async (blobUrl, fIndex) => {
+            //findex is for the image index
             const response = await fetch(blobUrl);
+
+            if (!response.ok) {
+              toast.error(response.message);
+              throw new Error("Failed to fetch image");
+            }
             const blob = await response.blob();
             const fileName = `variation-${vIndex}-colorImage-${fIndex}.${
               blob.type.split("/")[1]
             }`;
+
             return new File([blob], fileName, { type: blob.type });
           })
         );
@@ -369,13 +270,14 @@ const CreateProductForm = () => {
 
     try {
       const data = await createProduct(formData);
-      if (data) {
-        setNewProduct({
-          ...initailProductState, // Reset to initial state
-          variations: [{ ...initailProductState.variations[0] }], // Keep the first variation
-        });
-        toast.success("Product created successfully!");
-      }
+      console.log("Data: ", data);
+      //   if (data) {
+      //     setNewProduct({
+      //       ...initailProductState, // Reset to initial state
+      //       variations: [{ ...initailProductState.variations[0] }], // Keep the first variation
+      //     });
+      //     toast.success("Product created successfully!");
+      //   }
     } catch (error) {
       toast.error(error.message);
     }

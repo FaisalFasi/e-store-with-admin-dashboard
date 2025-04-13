@@ -13,11 +13,10 @@ export const useProductForm = () => {
     l3: [], // Level 3 grandchild categories
     l4: [], // Level 4 great-grandchild categories
   });
-  console.log("Category data:", categories);
 
   const [newProduct, setNewProduct] = useState({
     ...initialProductState,
-    pricing: {
+    price: {
       basePrice: 0,
       currency: "USD",
     },
@@ -196,7 +195,7 @@ export const useProductForm = () => {
               size: "",
               price: {
                 amount: 0,
-                currency: newProduct.pricing.currency || "USD",
+                currency: newProduct.price.currency || "USD",
               },
               quantity: 0,
             },
@@ -231,7 +230,7 @@ export const useProductForm = () => {
     } else {
       updatedVariations[vIndex].sizes[sIndex][field] = value;
     }
-    console.log("Updated variations after size change:", updatedVariations);
+
     setNewProduct({ ...newProduct, variations: updatedVariations });
   };
 
@@ -239,7 +238,7 @@ export const useProductForm = () => {
     const updatedVariations = [...newProduct.variations];
     updatedVariations[vIndex].sizes.push({
       size: "",
-      price: { amount: 0, currency: newProduct.pricing.currency || "USD" },
+      price: { amount: 0, currency: newProduct.price.currency || "USD" },
       quantity: 0,
     });
     setNewProduct({ ...newProduct, variations: updatedVariations });
