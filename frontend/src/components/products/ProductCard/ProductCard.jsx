@@ -99,8 +99,6 @@ const ProductCard = ({ product }) => {
     });
   };
 
-  console.log("Selected size object:", selectedSizeObj);
-  console.log("ProductCard - product:", product);
   return (
     <div className="flex w-full relative flex-col overflow-visible rounded-lg border border-gray-700 shadow-lg">
       <Navigation

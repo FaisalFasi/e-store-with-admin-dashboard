@@ -1,6 +1,7 @@
 import React from "react";
 import { Minus, Plus, Trash } from "lucide-react";
 import { useCartStore } from "../../../stores/useCartStore";
+import { Price } from "@/components/currencyProvider/Price";
 
 const CartItem = ({ item }) => {
   const { removeFromCart, updateQuantity } = useCartStore();
@@ -31,7 +32,9 @@ const CartItem = ({ item }) => {
 
   // Handle quantity increase
   const handleIncreaseQuantity = () => {
-    updateQuantity(item._id, item.variations[0]._id, item.quantity + 1);
+    if (item?.quantity < item.variations[0]?.colors[0]?.sizes[0]?.quantity) {
+      updateQuantity(item._id, item.variations[0]._id, item.quantity + 1);
+    }
   };
 
   // Handle quantity decrease
@@ -83,7 +86,9 @@ const CartItem = ({ item }) => {
           {/* Price */}
           <div className="text-end md:order-4 md:w-32">
             <p className="text-base font-bold text-emerald-400">
-              ${size?.price || item.basePrice}
+              <Price
+                priceInCents={size?.price?.amount || item.price?.basePrice}
+              />
             </p>
           </div>
         </div>
@@ -97,8 +102,8 @@ const CartItem = ({ item }) => {
 
           {/* Selected Variation Details */}
           <div className="text-sm text-gray-400">
-            <p>Color: {color?.name}</p>
-            <p>Size: {size?.value}</p>
+            <p>Color: {color?.colorName}</p>
+            <p>Size: {size?.size}</p>
           </div>
 
           {/* Remove Button */}

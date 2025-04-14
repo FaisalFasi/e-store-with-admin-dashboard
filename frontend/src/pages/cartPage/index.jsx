@@ -23,6 +23,7 @@ const CartPage = () => {
   if (!user) {
     return <Navigate to="/" />;
   }
+  console.log("Cart Items:", cart);
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (
@@ -51,7 +52,7 @@ const CartPage = () => {
           <div className="space-y-6">
             {cart?.map((item, index) => {
               if (!item) return null;
-
+              console.log("Item in page:", item);
               // Generate a unique key using product ID and variation ID
               const uniqueKey = `${item._id}-${index}`;
 
@@ -69,10 +70,12 @@ const CartPage = () => {
         )}
       </motion.div>
       {/* Cart View */}
-      {currentStep === "cart" && cart.length > 0 && <CartView cart={cart} />}
+      {/* {currentStep === "cart" && cart.length > 0 && <CartView cart={cart} />} */}
+
       {/* Address Form */}
       {isAddressModalOpen && currentStep === "address" ? <AddressForm /> : ""}
-      <div>{cart.length > 0 && <PeopleAlsoBought />}</div>
+
+      {/* <div>{cart.length > 0 && <PeopleAlsoBought />}</div> */}
     </div>
   );
 };

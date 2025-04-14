@@ -131,8 +131,8 @@ export const useCartStore = create((set, get) => ({
         size: selectedSize,
         quantity,
       } = selectedVariation;
-      const sizeValue = selectedSize.value;
-      const colorName = selectedColor.name;
+      const sizeValue = selectedSize.size;
+      const colorName = selectedColor.colorName;
       const variationId = selectedVar._id;
 
       // Find the matching product variation
@@ -146,7 +146,7 @@ export const useCartStore = create((set, get) => ({
 
       // Find matching color in the variation
       const colorObj = productVariation.colors.find(
-        (c) => c.name === colorName
+        (c) => c.colorName === colorName
       );
       if (!colorObj) {
         toast.error("Selected color not found in variation");
@@ -154,7 +154,7 @@ export const useCartStore = create((set, get) => ({
       }
 
       // Find matching size in the color
-      const sizeObj = colorObj.sizes.find((s) => s.value === sizeValue);
+      const sizeObj = colorObj.sizes.find((s) => s.size === sizeValue);
       if (!sizeObj) {
         toast.error("Selected size not found in color");
         return;
@@ -202,25 +202,20 @@ export const useCartStore = create((set, get) => ({
             ),
           };
         }
-        // Create new cart item
-        // const newItem = {
-        //   key: cartKey,
-        //   productId: product._id,
-        //   name: product.name,
-        //   basePrice: product.basePrice,
-        //   variationId: variationId,
-        //   color: colorName,
-        //   size: sizeValue,
-        //   quantity: quantity,
-        //   price: sizeObj.price || product.basePrice,
-        //   imageUrl:
-        //     colorObj.imageUrls?.[0] ||
-        //     product.variations[0]?.colors[0]?.imageUrls?.[0],
-        //   stock: availableStock,
-        // };
-
-        // return { cart: [...prevState.cart, newItem] };
-        return { cart: [...prevState.cart, product] };
+        return {
+          cart: [
+            ...prevState.cart,
+            {
+              key: cartKey,
+              product: product, // or spread the product if you prefer
+              variationId: variationId,
+              color: colorName,
+              size: sizeValue,
+              quantity: quantity, // Include quantity in the object
+              price: product.price,
+            },
+          ],
+        };
       });
 
       toast.success("Added to cart!");
@@ -317,8 +312,9 @@ export const useCartStore = create((set, get) => ({
 
       // Use the size object's price if available, fallback to base price
       const price = parseFloat(
-        item.variations[0].colors[0].sizes[0]?.price || 0
+        item?.product?.variations[0].colors[0].sizes[0]?.price?.amount || 0
       );
+
       const quantity = parseInt(item.quantity, 10);
 
       // Validate price and quantity

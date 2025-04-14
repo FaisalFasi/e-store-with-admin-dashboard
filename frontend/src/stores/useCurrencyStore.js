@@ -32,6 +32,13 @@ export const CURRENCIES = {
   },
 };
 
+// here persist is used to store the state in local storage
+// so that the selected currency and exchange rates persist across page reloads
+// and sessions
+// this is useful for user experience, as users don't have to select their currency every time they visit the site
+// and the exchange rates are updated automatically
+// what will happen is i dont use persist
+// the selected currency and exchange rates will be lost when the page is reloaded
 export const useCurrencyStore = create(
   persist(
     (set, get) => ({
