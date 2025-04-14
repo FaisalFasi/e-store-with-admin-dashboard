@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useCallback, useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
@@ -8,7 +8,7 @@ import Select from "@/components/shared/Select/Select";
 import InputField from "@/components/shared/InputField/InputField";
 import { Price } from "@/components/currencyProvider/Price";
 
-const ProductCard = ({ product }) => {
+const ProductCard = React.memo(({ product }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
 
@@ -16,60 +16,85 @@ const ProductCard = ({ product }) => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
-  // Get unique colors across all variations
-  const uniqueColors = [
-    ...new Set(
-      product?.variations?.flatMap((v) => v.colors.map((c) => c.colorName)) ||
-        []
-    ),
-  ];
+  // Memoize derived data to avoid recalculating on every render
+  const { uniqueColors, variations } = useMemo(() => {
+    const variations = product?.variations || [];
+    const colors = variations.flatMap((v) => v.colors.map((c) => c.colorName));
+    return {
+      uniqueColors: [...new Set(colors)],
+      variations,
+    };
+  }, [product]);
 
-  // Get sizes for selected color across all variations
-  const sizesForSelectedColor = selectedColor
-    ? [
-        ...new Set(
-          product?.variations?.flatMap((v) =>
-            v.colors
-              .filter((c) => c.colorName === selectedColor)
-              .flatMap((c) => c.sizes.map((s) => s.size))
-          )
-        ),
-      ]
-    : [];
+  // Memoize sizes for selected color
+  const sizesForSelectedColor = useMemo(() => {
+    if (!selectedColor) return [];
+    return [
+      ...new Set(
+        variations.flatMap((v) =>
+          v.colors
+            .filter((c) => c.colorName === selectedColor)
+            .flatMap((c) => c.sizes.map((s) => s.size))
+        )
+      ),
+    ];
+  }, [selectedColor, variations]);
 
   // Find the full variation details
-  const selectedVariation = product?.variations?.find((variation) =>
-    variation.colors.some(
-      (color) =>
-        color.colorName === selectedColor &&
-        color.sizes.some((size) => size.size === selectedSize)
-    )
-  );
+  const { selectedVariation, selectedColorObj, selectedSizeObj } =
+    useMemo(() => {
+      if (!selectedColor || !selectedSize) return {};
 
-  const selectedColorObj = selectedVariation?.colors?.find(
-    (c) => c.colorName === selectedColor
-  );
-  const selectedSizeObj = selectedColorObj?.sizes?.find(
-    (s) => s.size === selectedSize
-  );
+      const variation = variations.find((v) =>
+        v.colors.some(
+          (c) =>
+            c.colorName === selectedColor &&
+            c.sizes.some((s) => s.size === selectedSize)
+        )
+      );
 
-  const handleColorChange = (color) => {
+      const colorObj = variation?.colors?.find(
+        (c) => c.colorName === selectedColor
+      );
+      const sizeObj = colorObj?.sizes?.find((s) => s.size === selectedSize);
+
+      return {
+        selectedVariation: variation,
+        selectedColorObj: colorObj,
+        selectedSizeObj: sizeObj,
+      };
+    }, [selectedColor, selectedSize, variations]);
+
+  // Reset quantity when size changes
+  useEffect(() => {
+    setSelectedQuantity(1);
+  }, [selectedSize]);
+
+  // Event handlers with useCallback
+  const handleColorChange = useCallback((color) => {
     setSelectedColor(color);
     setSelectedSize("");
-    setSelectedQuantity(1);
-  };
+  }, []);
 
-  const handleSizeChange = (value) => {
+  const handleSizeChange = useCallback((value) => {
     setSelectedSize(value);
-  };
+  }, []);
 
-  const handleQuantityChange = (event) => {
-    const value = parseInt(event.target.value, 10);
-    if (value >= 0 && value <= selectedSizeObj?.quantity)
-      setSelectedQuantity(value);
-  };
+  const handleQuantityChange = useCallback(
+    (event) => {
+      const value = parseInt(event.target.value, 10);
+      if (
+        !isNaN(value) &&
+        value >= 1 &&
+        value <= (selectedSizeObj?.quantity || 1)
+      ) {
+        setSelectedQuantity(value);
+      }
+    },
+    [selectedSizeObj?.quantity]
+  );
 
-  const handleAddToCart = () => {
+  const handleAddToCart = useCallback(() => {
     if (!user) {
       toast.error("Please login to add products to cart");
       return;
@@ -90,14 +115,32 @@ const ProductCard = ({ product }) => {
       return;
     }
 
-    // Pass the complete variation structure
     addToCart(product, {
       variation: selectedVariation,
       color: selectedColorObj,
       size: selectedSizeObj,
       quantity: selectedQuantity,
     });
-  };
+  }, [
+    user,
+    selectedColor,
+    selectedSize,
+    selectedSizeObj,
+    selectedQuantity,
+    addToCart,
+    product,
+    selectedVariation,
+    selectedColorObj,
+  ]);
+
+  // Get default image URL
+  const imageUrl = useMemo(() => {
+    return (
+      selectedColorObj?.imageUrls?.[0] ||
+      variations?.[0]?.colors?.[0]?.imageUrls?.[0] ||
+      "https://via.placeholder.com/300"
+    );
+  }, [selectedColorObj, variations]);
 
   return (
     <div className="flex w-full relative flex-col overflow-visible rounded-lg border border-gray-700 shadow-lg">
@@ -107,12 +150,11 @@ const ProductCard = ({ product }) => {
       >
         <img
           className="object-cover w-full"
-          src={
-            selectedColorObj?.imageUrls?.[0] ||
-            product?.variations?.[0]?.colors?.[0]?.imageUrls?.[0] ||
-            "https://via.placeholder.com/300"
-          }
-          alt="product image"
+          src={imageUrl}
+          alt={product.name}
+          loading="lazy"
+          width={300}
+          height={300}
         />
         <div className="absolute inset-0 bg-black bg-opacity-20" />
       </Navigation>
@@ -186,6 +228,7 @@ const ProductCard = ({ product }) => {
        text-white hover:bg-emerald-700 focus:outline-none focus:ring-1 focus:ring-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleAddToCart}
           disabled={!selectedColor || !selectedSize}
+          aria-label="Add to cart"
         >
           <ShoppingCart size={22} className="mr-2" />
           Add to cart
@@ -193,6 +236,8 @@ const ProductCard = ({ product }) => {
       </div>
     </div>
   );
-};
+});
+
+ProductCard.displayName = "ProductCard";
 
 export default ProductCard;
