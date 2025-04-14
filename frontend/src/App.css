@@ -3,7 +3,9 @@
   --bg-color: #374151; /* Dark background (e.g., gray-700) */
   --text-color: #ffffff; /* Light text color (e.g., gray-300) */
 }
-
+body {
+  background-color: black;
+}
 /* Dark mode colors */
 body.dark {
   --bg-color: #1f2937; /* Dark mode background */

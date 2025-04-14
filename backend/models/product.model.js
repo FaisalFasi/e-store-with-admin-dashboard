@@ -35,7 +35,12 @@ const productSchema = new mongoose.Schema(
     isFeatured: { type: Boolean, default: false }, // Featured product flag
     // Pricing (Structured for precision)
     price: {
-      basePrice: { type: Number, required: true, min: 0 }, // Store in smallest unit (cents/paisa)
+      basePrice: {
+        type: Number,
+        required: true,
+        min: 0,
+        set: (v) => Math.round(v * 100), // Store in cents/paisa
+      }, // Store in smallest unit (cents/paisa)
       currency: { type: String, default: "USD", enum: ["USD", "EUR", "PKR"] },
       discount: { type: Number, min: 0, max: 100, default: 0 }, // Percentage (0-100)
     },

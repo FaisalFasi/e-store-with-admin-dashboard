@@ -6,6 +6,7 @@ import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
 import Select from "@/components/shared/Select/Select";
 import InputField from "@/components/shared/InputField/InputField";
+import { Price } from "@/components/currencyProvider/Price";
 
 const ProductCard = ({ product }) => {
   const { user } = useUserStore();
@@ -18,7 +19,8 @@ const ProductCard = ({ product }) => {
   // Get unique colors across all variations
   const uniqueColors = [
     ...new Set(
-      product?.variations?.flatMap((v) => v.colors.map((c) => c.name)) || []
+      product?.variations?.flatMap((v) => v.colors.map((c) => c.colorName)) ||
+        []
     ),
   ];
 
@@ -28,8 +30,8 @@ const ProductCard = ({ product }) => {
         ...new Set(
           product?.variations?.flatMap((v) =>
             v.colors
-              .filter((c) => c.name === selectedColor)
-              .flatMap((c) => c.sizes.map((s) => s.value))
+              .filter((c) => c.colorName === selectedColor)
+              .flatMap((c) => c.sizes.map((s) => s.size))
           )
         ),
       ]
@@ -39,16 +41,16 @@ const ProductCard = ({ product }) => {
   const selectedVariation = product?.variations?.find((variation) =>
     variation.colors.some(
       (color) =>
-        color.name === selectedColor &&
-        color.sizes.some((size) => size.value === selectedSize)
+        color.colorName === selectedColor &&
+        color.sizes.some((size) => size.size === selectedSize)
     )
   );
 
   const selectedColorObj = selectedVariation?.colors?.find(
-    (c) => c.name === selectedColor
+    (c) => c.colorName === selectedColor
   );
   const selectedSizeObj = selectedColorObj?.sizes?.find(
-    (s) => s.value === selectedSize
+    (s) => s.size === selectedSize
   );
 
   const handleColorChange = (color) => {
@@ -97,6 +99,7 @@ const ProductCard = ({ product }) => {
     });
   };
 
+  console.log("Selected size object:", selectedSizeObj);
   console.log("ProductCard - product:", product);
   return (
     <div className="flex w-full relative flex-col overflow-visible rounded-lg border border-gray-700 shadow-lg">
@@ -123,7 +126,11 @@ const ProductCard = ({ product }) => {
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-emerald-400">
-              ${selectedSizeObj?.price || product.basePrice}
+              <Price
+                priceInCents={
+                  selectedSizeObj?.price?.amount || product?.price?.basePrice
+                }
+              />
             </span>
           </p>
           {selectedSizeObj?.quantity >= 0 && (

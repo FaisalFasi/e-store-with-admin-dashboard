@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useEffect } from "react";
 import FeaturedProducts from "../../components/products/FeaturedProducts/FeaturedProducts";
 import { motion } from "framer-motion";
@@ -15,7 +15,6 @@ import ProductCarousel from "@/components/products/ProductCarousel/ProductCarous
 const HomePage = () => {
   const {
     fetchAllProducts,
-
     products,
     featuredProducts,
     fetchFeaturedProducts,

@@ -60,12 +60,13 @@ export const processSizes = async (sizes, vIndex) => {
     sizes.map(async (size, sIndex) => {
       const amount = parseFloat(size?.price?.amount) || 0;
       const currency = size?.price?.currency || "USD";
+      console.log("Price amount:", amount);
 
       return {
         size: String(size.size).toUpperCase().trim(),
         quantity: parseInt(size.quantity) || 0,
         price: {
-          amount: Math.round(amount * 100), // Convert to cents
+          amount: amount, // Convert to cents
           currency: currency,
         },
         sku: size?.sku || generateTempSku(vIndex, sIndex),
@@ -87,6 +88,7 @@ export const createProductVariations = async (
   if (!variations || !Array.isArray(variations)) {
     throw new Error("Variations must be an array");
   }
+  console.log("Variation   created:", JSON.stringify(variations));
 
   try {
     const variationDocs = await ProductVariation.insertMany(
@@ -107,7 +109,8 @@ export const createProductVariations = async (
                 generateTempSku(productId, variation.colorName, size.size),
               barcode: size.barcode || generateTempBarcode(),
               price: {
-                amount: Math.round((size.price?.amount || 0) * 100),
+                // amount: Math.round((size.price?.amount || 0) * 100),
+                amount: size.price?.amount || 0,
                 currency: size.price?.currency || currency,
               },
               isInStock: (size.quantity || 0) > 0,
@@ -120,6 +123,7 @@ export const createProductVariations = async (
       { session }
     );
 
+    console.log("Variation documents created:", JSON.stringify(variationDocs));
     return {
       variationIds: variationDocs.map((doc) => doc._id),
       defaultVariationId: variationDocs[0]?._id || null,

@@ -82,7 +82,7 @@ export const createProduct = async (req, res) => {
     if (!valid) {
       return handleError(res, message, "createProduct", 400);
     }
-
+    console.log("parsedprice", parsedPrice);
     // 3. DATA PREPARATION ============================================
     // Base product data
     const productData = {
@@ -99,9 +99,9 @@ export const createProduct = async (req, res) => {
       variations: [],
       defaultVariation: null,
       price: {
-        basePrice: Math.round(parsedPrice.basePrice * 100), // Store in cents
+        basePrice: parseFloat(parsedPrice.basePrice), // Store in cents
         currency: parsedPrice.currency || "USD",
-        discount: parsedPrice.discount || undefined,
+        discount: parsedPrice.discount || 0,
       },
       //  parseInt will convert string to number
       // and if it is not a number then it will return NaN

@@ -6,6 +6,7 @@ import NewsLetterSubscriber from "../NewsLetterSubscriber/NewsLetterSubscriber";
 import { useState } from "react";
 import { Mails } from "lucide-react";
 import Button from "../Button/Button";
+import { CurrencySelector } from "@/components/currencyProvider/CurrencySelector";
 
 const Navbar = () => {
   const { user, logout, loginAsGuest } = getUserData();
@@ -33,6 +34,7 @@ const Navbar = () => {
           )}
 
           <nav className="flex flex-wrap items-center gap-2 md:gap-4">
+            <CurrencySelector />
             <Button to={"/"} className="hidden sm:block">
               Home
             </Button>
