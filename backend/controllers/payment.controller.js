@@ -250,13 +250,6 @@ export const checkoutSuccess = async (req, res) => {
         // Find the selected variation
         const selectedVariation = product.selectedVariation;
 
-        console.log(
-          "Selected Variation:",
-          selectedVariation,
-          "Product ID:",
-          product
-        );
-
         if (!selectedVariation) {
           return handleError(
             res,
