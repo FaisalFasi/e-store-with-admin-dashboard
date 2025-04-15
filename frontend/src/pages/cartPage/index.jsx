@@ -70,7 +70,7 @@ const CartPage = () => {
         )}
       </motion.div>
       {/* Cart View */}
-      {/* {currentStep === "cart" && cart.length > 0 && <CartView cart={cart} />} */}
+      {currentStep === "cart" && cart.length > 0 && <CartView cart={cart} />}
 
       {/* Address Form */}
       {isAddressModalOpen && currentStep === "address" ? <AddressForm /> : ""}

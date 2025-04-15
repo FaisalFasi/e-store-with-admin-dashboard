@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useCartStore } from "../../../stores/useCartStore";
 import { getUserData } from "../../../utils/getUserData";
 import NewsLetterSubscriber from "../NewsLetterSubscriber/NewsLetterSubscriber";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mails } from "lucide-react";
 import Button from "../Button/Button";
 import { CurrencySelector } from "@/components/currencyProvider/CurrencySelector";
@@ -11,12 +11,15 @@ import { CurrencySelector } from "@/components/currencyProvider/CurrencySelector
 const Navbar = () => {
   const { user, logout, loginAsGuest } = getUserData();
   let isAdmin = user?.role === "admin";
-  const { cart } = useCartStore();
+  const { cart, getCartItems } = useCartStore();
   const [openSubscribePopup, setOpenSubscribePopup] = useState(false);
 
   const handleSubscribePopup = () => {
     setOpenSubscribePopup(!openSubscribePopup);
   };
+  useEffect(() => {
+    getCartItems();
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 w-full bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg z-40 transition-all duration-300 border-b border-emerald-800">

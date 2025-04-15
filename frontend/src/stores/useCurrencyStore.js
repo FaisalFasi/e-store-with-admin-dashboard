@@ -31,20 +31,13 @@ export const CURRENCIES = {
     decimalPlaces: 0, // PKR typically doesn't use decimals in display
   },
 };
-
-// here persist is used to store the state in local storage
-// so that the selected currency and exchange rates persist across page reloads
-// and sessions
-// this is useful for user experience, as users don't have to select their currency every time they visit the site
-// and the exchange rates are updated automatically
-// what will happen is i dont use persist
-// the selected currency and exchange rates will be lost when the page is reloaded
 export const useCurrencyStore = create(
   persist(
     (set, get) => ({
       selectedCurrency: CURRENCIES.USD,
       currencies: CURRENCIES,
       lastUpdated: null,
+      lastErrorTime: null,
       isLoading: false,
       error: null,
 
@@ -57,10 +50,14 @@ export const useCurrencyStore = create(
 
       updateExchangeRates: async () => {
         const currentTime = Date.now();
-        const lastUpdated = get().lastUpdated;
+        const { lastUpdated, lastErrorTime } = get();
 
-        // Only update if it's been more than 1 hour since last update
-        if (lastUpdated && currentTime - lastUpdated < 3600000) {
+        // If last update was successful and within 24h, don't update
+        if (
+          lastUpdated &&
+          currentTime - lastUpdated < 86400000 &&
+          !lastErrorTime
+        ) {
           return;
         }
 
@@ -91,6 +88,7 @@ export const useCurrencyStore = create(
             set({
               currencies: updatedCurrencies,
               lastUpdated: currentTime,
+              lastErrorTime: null,
               isLoading: false,
             });
           }
@@ -99,12 +97,14 @@ export const useCurrencyStore = create(
           set({
             error: error.message || "Unknown error",
             isLoading: false,
+            lastErrorTime: currentTime,
           });
         }
       },
     }),
     {
       name: "currency-store",
+      getStorage: () => localStorage, // Ensure persistence in local storage
     }
   )
 );

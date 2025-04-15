@@ -1,4 +1,4 @@
-export const cacheChecking = (
+export const isCacheValidForFetchingProducts = (
   get,
   forceRefetch = false,
   cacheDuration = 5 * 60 * 1000
