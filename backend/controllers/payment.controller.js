@@ -6,6 +6,7 @@ import Product from "../models/product.model.js";
 import UserAddress from "../models/address.model.js";
 import { handleError } from "../utils/handleError/handleError.js";
 import ProductVariation from "../models/productVariation.model.js";
+import crypto from "crypto";
 
 export const createCheckoutSession = async (req, res) => {
   try {
@@ -47,9 +48,9 @@ export const createCheckoutSession = async (req, res) => {
           (color) => {
             return {
               color: color?.color,
-              name: color?.name?.toUpperCase(),
-              size: color.sizes[0].value,
-              price: color.sizes[0].price,
+              colorName: color?.colorName?.toUpperCase(),
+              size: color.sizes[0].size,
+              price: color.sizes[0].price.amount,
               imageUrls: color.imageUrls,
               quantity: product.quantity,
             };
@@ -57,7 +58,7 @@ export const createCheckoutSession = async (req, res) => {
         );
 
         // Find the selected color (case-insensitive)
-        const selectedColor = __selectedProductVariationData[0]?.name;
+        const selectedColor = __selectedProductVariationData[0]?.colorName;
 
         if (!selectedColor) {
           return handleError(
@@ -126,23 +127,31 @@ export const createCheckoutSession = async (req, res) => {
     // Step 2: Handle Coupon (If Provided)
     let discountAmount = 0;
     let coupon = null;
+
     if (couponCode) {
       coupon = await Coupon.findOne({
         code: couponCode,
         userId: userId,
         isActive: true,
-      });
+      }).lean();
+
       if (coupon) {
-        discountAmount = Math.round(
-          (totalAmount * coupon.discountPercentage) / 100
-        );
-        totalAmount -= discountAmount;
+        if (!coupon.discountValue || !coupon.discountType) {
+          return handleError(res, "Invalid coupon configuration", 400);
+        }
+
+        // Calculate discount based on type
+        if (coupon.discountType === "percentage") {
+          discountAmount = Math.round(
+            (totalAmount * coupon.discountValue) / 100
+          );
+        } else if (coupon.discountType === "fixed") {
+          discountAmount = Math.round(coupon.discountValue * 100); // Convert to cents
+        }
+
+        totalAmount = Math.max(0, totalAmount - discountAmount); // Ensure total doesn't go negative
       }
     }
-
-    const get_price = (p) => p.variations[0].colors[0].sizes[0].price;
-    const get_color = (p) => p.variations[0].colors[0].name;
-    const get_size = (p) => p.variations[0].colors[0].sizes[0].value;
 
     // Step 3: Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -154,7 +163,10 @@ export const createCheckoutSession = async (req, res) => {
       discounts: coupon
         ? [
             {
-              coupon: await createStripeCoupon(coupon.discountPercentage),
+              coupon: await createStripeCoupon(
+                coupon.discountValue,
+                coupon.discountType
+              ),
             },
           ]
         : [],
@@ -162,7 +174,7 @@ export const createCheckoutSession = async (req, res) => {
         userType: userId ? "loggedIn" : "guest",
         userId: userId?.toString() || "", // Save user ID if logged in
         guestId: guestId || "", // Save guest ID if not logged in
-        couponCode: couponCode || "",
+        couponCode: couponCode || null,
         products: JSON.stringify(
           products.map((p) => ({
             id: p._id,
@@ -172,9 +184,6 @@ export const createCheckoutSession = async (req, res) => {
         ),
       },
     });
-    // price: get_price(p),
-    // selectedColor: get_color(p),
-    // selectedSize: get_size(p),
 
     // Step 4: Create a new coupon if total amount is above a threshold
     if (totalAmount >= 20000) {
@@ -241,6 +250,13 @@ export const checkoutSuccess = async (req, res) => {
         // Find the selected variation
         const selectedVariation = product.selectedVariation;
 
+        console.log(
+          "Selected Variation:",
+          selectedVariation,
+          "Product ID:",
+          product
+        );
+
         if (!selectedVariation) {
           return handleError(
             res,
@@ -264,9 +280,9 @@ export const checkoutSuccess = async (req, res) => {
           (color) => {
             return {
               color: color?.color || "",
-              name: color?.name?.toUpperCase() || "",
-              size: color.sizes[0].value,
-              price: color.sizes[0].price,
+              colorName: color?.colorName?.toUpperCase() || "",
+              size: color.sizes[0].size,
+              price: color.sizes[0].price.amount,
               imageUrls: color.imageUrls,
               quantity: product.quantity,
             };
@@ -274,7 +290,7 @@ export const checkoutSuccess = async (req, res) => {
         );
 
         // Find the selected color
-        const selectedColor = __selectedProductVariationData[0]?.name;
+        const selectedColor = __selectedProductVariationData[0]?.colorName;
 
         if (!selectedColor) {
           return handleError(
@@ -356,9 +372,9 @@ export const checkoutSuccess = async (req, res) => {
                 }
 
                 // Get the first color and size (or implement your logic to get the correct ones)
-                const colorName = variation.colors[0]?.name || "";
-                const size = variation.colors[0]?.sizes[0]?.value || "";
-                const price = variation.colors[0]?.sizes[0]?.price || 0;
+                const colorName = variation.colors[0]?.colorName || "";
+                const size = variation.colors[0]?.sizes[0]?.size || "";
+                const price = variation.colors[0]?.sizes[0]?.price.amount || 0;
 
                 return {
                   product: p.id,
@@ -401,6 +417,12 @@ export const checkoutSuccess = async (req, res) => {
         { session: mongoDB_Session }
       );
 
+      console.log(
+        "stripeSession.amount_total:",
+        stripeSession.amount_total,
+        "stripeSession.amount_subtotal:",
+        stripeSession.amount_subtotal
+      );
       // Deactivate the coupon if it exists
       if (stripeSession.metadata.couponCode) {
         await Coupon.findOneAndUpdate(
@@ -423,27 +445,115 @@ export const checkoutSuccess = async (req, res) => {
     mongoDB_Session.endSession();
   }
 };
+/**
+ * Creates a Stripe coupon with proper validation and support for both percentage and fixed discounts
+ * @param {number} discountValue - The discount value (percentage or fixed amount)
+ * @param {string} discountType - Either 'percentage' or 'fixed'
+ * @returns {Promise<string>} The Stripe coupon ID
+ * @throws {Error} If invalid parameters are provided
+ */
+async function createStripeCoupon(discountValue, discountType) {
+  // Validate input parameters
+  if (typeof discountValue !== "number" || isNaN(discountValue)) {
+    throw new Error("Discount value must be a valid number");
+  }
 
-async function createStripeCoupon(discountPercentage) {
-  const coupon = await stripe.coupons.create({
-    percent_off: discountPercentage,
+  if (!["percentage", "fixed"].includes(discountType)) {
+    throw new Error('Discount type must be either "percentage" or "fixed"');
+  }
+
+  // Prepare coupon parameters based on discount type
+  const couponParams = {
     duration: "once",
-  });
+    metadata: {
+      created_at: new Date().toISOString(),
+      discount_type: discountType,
+    },
+  };
 
-  return coupon.id;
+  if (discountType === "percentage") {
+    // Validate percentage range (0-100)
+    if (discountValue <= 0 || discountValue > 100) {
+      throw new Error("Percentage discount must be between 0 and 100");
+    }
+    couponParams.percent_off = Math.round(discountValue);
+  } else {
+    // Validate fixed amount (must be positive)
+    if (discountValue <= 0) {
+      throw new Error("Fixed discount amount must be greater than 0");
+    }
+    couponParams.amount_off = Math.round(discountValue * 100); // Convert to cents
+    couponParams.currency = "usd";
+  }
+
+  try {
+    const coupon = await stripe.coupons.create(couponParams);
+    return coupon.id;
+  } catch (error) {
+    console.error("Failed to create Stripe coupon:", error);
+    throw new Error(`Could not create coupon: ${error.message}`);
+  }
 }
 
-async function createNewCoupon(userId) {
-  await Coupon.findOneAndDelete({ userId });
+async function createNewCoupon(userId, options = {}) {
+  const {
+    discountValue = 10,
+    discountType = "percentage",
+    daysValid = 30,
+    maxUsage = 1,
+    maxUsagePerUser = 1,
+    minOrderAmount,
+  } = options;
 
+  // Validate input
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  if (typeof discountValue !== "number" || isNaN(discountValue)) {
+    throw new Error("Discount value must be a valid number");
+  }
+
+  if (!["percentage", "fixed"].includes(discountType)) {
+    throw new Error('Discount type must be either "percentage" or "fixed"');
+  }
+
+  // Generate a unique coupon code
+  let couponCode;
+  let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  // Keep trying until we find a unique code or reach max attempts
+  while (!isUnique && attempts < maxAttempts) {
+    attempts++;
+    couponCode = "GIFT" + crypto.randomBytes(3).toString("hex").toUpperCase();
+
+    const existingCoupon = await Coupon.findOne({ code: couponCode });
+    if (!existingCoupon) {
+      isUnique = true;
+    }
+  }
+
+  if (!isUnique) {
+    throw new Error("Failed to generate a unique coupon code");
+  }
+
+  // Create new coupon
   const newCoupon = new Coupon({
-    code: "GIFT" + Math.random().toString(36).substring(2, 8).toUpperCase(),
-    discountPercentage: 10,
-    expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    userId: userId,
+    code: couponCode,
+    discountValue,
+    discountType,
+    expirationDate: new Date(Date.now() + daysValid * 24 * 60 * 60 * 1000),
+    isActive: true,
+    maxUsage,
+    maxUsagePerUser,
+    minOrderAmount,
+    userIds: [userId], // Add user to the allowed users list
+    createdAt: new Date(),
   });
 
+  // Save and return the coupon
   await newCoupon.save();
-
   return newCoupon;
 }

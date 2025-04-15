@@ -1,11 +1,6 @@
 import Coupon from "../models/coupen.model.js";
 import { handleError } from "../utils/handleError/handleError.js";
 
-const sendErrorResponse = (res, statusCode, message, error) => {
-  console.error(message, error);
-  return res.status(statusCode).json({ message, error: error.message });
-};
-
 export const getCoupon = async (req, res) => {
   try {
     const coupon = await Coupon.findOne({
