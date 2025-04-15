@@ -1,4 +1,10 @@
 import Coupon from "../models/coupen.model.js";
+import { handleError } from "../utils/handleError/handleError.js";
+
+const sendErrorResponse = (res, statusCode, message, error) => {
+  console.error(message, error);
+  return res.status(statusCode).json({ message, error: error.message });
+};
 
 export const getCoupon = async (req, res) => {
   try {
@@ -15,17 +21,18 @@ export const getCoupon = async (req, res) => {
     res.status(200).json(coupon);
   } catch (err) {
     console.log("Error in getCoupon controller: ", err.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: err.message });
+    handleError(res, err, "Getting coupons", 500);
   }
 };
 
 export const validateCoupon = async (req, res) => {
-  try {
-    const { code } = req.body;
-    const user = req.user;
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ message: "Coupon code is required" });
+  }
 
+  try {
+    const user = req.user; // Get the logged-in user from the request
     // Find the coupon
     const coupon = await Coupon.findOne({
       code: code,
@@ -42,7 +49,8 @@ export const validateCoupon = async (req, res) => {
     if (coupon.usageCount >= coupon.maxUsage) {
       coupon.isActive = false; // Deactivate the coupon
       await coupon.save();
-      return res.status(400).json({ message: "Coupon usage limit reached" });
+
+      res.status(400).json({ message: "Coupon usage limit reached" });
     }
 
     // Increment the usage count
@@ -59,9 +67,7 @@ export const validateCoupon = async (req, res) => {
     });
   } catch (err) {
     console.log("Error in validateCoupon controller: ", err.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: err.message });
+    handleError(res, err, "Validating coupon", 500);
   }
 };
 
@@ -83,8 +89,6 @@ export const getCouponsForUser = async (req, res) => {
     res.status(200).json(coupons);
   } catch (err) {
     console.error("Error fetching user coupons:", err.message);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: err.message });
+    handleError(res, err, "Fetching user coupons", 500);
   }
 };

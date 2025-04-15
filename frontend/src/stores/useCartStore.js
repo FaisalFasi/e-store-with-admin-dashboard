@@ -13,9 +13,11 @@ export const useCartStore = create(
       subTotal: 0,
       loading: false,
       isCouponApplied: false,
+      savings: 0,
 
       // Fetch the user's active coupon
       getMyCoupon: async () => {
+        set({ loading: true });
         try {
           const response = await axiosBaseURL.get("/coupons");
           const coupon = response?.data;
@@ -37,13 +39,16 @@ export const useCartStore = create(
         } catch (error) {
           console.error("Error fetching coupon:", error);
           toast.error("Failed to fetch coupon");
+        } finally {
+          set({ loading: false });
         }
       },
 
       // Apply a coupon by code
       applyCoupon: async (code) => {
+        set({ loading: true });
         try {
-          const { coupon: existingCoupon, isCouponApplied } = get();
+          const { isCouponApplied } = get();
 
           // Check if a coupon is already applied
           if (isCouponApplied) {
@@ -62,6 +67,12 @@ export const useCartStore = create(
             return;
           }
 
+          // Check if the coupon is expired
+          if (new Date(coupon.expirationDate) < new Date()) {
+            toast.error("Coupon has expired");
+            return;
+          }
+
           // Set the coupon and mark it as applied
           set({ coupon, isCouponApplied: true });
 
@@ -73,6 +84,8 @@ export const useCartStore = create(
           toast.error(
             error.response?.data?.message || "Failed to apply coupon"
           );
+        } finally {
+          set({ loading: false });
         }
       },
 
@@ -99,22 +112,27 @@ export const useCartStore = create(
 
         try {
           const response = await axiosBaseURL.get("/cart");
+          const { cartItems } = response?.data || {}; // Destructure cartItems
+
+          console.log("Cart items:", cartItems);
+
           set({
-            cart: response?.data?.cartItems,
+            cart: cartItems || [], // Fallback to an empty array if cartItems is undefined
             loading: false,
           });
-          console.log(
-            "Cart items:",
-            response?.data?.cartItems,
-            "Cart items length:",
-            response?.data?.cartItems.length
-          );
 
-          get().calculate_Total_AmountInCart();
+          get().calculate_Total_AmountInCart(); // Use consistent naming
         } catch (error) {
-          set({ cart: [], total: 0, subTotal: 0, loading: false });
-          console.log("Error in getCartItems:", error);
-          toast.error("Error in getCartItems");
+          console.error("Error in getCartItems:", error); // Log the error for debugging
+          set({
+            cart: [],
+            total: 0,
+            subTotal: 0,
+            loading: false,
+          });
+
+          // Provide a more detailed error message
+          toast.error("Failed to load cart items. Please try again later.");
         }
       },
 
@@ -281,7 +299,8 @@ export const useCartStore = create(
 
       calculate_Total_AmountInCart: () => {
         const { cart, coupon } = get();
-
+        console.log("Calculating total amount in cart...");
+        console.log("Cart:", cart);
         // If cart is empty, reset totals
         if (!Array.isArray(cart)) {
           console.warn("Invalid cart data");
@@ -298,7 +317,7 @@ export const useCartStore = create(
 
           // Use the size object's price if available, fallback to base price
           const price = parseFloat(
-            item?.product?.variations[0].colors[0].sizes[0]?.price?.amount || 0
+            item?.variations[0].colors[0].sizes[0]?.price?.amount || 0
           );
 
           const quantity = parseInt(item.quantity, 10);
@@ -323,6 +342,11 @@ export const useCartStore = create(
           const discount = subTotal * (coupon.discountPercentage / 100);
           total = Math.max(0, subTotal - discount); // Ensure total isn't negative
         }
+        console.log("Coupon:", coupon);
+        console.log("SubTotal:", subTotal);
+        console.log("Total:", total);
+        console.log("Discount:", coupon?.discountPercentage);
+        console.log("Savings:", subTotal - total);
 
         // Update state
         set({ subTotal, total });

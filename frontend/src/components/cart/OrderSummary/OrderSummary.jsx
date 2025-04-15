@@ -3,16 +3,18 @@ import { motion } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore";
 import { Link } from "react-router-dom";
 import { useCheckoutStore } from "../../../stores/useCheckoutStore";
+import { usePrice } from "@/utils/currency/currency";
 
 const OrderSummary = () => {
   const { subTotal, total, coupon, isCouponApplied, savings } = useCartStore();
 
   const { setCurrentStep, openAddressModal } = useCheckoutStore();
+  const { formatPrice } = usePrice();
 
   // Format values for display
-  const formattedSubtotal = subTotal ? subTotal.toFixed(2) : "0.00";
-  const formattedTotal = total ? total.toFixed(2) : "0.00";
-  const formattedSavings = savings ? savings.toFixed(2) : "0.00";
+  const formattedSubtotal = subTotal ? formatPrice(subTotal) : "0.00";
+  const formattedTotal = total ? formatPrice(total) : "0.00";
+  const formattedSavings = savings ? formatPrice(savings) : "0.00";
 
   const hanldeProceedToAddress = () => {
     setCurrentStep("address");
@@ -29,6 +31,7 @@ const OrderSummary = () => {
     formattedTotal,
     formattedSavings,
   });
+
   return (
     <motion.div
       className=" space-y-4 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm sm:p-6"

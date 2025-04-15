@@ -6,11 +6,12 @@ import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
 import Select from "@/components/shared/Select/Select";
 import InputField from "@/components/shared/InputField/InputField";
-import { Price } from "@/components/currencyProvider/Price";
+import { usePrice } from "@/utils/currency/currency.js";
 
 const ProductCard = React.memo(({ product }) => {
   const { user } = useUserStore();
   const { addToCart } = useCartStore();
+  const { formatPrice } = usePrice();
 
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
@@ -166,11 +167,9 @@ const ProductCard = React.memo(({ product }) => {
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-emerald-400">
-              <Price
-                priceInCents={
-                  selectedSizeObj?.price?.amount || product?.price?.basePrice
-                }
-              />
+              {formatPrice(
+                selectedSizeObj?.price?.amount || product?.price?.basePrice
+              )}
             </span>
           </p>
           {selectedSizeObj?.quantity >= 0 && (
