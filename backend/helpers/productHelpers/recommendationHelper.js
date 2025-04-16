@@ -23,9 +23,10 @@ export const __getRecommendedProducts = async (req, res) => {
 
     // 2. Determine the most specific category level to use
     const categoryLevels = [
-      currentProduct.category.grandchild,
-      currentProduct.category.child,
-      currentProduct.category.parent,
+      currentProduct.category.l4,
+      currentProduct.category.l3,
+      currentProduct.category.l2,
+      currentProduct.category.l1,
     ];
     const categoryId = categoryLevels.find((id) => id) || null;
     const cacheKey = `recs:cat:${categoryId}`;
@@ -102,14 +103,17 @@ async function getProductsFromDatabase(currentProductId, category, categoryId) {
 
   const categoryConditions = [];
 
-  if (category.grandchild) {
-    categoryConditions.push({ "category.grandchild": category.grandchild });
+  if (category.l4) {
+    categoryConditions.push({ "category.l4": category.l4 });
   }
-  if (category.child) {
-    categoryConditions.push({ "category.child": category.child });
+  if (category.l3) {
+    categoryConditions.push({ "category.l3": category.l3 });
   }
-  if (category.parent) {
-    categoryConditions.push({ "category.parent": category.parent });
+  if (category.l2) {
+    categoryConditions.push({ "category.l2": category.l2 });
+  }
+  if (category.l1) {
+    categoryConditions.push({ "category.l1": category.l1 });
   }
 
   if (categoryConditions.length > 0) {
@@ -121,7 +125,7 @@ async function getProductsFromDatabase(currentProductId, category, categoryId) {
 
   const products = await Product.find(query)
     .limit(10)
-    .populate("category.parent category.child category.grandchild", "name slug")
+    .populate("category.l1 category.l2 category.l3 category.l4", "name slug")
     .populate({
       path: "variations",
       model: "ProductVariation", // Double-check model name
@@ -146,7 +150,7 @@ async function getRandomProducts(excludeProductId) {
     // .limit(10)
     // .select("name  slug  variations ")
     // .sort({ createdAt: -1 })
-    .populate("category.parent category.child category.grandchild", "name slug")
+    .populate("category.l1 category.l2 category.l3 category.l4", "name slug")
     .populate({
       path: "variations",
       model: "ProductVariation", // Double-check model name
@@ -186,9 +190,10 @@ export async function invalidateRecommendationsCache(productId) {
     if (!product?.category) return;
 
     const categoryLevels = [
-      product.category.grandchild,
-      product.category.child,
-      product.category.parent,
+      product.category.l4,
+      product.category.l3,
+      product.category.l2,
+      product.category.l1,
     ];
 
     await Promise.all(

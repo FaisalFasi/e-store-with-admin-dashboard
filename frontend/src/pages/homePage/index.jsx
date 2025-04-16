@@ -11,6 +11,7 @@ import { useProductStoreData } from "../../hooks/useProductStoreData.js";
 import ProductCard from "../../components/products/ProductCard/ProductCard.jsx";
 import { useProductStore } from "../../stores/useProductStore.js";
 import ProductCarousel from "@/components/products/ProductCarousel/ProductCarousel";
+import LoadingSpinner from "@/components/shared/LoadingSpinner/LoadingSpinner";
 
 const HomePage = () => {
   const {
@@ -73,13 +74,20 @@ const HomePage = () => {
             <CategoryItem category={category} key={category.name} />
           ))} */}
         </div>
-        {!isLoading && featuredProducts.length > 0 && (
-          <ProductCarousel
-            products={featuredProducts}
-            title={"Featured Products"}
-            titleColor="emerald"
-          />
+        {isLoading && featuredProducts.length > 0 ? (
+          <LoadingSpinner />
+        ) : (
+          <div>
+            {featuredProducts.length > 0 && (
+              <ProductCarousel
+                products={featuredProducts}
+                title={"Featured Products"}
+                titleColor="emerald"
+              />
+            )}
+          </div>
         )}
+
         {/* {!isLoading && featuredProducts.length > 0 && (
           <FeaturedProducts featuredProducts={featuredProducts} />
         )} */}

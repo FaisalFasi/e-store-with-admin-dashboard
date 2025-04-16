@@ -122,10 +122,7 @@ export const getAllCategories = async (req, res) => {
 
     const buildCategoryTree = (categories, parentId = null) => {
       return categories
-        .filter(
-          (category) =>
-            category.parentCategory?.toString() === parentId?.toString()
-        )
+        .filter((category) => category.l1?.toString() === parentId?.toString())
         .map((category) => ({
           ...category.toObject(), // Convert Mongoose document to a plain object
           subCategories: buildCategoryTree(categories, category._id), // Recursively find subcategories

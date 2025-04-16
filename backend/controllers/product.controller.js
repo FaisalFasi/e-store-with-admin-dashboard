@@ -249,7 +249,7 @@ export const getHomepageProducts = async (req, res) => {
 
     const query = { status: "active" };
     if (category) {
-      query["category.parent"] = new mongoose.Types.ObjectId(category);
+      query["category.l1"] = new mongoose.Types.ObjectId(category);
     }
 
     const [products, total] = await Promise.all([
@@ -258,7 +258,7 @@ export const getHomepageProducts = async (req, res) => {
         .limit(Number(limit))
         .sort(sort)
         .populate("defaultVariation", "price imageUrls")
-        .populate("category.parent", "name slug")
+        .populate("category.l1", "name slug")
         .lean(),
       Product.countDocuments(query),
     ]);
@@ -307,7 +307,7 @@ export const getAllProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category.parent category.child category.grandchild")
+      .populate("category.l1 category.child category.grandchild")
       .populate({
         path: "variations",
         populate: {
@@ -331,6 +331,7 @@ export const getProductById = async (req, res) => {
 };
 
 // Enhanced getFeaturedProducts
+
 export const getFeaturedProducts = async (req, res) => {
   try {
     const cacheKey = "featured_products";
@@ -339,27 +340,49 @@ export const getFeaturedProducts = async (req, res) => {
     if (!featuredProducts) {
       featuredProducts = await Product.find({
         isFeatured: true,
-        status: "draft",
+        status: "active",
       })
-        .populate(
-          "category.parent category.child category.grandchild",
-          "name slug"
-        )
-        .populate({
-          path: "variations",
-          model: "ProductVariation", // Double-check model name
-
-          populate: {
-            path: "colors.sizes",
+        .populate([
+          {
+            path: "category.l1 category.l2 category.l3 category.l4",
+            select: "name slug",
+          },
+          {
+            path: "variations",
             model: "ProductVariation",
           },
-        })
+          {
+            path: "defaultVariation",
+            model: "ProductVariation",
+            select: "price imageUrls",
+          },
+        ])
         .lean();
 
+      // Save to Redis
       await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600);
+      console.log("Fetched from DB and cached");
     } else {
-      // Parse cached data
+      // Parse and manually populate variations
       featuredProducts = JSON.parse(featuredProducts);
+      console.log("Fetched from Redis");
+
+      for (let product of featuredProducts) {
+        if (product.variations && product.variations.length) {
+          const fullVariations = await ProductVariation.find({
+            _id: { $in: product.variations },
+          }).lean();
+
+          product.variations = fullVariations;
+        }
+
+        if (product.defaultVariation) {
+          const defaultVar = await ProductVariation.findById(
+            product.defaultVariation
+          ).lean();
+          product.defaultVariation = defaultVar;
+        }
+      }
     }
 
     res.status(200).json({ success: true, products: featuredProducts });
@@ -368,7 +391,6 @@ export const getFeaturedProducts = async (req, res) => {
   }
 };
 
-// Enhanced getRecommendedProducts
 export const getRecommendedProducts = async (req, res) => {
   __getRecommendedProducts(req, res);
 };
@@ -385,9 +407,10 @@ export const getProductByCategory = async (req, res) => {
     const { categoryId } = req.params;
     const products = await Product.find({
       $or: [
-        { "category.parent": categoryId },
-        { "category.child": categoryId },
-        { "category.grandchild": categoryId },
+        { "category.l1": categoryId },
+        { "category.l2": categoryId },
+        { "category.l3": categoryId },
+        { "category.l4": categoryId },
       ],
     }).populate("defaultVariation", "price imageUrls");
 
@@ -511,9 +534,10 @@ export const deleteProduct = async (req, res) => {
     await session.commitTransaction();
 
     await invalidateCategoryRecommendations(
-      product.category.grandchild ||
-        product.category.child ||
-        product.category.parent
+      product.category.l4 ||
+        product.category.l3 ||
+        product.category.l2 ||
+        product.category.l1
     );
 
     res.json({

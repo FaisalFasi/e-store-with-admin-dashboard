@@ -3,9 +3,12 @@ import { useProductStore } from "../../../stores/useProductStore";
 import { Trash, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import CustomTooltip from "../../shared/CustomTooltip/CustomTooltip";
+import { usePrice } from "@/utils/currency/currency";
 
 const ProductsList = () => {
   const { deleteProduct, products, toggleFeaturedProduct } = useProductStore();
+
+  const { formatPrice } = usePrice();
 
   console.log("products--:", products);
 
@@ -75,8 +78,8 @@ const ProductsList = () => {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-gray-300 text-sm">
                     $
-                    {product.variations[0]?.colors[0]?.sizes[0].price.toFixed(
-                      2
+                    {formatPrice(
+                      product?.variations[0]?.colors[0]?.sizes[0].price?.amount
                     ) || "N/A"}{" "}
                   </div>
                 </td>
@@ -139,8 +142,9 @@ const ProductsList = () => {
               </p>
               <p className="text-gray-200 mt-1 font-bold text-xl">
                 $
-                {product.variations[0]?.colors[0]?.sizes[0].price.toFixed(2) ||
-                  "N/A"}
+                {formatPrice(
+                  product.variations[0]?.colors[0]?.sizes[0].price?.amount
+                ) || "N/A"}
               </p>
 
               <div className="mt-4 flex justify-center space-x-2">

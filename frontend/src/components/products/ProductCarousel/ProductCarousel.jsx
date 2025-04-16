@@ -3,12 +3,8 @@ import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useCartStore } from "../../../stores/useCartStore";
 import Navigation from "../../shared/Navigation/Navigation";
 import { Link } from "react-router-dom";
+import { usePrice } from "@/utils/currency/currency";
 
-// products = [],
-//   title = "Products",
-//   titleColor = "emerald",
-//   itemLinkPath = "/products",
-//   showAddToCart = true,
 const ProductCarousel = ({
   products = [],
   title = "Products",
@@ -20,6 +16,9 @@ const ProductCarousel = ({
   const [itemsPerPage, setItemsPerPage] = useState(4);
 
   const { addToCart } = useCartStore();
+  const { formatPrice } = usePrice();
+
+  useEffect(() => {}, [products]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -65,11 +64,13 @@ const ProductCarousel = ({
 
   const getProductPrice = (product) => {
     return (
-      product?.variations?.[0]?.colors?.[0]?.sizes?.[0]?.price ||
-      product?.price ||
+      product?.variations?.[0]?.colors?.[0]?.sizes?.[0]?.price?.amount ||
+      product?.price?.basePrice ||
       0
     );
   };
+
+  console.log("products--:", products);
 
   return (
     <div className="py-12">
@@ -119,7 +120,7 @@ const ProductCarousel = ({
                             <p
                               className={`text-${titleColor}-300 font-medium mb-4`}
                             >
-                              ${Number(productPrice || 0).toFixed(2)}
+                              {formatPrice(productPrice || 0)}
                             </p>
                           </div>
                           {showAddToCart && (

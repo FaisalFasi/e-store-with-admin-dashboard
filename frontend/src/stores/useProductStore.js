@@ -49,10 +49,6 @@ export const useProductStore = create(
         }
       },
 
-      // Check cache first if not forcing refetch
-      // if (!forceRefetch && isCacheValidForFetchingProducts(get)) {
-      //   return;
-      // }
       fetchAllProducts: async (forceRefetch = false) => {
         set({ loading: true, error: null });
 
@@ -160,13 +156,16 @@ export const useProductStore = create(
       },
 
       fetchFeaturedProducts: async (forceRefetch = false) => {
-        if (!forceRefetch && get().featuredProducts.length > 0) {
-          return;
-        }
+        // if (!forceRefetch && get().featuredProducts.length > 0) {
+        //   return;
+        // }
+        console.log("Fetching featured products");
 
         set({ loading: true, error: null });
         try {
           const response = await axiosBaseURL.get("/products/featured");
+
+          console.log("Featured products response:", response.data);
 
           if (!response.data?.products) {
             set({ featuredProducts: [], loading: false });
