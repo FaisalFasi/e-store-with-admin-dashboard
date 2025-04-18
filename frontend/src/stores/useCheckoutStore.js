@@ -46,7 +46,6 @@ export const useCheckoutStore = create((set, get) => ({
   errors: {},
 
   // write initial state to set the adress object
-
   setAddress: (updatedFields) =>
     set((state) => ({
       address: { ...state.address, ...updatedFields },
@@ -63,12 +62,11 @@ export const useCheckoutStore = create((set, get) => ({
   setCurrentStep: (step) => set({ currentStep: step }),
 
   // write a function to handle the payment
-  handlePayment: async (cart, coupon) => {
+  handlePayment: async (cart, coupon, selectedCurrency) => {
     const { currentStep, openAddressModal, resetToAddress } = get();
 
-    console.log("Current Step:", currentStep);
-    console.log("Cart:", cart);
-    console.log("Coupon:", coupon);
+    console.log("currency currency:", selectedCurrency);
+    console.log("cart cart:", cart);
 
     if (currentStep === "address") {
       const stripe = await stripePromise;
@@ -78,9 +76,9 @@ export const useCheckoutStore = create((set, get) => ({
           {
             products: cart,
             couponCode: coupon ? coupon.code : null,
+            currency: selectedCurrency.code,
           }
         );
-        console.log("Response :", res);
 
         const session = res?.data;
         const result = await stripe.redirectToCheckout({

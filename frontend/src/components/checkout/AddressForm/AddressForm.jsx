@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "../../../stores/useCartStore";
 import { useCheckoutStore } from "../../../stores/useCheckoutStore";
+import { usePrice } from "@/utils/currency/currency";
 
 const AddressForm = () => {
   const { saveShippingAddress, cart, coupon } = useCartStore();
@@ -13,6 +14,8 @@ const AddressForm = () => {
     errors,
     setErrors,
   } = useCheckoutStore();
+
+  const { selectedCurrency } = usePrice();
 
   useEffect(() => {
     localStorage.setItem("address", JSON.stringify(address));
@@ -66,8 +69,10 @@ const AddressForm = () => {
     if (Object.keys(validationErrors).length === 0) {
       setCurrentStep("address");
       handleSaveShippingAddress();
+      console.log("selectedCurrency saved:", selectedCurrency);
+
       // paymeent function is called from the useCheckoutStore.js
-      handlePayment(cart, coupon);
+      handlePayment(cart, coupon, selectedCurrency);
     }
   };
 

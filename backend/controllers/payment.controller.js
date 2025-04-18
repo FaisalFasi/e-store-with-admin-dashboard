@@ -8,10 +8,42 @@ import { handleError } from "../utils/handleError/handleError.js";
 import ProductVariation from "../models/productVariation.model.js";
 import crypto from "crypto";
 
+const fetchExchangeRates = async () => {
+  try {
+    const response = await fetch(
+      "https://api.exchangerate-api.com/v4/latest/USD"
+    );
+    if (!response.ok) throw new Error("Failed to fetch exchange rates");
+    const data = await response.json();
+    return data.rates;
+  } catch (error) {
+    console.error("Failed to fetch live rates, using fallback:", error);
+    // Fallback rates if API fails
+    return {
+      USD: 1,
+      EUR: 0.93,
+      GBP: 0.79,
+      PKR: 278.5,
+    };
+  }
+};
+
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { products, couponCode, guestId } = req.body;
+    const { products, couponCode, guestId, currency = "USD" } = req.body;
     const userId = req.user ? req.user._id : null;
+
+    // Validate currency input (case-insensitive)
+    const normalizedCurrency = currency.toUpperCase();
+    const supportedCurrencies = ["USD", "EUR", "GBP", "PKR"];
+
+    if (!supportedCurrencies.includes(normalizedCurrency)) {
+      return handleError(
+        res,
+        "Unsupported currency. Supported currencies: USD, EUR, GBP, PKR",
+        400
+      );
+    }
 
     if (!Array.isArray(products) || products.length === 0) {
       return handleError(res, "Invalid or empty products array", 400);
@@ -23,13 +55,26 @@ export const createCheckoutSession = async (req, res) => {
     }
 
     const shippingAddress = await UserAddress.findOne({ userId });
-
     if (!shippingAddress) {
       return handleError(res, "Please add a shipping address", 400);
     }
 
+    // Fetch live exchange rates from API
+
+    const exchangeRates = await fetchExchangeRates();
+    const exchangeRate = exchangeRates[normalizedCurrency] || 1;
+
+    // Currency-specific configuration
+    const CURRENCY_CONFIG = {
+      USD: { decimal_places: 2, min_amount: 50 }, // $0.50 minimum
+      EUR: { decimal_places: 2, min_amount: 50 }, // €0.50 minimum
+      GBP: { decimal_places: 2, min_amount: 50 }, // £0.50 minimum
+      PKR: { decimal_places: 0, min_amount: 100 }, // ₨100 minimum (no decimals)
+    };
+
     // Step 1: Calculate Total and Generate Line Items
-    let totalAmount = 0;
+    let totalAmountUSD = 0; // Always calculate in USD cents first
+
     const lineItems = await Promise.all(
       products.map(async (product) => {
         // Fetch the product variation
@@ -44,75 +89,74 @@ export const createCheckoutSession = async (req, res) => {
             400
           );
         }
+
         const __selectedProductVariationData = __productVariation?.colors?.map(
           (color) => {
             return {
               color: color?.color,
               colorName: color?.colorName?.toUpperCase(),
               size: color.sizes[0].size,
-              price: color.sizes[0].price.amount,
+              price: color.sizes[0].price.amount, // This is in USD
               imageUrls: color.imageUrls,
               quantity: product.quantity,
             };
           }
         );
 
-        // Find the selected color (case-insensitive)
+        // Validate product data
         const selectedColor = __selectedProductVariationData[0]?.colorName;
-
-        if (!selectedColor) {
-          return handleError(
-            res,
-            `Selected color not found for product: ${product.name}`,
-            400
-          );
-        }
-
-        // Find the selected size
-        const selectedSize = __selectedProductVariationData[0].size;
-
-        if (!selectedSize) {
-          return handleError(
-            res,
-            `Selected size not found for product: ${product.name}`,
-            400
-          );
-        }
-
-        // Get the price and quantity
-        const price = __selectedProductVariationData[0].price;
-
-        const quantity = __selectedProductVariationData[0].quantity || 1;
-
+        const selectedSize = __selectedProductVariationData[0]?.size;
+        const priceUSD = __selectedProductVariationData[0]?.price;
+        const quantity = __selectedProductVariationData[0]?.quantity || 1;
         const imageUrl = __selectedProductVariationData[0]?.imageUrls || [];
 
-        if (isNaN(price)) {
+        if (
+          !selectedColor ||
+          !selectedSize ||
+          isNaN(priceUSD) ||
+          isNaN(quantity) ||
+          quantity <= 0
+        ) {
           return handleError(
             res,
-            `Invalid price for product: ${product.name}`,
+            `Invalid product data for: ${product.name}`,
             400
           );
         }
 
-        if (isNaN(quantity) || quantity <= 0) {
-          return handleError(
-            res,
-            `Invalid quantity for product: ${product.name}`,
-            400
-          );
-        }
+        // Calculate in USD cents first
+        // const amountUSD = Math.round(priceUSD * 100);
+        const amountUSD = priceUSD;
 
-        const amount = Math.round(price * 100); // Convert to cents
-        totalAmount += amount * quantity;
+        totalAmountUSD += priceUSD * quantity;
+
+        // Convert to target currency and apply currency-specific rules
+        let unitAmount = amountUSD * exchangeRate;
+        // let unitAmount = Math.round(amountUSD * exchangeRate);
+
+        // Ensure amount meets Stripe's minimum for the currency
+        unitAmount = Math.max(
+          unitAmount,
+          CURRENCY_CONFIG[normalizedCurrency].min_amount
+        );
+
+        // For currencies without decimals (like PKR), round to nearest whole number
+        if (CURRENCY_CONFIG[normalizedCurrency].decimal_places === 0) {
+          unitAmount = Math.round(unitAmount / 100) * 100;
+        }
 
         return {
           price_data: {
-            currency: "usd", // Stripe expects lowercase currency codes
+            currency: normalizedCurrency.toLowerCase(), // Stripe expects lowercase
             product_data: {
               name: product.name,
               images: imageUrl,
+              metadata: {
+                productId: product._id.toString(),
+                variationId: product.selectedVariation.toString(),
+              },
             },
-            unit_amount: amount,
+            unit_amount: unitAmount,
           },
           quantity: quantity,
         };
@@ -121,11 +165,11 @@ export const createCheckoutSession = async (req, res) => {
 
     // Validate lineItems
     if (!lineItems || lineItems.length === 0) {
-      return handleError(res, "Error due to Line item", 403);
+      return handleError(res, "No valid line items generated", 400);
     }
 
     // Step 2: Handle Coupon (If Provided)
-    let discountAmount = 0;
+    let discountAmountUSD = 0;
     let coupon = null;
 
     if (couponCode) {
@@ -140,16 +184,13 @@ export const createCheckoutSession = async (req, res) => {
           return handleError(res, "Invalid coupon configuration", 400);
         }
 
-        // Calculate discount based on type
-        if (coupon.discountType === "percentage") {
-          discountAmount = Math.round(
-            (totalAmount * coupon.discountValue) / 100
-          );
-        } else if (coupon.discountType === "fixed") {
-          discountAmount = Math.round(coupon.discountValue * 100); // Convert to cents
-        }
+        // Calculate discount in USD cents
+        discountAmountUSD =
+          coupon.discountType === "percentage"
+            ? Math.round((totalAmountUSD * coupon.discountValue) / 100)
+            : Math.round(coupon.discountValue * 100);
 
-        totalAmount = Math.max(0, totalAmount - discountAmount); // Ensure total doesn't go negative
+        totalAmountUSD = Math.max(0, totalAmountUSD - discountAmountUSD);
       }
     }
 
@@ -170,11 +211,22 @@ export const createCheckoutSession = async (req, res) => {
             },
           ]
         : [],
+      payment_intent_data: {
+        description: `Order from ${userId || guestId}`,
+        metadata: {
+          userId: userId?.toString() || "guest",
+          guestId: guestId || "",
+          currency: normalizedCurrency,
+        },
+      },
       metadata: {
         userType: userId ? "loggedIn" : "guest",
-        userId: userId?.toString() || "", // Save user ID if logged in
-        guestId: guestId || "", // Save guest ID if not logged in
+        userId: userId?.toString() || "",
+        guestId: guestId || "",
         couponCode: couponCode || null,
+        currency: normalizedCurrency,
+        exchangeRate: exchangeRate,
+        originalAmountUSD: totalAmountUSD, // Store original USD amount in cents
         products: JSON.stringify(
           products.map((p) => ({
             id: p._id,
@@ -185,24 +237,43 @@ export const createCheckoutSession = async (req, res) => {
       },
     });
 
-    // Step 4: Create a new coupon if total amount is above a threshold
-    if (totalAmount >= 20000) {
+    // Step 4: Create a new coupon if total amount is above a threshold ($200)
+    if (totalAmountUSD >= 20000) {
       await createNewCoupon(userId);
     }
 
-    res.status(200).json({ id: session.id, totalAmount: totalAmount / 100 });
+    // Prepare response with properly formatted amounts
+    const responseData = {
+      id: session.id,
+      amount: totalAmountUSD / 100, // Original USD amount in dollars
+      convertedAmount: (totalAmountUSD * exchangeRate) / 100, // Converted amount in target currency
+      currency: normalizedCurrency,
+      displayAmount: new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: normalizedCurrency,
+        minimumFractionDigits:
+          CURRENCY_CONFIG[normalizedCurrency].decimal_places,
+        maximumFractionDigits:
+          CURRENCY_CONFIG[normalizedCurrency].decimal_places,
+      }).format((totalAmountUSD * exchangeRate) / 100),
+      exchangeRate: exchangeRate,
+    };
+
+    res.status(200).json(responseData);
   } catch (error) {
     console.error("Error processing checkout:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Error processing checkout" });
+    res.status(500).json({
+      success: false,
+      message: "Checkout processing failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      code: error.code || "CHECKOUT_ERROR",
+    });
   }
 };
 
 export const checkoutSuccess = async (req, res) => {
   const mongoDB_Session = await mongoose.startSession();
   const userId = req.user ? req.user._id : null;
-
   try {
     const { sessionId } = req.body;
 
