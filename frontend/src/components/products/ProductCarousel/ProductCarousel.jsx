@@ -57,7 +57,6 @@ const ProductCarousel = ({
   const getProductImageUrl = (product) => {
     return (
       product?.variations?.[0]?.colors?.[0]?.imageUrls?.[0] ||
-      product?.imageUrl ||
       "/images/imagePlaceholder.jpg"
     );
   };
@@ -69,7 +68,7 @@ const ProductCarousel = ({
       0
     );
   };
-
+  console.log("Products ---:", products);
   return (
     <div className="py-12">
       <div className="container mx-auto px-4">

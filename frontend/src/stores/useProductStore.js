@@ -8,6 +8,7 @@ export const useProductStore = create(
   persist(
     (set, get) => ({
       products: [],
+      product: null,
       featuredProducts: [],
       recommendedProducts: [],
       loading: false,
@@ -17,6 +18,8 @@ export const useProductStore = create(
       productsPerPage: 20,
 
       // Actions
+      setLoading: (loading) => set({ loading }),
+      clearProduct: () => set({ product: null }),
       setProducts: (products) => set({ products }),
       setFeaturedProducts: (featuredProducts) => set({ featuredProducts }),
 
@@ -84,10 +87,11 @@ export const useProductStore = create(
       fetchProductById: async (productId) => {
         set({ loading: true, error: null });
         try {
+          console.log("Fetching product by ID:", productId);
           const response = await axiosBaseURL.get(`/products/${productId}`);
           console.log("Product details response:", response.data.product);
           set({
-            products: response?.data?.product,
+            product: response?.data?.product,
             loading: false,
             error: null,
           });
@@ -218,6 +222,7 @@ export const useProductStore = create(
       name: "product-store", // unique name for localStorage key
       partialize: (state) => ({
         products: state.products,
+        product: state.product,
         featuredProducts: state.featuredProducts,
         recommendedProducts: state.recommendedProducts,
         // cacheTimestamp: state.cacheTimestamp,

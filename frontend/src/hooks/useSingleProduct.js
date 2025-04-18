@@ -11,7 +11,7 @@ export const useSingleProduct = () => {
     fetchProductById,
     fetchRecommendedProducts,
     recommendedProducts,
-    products: product,
+    product,
     loading: isLoading,
   } = useProductStore();
   const { addToCart } = useCartStore();

@@ -1,48 +1,74 @@
 import { create } from "zustand";
 import axiosBaseURL from "../lib/axios";
+import toast from "react-hot-toast";
 
 export const useCategoryStore = create((set) => ({
   categories: [],
-
   loading: false,
-  setLoading: (loading) => set({ loading }),
+  error: null,
 
-  setCategories: (categories) => {
-    set({ categories, loading: false });
-  },
+  // Setter functions
+  setCategories: (categories) => set({ categories, error: null }),
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  clearError: () => set({ error: null }),
 
   getAllCategories: async () => {
     try {
-      set({ loading: true });
+      set({ loading: true, error: null });
       const response = await axiosBaseURL.get("/category");
-      console.log("Categories ---:", response?.data);
 
-      set({ categories: response?.data, loading: false });
+      set({
+        categories: response?.data || response?.data?.categories || [],
+        loading: false,
+      });
+      return response.data;
     } catch (error) {
-      set({ loading: false });
-      console.log("Error getting categories", error);
-      if (error.response) {
-        console.error("Error Response:", error.response.data);
-      }
+      set({
+        loading: false,
+        error: error,
+      });
+      toast.error(error?.response?.data?.error || "Failed to fetch categories");
+      console.log("Error getting categories", error.message);
     }
   },
 
   getParentCategories: async () => {
-    set({ loading: true });
+    const currentCategories = get().categories;
+
+    // If we already have categories and want to filter parents
+    // (assuming parent categories can be filtered from existing data)
+    if (currentCategories?.length > 0) {
+      const parentCategories = currentCategories?.filter(
+        (cat) => !cat.parentId
+      );
+      if (parentCategories.length > 0) {
+        return parentCategories;
+      }
+    }
     try {
+      set({ loading: true, error: null });
       const response = await axiosBaseURL.get("/category/parent-categories");
-      set({ categories: response.data, loading: false });
-      return response?.data;
+
+      set({
+        loading: false,
+        categories: [...get().categories, ...response?.data], // Merge with existing
+      });
+      return response.data;
     } catch (error) {
       set({ loading: false });
+      toast.error(
+        error?.response?.data?.error || "Failed to fetch parent categories"
+      );
       console.log("Error getting categories", error.message);
     }
   },
-  createCategory: async (category) => {
-    set({ loading: true });
 
+  createCategory: async (category) => {
     console.log("Category to create ", category);
     try {
+      set({ loading: true, error: null });
+
       const response = await axiosBaseURL.post(
         "/category/create-category",
         category,

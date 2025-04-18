@@ -40,11 +40,13 @@ const SingleProductPage = () => {
   if (!product) {
     return <div className="text-center text-white">Product not found!</div>;
   }
+
   const productPrice =
     product?.variations[0]?.colors[0]?.sizes[0]?.price?.amount ||
-    product?.price?.basePrice;
-  console.log("selected color", selectedColor);
-  console.log("selected size", selectedSize);
+    product?.price?.basePrice ||
+    0;
+
+  console.log("Product recommendedProducts:", recommendedProducts);
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
@@ -119,7 +121,7 @@ const SingleProductPage = () => {
               transition={{ duration: 0.8 }}
               className="text-emerald-400 text-2xl lg:text-3xl font-bold mb-6"
             >
-              {formatPrice(productPrice)}
+              {productPrice && formatPrice(productPrice)}
             </motion.div>
 
             {/* Stock Availability */}
