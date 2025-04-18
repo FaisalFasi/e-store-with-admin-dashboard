@@ -85,7 +85,12 @@ export const useProductStore = create(
         set({ loading: true, error: null });
         try {
           const response = await axiosBaseURL.get(`/products/${productId}`);
-          set({ products: response?.data?.product, loading: false });
+          console.log("Product details response:", response.data.product);
+          set({
+            products: response?.data?.product,
+            loading: false,
+            error: null,
+          });
         } catch (error) {
           set({
             loading: false,

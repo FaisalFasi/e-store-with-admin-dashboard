@@ -81,6 +81,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true } } // Enable virtuals
 );
 
+// Virtuals are not included in the database, so they do not take up any space.
 // 🚀 **Virtual for Category Path (e.g., "Electronics > Phones > Smartphones")**
 productSchema.virtual("categoryPath").get(async function () {
   const cats = await Category.find({
@@ -93,11 +94,20 @@ productSchema.virtual("categoryPath").get(async function () {
       ],
     },
   });
+  // Filter out null or undefined categories and join their names
+  // to create a path string like "Electronics > Phones > Smartphones"
+  // If no categories are found, return "Uncategorized"
   const path = cats
     .map((c) => c.name)
     .filter(Boolean)
     .join(" > ");
   return path || "Uncategorized";
+});
+
+productSchema.virtual("reviews", {
+  ref: "Review",
+  localField: "_id",
+  foreignField: "product",
 });
 
 // 🔥 **Indexes (Max Query Performance)**

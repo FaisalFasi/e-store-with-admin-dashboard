@@ -7,9 +7,11 @@ import ReviewCommentSection from "../../components/reviews/ReviewCommentSection/
 import { getUserData } from "../../utils/getUserData.js";
 import FeaturedProducts from "@/components/products/FeaturedProducts/FeaturedProducts";
 import ProductCarousel from "@/components/products/ProductCarousel/ProductCarousel";
+import { usePrice } from "@/utils/currency/currency";
 
 const SingleProductPage = () => {
   const { user } = getUserData();
+  const { formatPrice } = usePrice();
 
   const {
     product,
@@ -38,6 +40,11 @@ const SingleProductPage = () => {
   if (!product) {
     return <div className="text-center text-white">Product not found!</div>;
   }
+  const productPrice =
+    product?.variations[0]?.colors[0]?.sizes[0]?.price?.amount ||
+    product?.price?.basePrice;
+  console.log("selected color", selectedColor);
+  console.log("selected size", selectedSize);
   return (
     <div className="relative min-h-screen bg-gray-900 text-white">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
@@ -112,7 +119,7 @@ const SingleProductPage = () => {
               transition={{ duration: 0.8 }}
               className="text-emerald-400 text-2xl lg:text-3xl font-bold mb-6"
             >
-              ${selectedSizeObj?.price || product.basePrice}
+              {formatPrice(productPrice)}
             </motion.div>
 
             {/* Stock Availability */}
@@ -264,7 +271,7 @@ const SingleProductPage = () => {
         </div>
 
         {/* Comment and Review Section */}
-        {user && <ReviewCommentSection productId={product._id} />}
+        <ReviewCommentSection productId={product._id} />
       </div>
     </div>
   );

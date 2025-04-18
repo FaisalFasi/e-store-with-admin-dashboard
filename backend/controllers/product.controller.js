@@ -307,7 +307,7 @@ export const getAllProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate("category.l1 category.child category.grandchild")
+      .populate("category.l1 category.l2 category.l3 category.l4")
       .populate({
         path: "variations",
         populate: {
@@ -315,13 +315,17 @@ export const getProductById = async (req, res) => {
           model: "ProductVariation",
         },
       })
-      .populate("reviews"); // Ensure Review model is registered
+      .populate({
+        path: "reviews",
+        model: "Review",
+      });
 
     if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
+    console.log("product", product);
 
     res.json({ success: true, product });
   } catch (error) {

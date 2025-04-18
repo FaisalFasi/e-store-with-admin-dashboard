@@ -112,6 +112,7 @@ export const useCartStore = create(
 
         try {
           const response = await axiosBaseURL.get("/cart");
+          console.log("Response from getCartItems:", response);
           const { cartItems } = response?.data || {}; // Destructure cartItems
 
           console.log("Cart items:", cartItems);

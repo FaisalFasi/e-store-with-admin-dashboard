@@ -30,7 +30,7 @@ export const useSingleProduct = () => {
         v.colors.map((c) => {
           return {
             color: c.color,
-            name: c.name,
+            name: c.colorName,
           };
         })
       ) || []
@@ -43,8 +43,8 @@ export const useSingleProduct = () => {
         ...new Set(
           product?.variations?.flatMap((v) =>
             v.colors
-              .filter((c) => c.name === selectedColor)
-              .flatMap((c) => c.sizes.map((s) => s.value))
+              .filter((c) => c.colorName === selectedColor)
+              .flatMap((c) => c.sizes.map((s) => s.size))
           )
         ),
       ]
@@ -52,18 +52,18 @@ export const useSingleProduct = () => {
 
   // Find the selected variation based on color and size
   const selectedVariation = product?.variations?.find((variation) =>
-    variation.colors.some(
-      (color) => color.name === selectedColor
+    variation?.colors?.some(
+      (color) => color.colorName === selectedColor
       // &&
       //   color.sizes.some((size) => size.value === selectedSize)
     )
   );
 
   const selectedColorObj = selectedVariation?.colors?.find(
-    (c) => c.name === selectedColor
+    (c) => c.colorName === selectedColor
   );
   const selectedSizeObj = selectedColorObj?.sizes?.find(
-    (s) => s.value === selectedSize
+    (s) => s.size === selectedSize
   );
 
   const handleColorChange = (color) => {
@@ -72,19 +72,25 @@ export const useSingleProduct = () => {
 
     // Find all size options for this color
     const colorVariations = product?.variations
-      ?.flatMap((v) => v.colors.filter((c) => c.name === color))
+      ?.flatMap((v) => v.colors.filter((c) => c.colorName === color))
       .flat();
     // Find the first size with available stock (quantity > 0)
     const firstAvailableSize = colorVariations
       ?.flatMap((c) => c.sizes)
-      .find((size) => size.quantity > 0)?.value;
+      .find((size) => size.quantity > 0)?.size;
+    console.log(
+      "First available size for color",
+      color,
+      "is",
+      firstAvailableSize
+    );
 
     setSelectedSize(firstAvailableSize || ""); // Fallback to empty if none available
 
     // Update image to first available variation
     const firstVariationWithStock = product?.variations?.find((v) =>
       v.colors.some(
-        (c) => c.name === color && c.sizes.some((s) => s.quantity > 0)
+        (c) => c.colorName === color && c.sizes.some((s) => s.quantity > 0)
       )
     );
 
@@ -99,7 +105,8 @@ export const useSingleProduct = () => {
     // Update images to the selected variation
     const selectedVariation = product?.variations?.find((v) =>
       v.colors.some(
-        (c) => c.name === selectedColor && c.sizes.some((s) => s.value === size)
+        (c) =>
+          c.colorName === selectedColor && c.sizes.some((s) => s.size === size)
       )
     );
     if (selectedVariation) {
@@ -165,14 +172,15 @@ export const useSingleProduct = () => {
       initialColorObjWithStock || product.variations[0].colors[0];
 
     if (initialColorObj) {
-      const initialColor = initialColorObj.name;
+      const initialColor = initialColorObj.colorName;
 
       // Try to find first size with stock, fallback to first size
       const initialSizeWithStock = initialColorObj.sizes?.find(
         (s) => s.quantity > 0
       );
+
       const initialSize =
-        initialSizeWithStock?.value || initialColorObj.sizes?.[0]?.value || "";
+        initialSizeWithStock?.size || initialColorObj.sizes[0]?.size || "";
 
       // Always use first image URL if available
       const initialImage =

@@ -10,8 +10,6 @@ const ProductsList = () => {
 
   const { formatPrice } = usePrice();
 
-  console.log("products--:", products);
-
   return (
     <motion.div
       className="p-0 bg-gray-800 shadow-lg rounded-lg overflow-hidden max-w-4xl mx-auto"
