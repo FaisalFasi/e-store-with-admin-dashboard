@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+"use client";
+
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { PlusCircle } from "lucide-react"; // Optional icon
+import { PlusCircle } from "lucide-react";
 import { useCategoryStore } from "../../../stores/useCategoryStore";
 import LoadingSpinner from "../../shared/LoadingSpinner/LoadingSpinner";
 import InputField from "../../shared/InputField/InputField";
@@ -15,31 +17,144 @@ const initialCategoryState = {
   slug: "",
   description: "",
   image: null,
-  categoryType: "parent", // Default to parent category
-  parentCategory: "parent", // Empty initially, only used if categoryType is "child"
+  depth: 0, // 0=L1, 1=L2, 2=L3, 3=L4
+  parentCategory: null, // Parent category ID
   status: "active",
-  sortOrder: "0",
+  sortOrder: 0,
   metaTitle: "",
   metaDescription: "",
 };
 
 const CreateCategoryForm = () => {
-  const { createCategory, loading, categories } = useCategoryStore(); // Assuming categories are available
+  const { createCategory, loading, categories, getAllCategories } =
+    useCategoryStore();
   const [newCategory, setNewCategory] = useState(initialCategoryState);
+  const [availableParents, setAvailableParents] = useState([]);
   const fileInputRef = useRef(null);
 
+  // Fetch categories on component mount
+  useEffect(() => {
+    getAllCategories();
+  }, [getAllCategories]);
+
+  // Update available parents when depth changes
+  useEffect(() => {
+    if (newCategory.depth === 0) {
+      // L1 categories don't have parents
+      setAvailableParents([]);
+    } else {
+      // Filter categories that can be parents for the current depth
+      const parentDepth = newCategory.depth - 1;
+      const possibleParents = categories.filter(
+        (cat) => cat.depth === parentDepth && cat.status === "active"
+      );
+      setAvailableParents(possibleParents);
+    }
+  }, [newCategory.depth, categories]);
+
+  // Generate slug from name
+  useEffect(() => {
+    if (newCategory.name) {
+      const slug = newCategory.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      setNewCategory((prev) => ({ ...prev, slug }));
+    }
+  }, [newCategory.name]);
+
+  const handleInputChange = (key, value) => {
+    if (key === "image") {
+      const validatedImages = validateImages([value]);
+      setNewCategory((prev) => ({
+        ...prev,
+        image: validatedImages[0],
+      }));
+    } else if (key === "depth") {
+      // When depth changes, reset parent category
+      setNewCategory((prev) => ({
+        ...prev,
+        [key]: Number.parseInt(value),
+        parentCategory: null,
+      }));
+    } else {
+      setNewCategory((prev) => ({ ...prev, [key]: value }));
+    }
+  };
+
+  const removeImage = (index) => {
+    const updateImages = removeImageFromList([newCategory.image], index);
+    setNewCategory((prev) => ({
+      ...prev,
+      image: updateImages[0] || null,
+    }));
+    if (!updateImages[0]) fileInputRef.current.value = "";
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate required fields
+    if (!newCategory.name || !newCategory.slug) {
+      return toast.error("Name and slug are required");
+    }
+
+    // Validate parent category for non-L1 categories
+    if (newCategory.depth > 0 && !newCategory.parentCategory) {
+      return toast.error("Parent category is required for sub-categories");
+    }
+
+    const formData = new FormData();
+
+    // Append all category fields to formData
+    Object.keys(newCategory).forEach((key) => {
+      if (key === "image" && newCategory.image) {
+        // Handle image file
+        if (typeof newCategory.image === "string") {
+          // If it's a URL string (for existing images)
+          formData.append("imageUrl", newCategory.image);
+        } else {
+          // If it's a File object
+          formData.append("image", newCategory.image);
+        }
+      } else if (newCategory[key] !== null && newCategory[key] !== undefined) {
+        formData.append(key, newCategory[key]);
+      }
+    });
+
+    const data = await createCategory(formData);
+    if (data) {
+      setNewCategory(initialCategoryState);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // Get depth label
+  const getDepthLabel = (depth) => {
+    switch (depth) {
+      case 0:
+        return "Main Category (L1)";
+      case 1:
+        return "Sub-Category (L2)";
+      case 2:
+        return "Sub-Sub-Category (L3)";
+      case 3:
+        return "Final Category (L4)";
+      default:
+        return "Category";
+    }
+  };
+
+  // Dynamic input fields
   const inputFields = [
     {
       name: "name",
-      label: `${
-        newCategory.categoryType === "child" ? "Sub" : ""
-      } Category Name`,
+      label: `${getDepthLabel(newCategory.depth)} Name`,
       type: "text",
       value: newCategory.name,
       placeholder: "Enter category name",
       required: true,
     },
-
     {
       name: "slug",
       label: "Slug",
@@ -98,78 +213,6 @@ const CreateCategoryForm = () => {
     },
   ];
 
-  useEffect(() => {}, []);
-
-  // UseMemo for constant data
-  const selctCategory = useMemo(
-    () =>
-      categories.map((category) => ({
-        value: category._id,
-        label: category.name,
-      })),
-    [categories]
-  );
-
-  const handleParentCategoryChange = (e) => {
-    const selectedParentCategory = e.target.value;
-    handleInputChange("parentCategory", selectedParentCategory);
-  };
-
-  // Optimize the handle input change function with useCallback
-  const handleInputChange = (key, value) => {
-    // check if key is image and value is not null
-    if (key === "image") {
-      const validatedImages = validateImages([value]);
-      setNewCategory((prev) => ({
-        ...prev,
-        image: validatedImages[0],
-      }));
-    } else {
-      setNewCategory((prev) => ({ ...prev, [key]: value }));
-    }
-  };
-
-  const removeImage = (index) => {
-    const updateImages = removeImageFromList([newCategory.image], index);
-
-    setNewCategory((prev) => ({
-      ...prev,
-      image: updateImages[0] ? null : updateImages[0],
-    }));
-
-    // Clear the file input
-    if (updateImages.length <= 0) fileInputRef.current.value = "";
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const missingFields = [];
-    Object.keys(newCategory).forEach((key) => {
-      if (!newCategory[key] || newCategory[key].toString().trim() === "") {
-        missingFields.push(key);
-      }
-    });
-
-    if (missingFields.length > 0) {
-      return toast.error(`Missing fields: ${missingFields.join(", ")}`);
-    }
-
-    const formData = new FormData(e.target);
-    const imageFile = formData.get("image");
-
-    if (!imageFile) {
-      return toast.error("Please upload an image");
-    }
-    formData.set("image", imageFile);
-
-    // const dataObject = Object.fromEntries(formData);
-
-    const data = await createCategory(formData);
-
-    if (data) setNewCategory(initialCategoryState);
-  };
-
   return (
     <motion.div
       className="bg-gray-800 w-full p-6 rounded-lg md:max-w-xl lg:max-w-2xl"
@@ -181,53 +224,85 @@ const CreateCategoryForm = () => {
         Create New Category
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Category Type Selection */}
+        {/* Category Depth Selection */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-300 mb-1">
-            Category Type
+            Category Level
           </label>
-          <div className="mt-2 flex space-x-4">
-            <label>
-              <input
-                type="radio"
-                name="categoryType"
-                value="parent"
-                checked={newCategory.categoryType === "parent"}
-                onChange={(e) =>
-                  handleInputChange("categoryType", e.target.value)
-                }
-                // onChange={() => handleInputChange("parent")}
-              />
-              Parent Category
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="categoryType"
-                value="child"
-                // checked  is used to set the default value
-                checked={newCategory.categoryType === "child"} // here !! converts the value to boolean
-                onChange={(e) =>
-                  handleInputChange("categoryType", e.target.value)
-                }
-                // onChange={() => handleInputChange("child")}
-              />
-              Child Category
-            </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className={`py-2 px-4 rounded-md ${
+                newCategory.depth === 0
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+              onClick={() => handleInputChange("depth", 0)}
+            >
+              Main Category (L1)
+            </button>
+            <button
+              type="button"
+              className={`py-2 px-4 rounded-md ${
+                newCategory.depth === 1
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+              onClick={() => handleInputChange("depth", 1)}
+            >
+              Sub-Category (L2)
+            </button>
+            <button
+              type="button"
+              className={`py-2 px-4 rounded-md ${
+                newCategory.depth === 2
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+              onClick={() => handleInputChange("depth", 2)}
+            >
+              Sub-Sub-Category (L3)
+            </button>
+            <button
+              type="button"
+              className={`py-2 px-4 rounded-md ${
+                newCategory.depth === 3
+                  ? "bg-emerald-600 text-white"
+                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+              }`}
+              onClick={() => handleInputChange("depth", 3)}
+            >
+              Final Category (L4)
+            </button>
           </div>
         </div>
 
-        {/* Parent Category Dropdown (only if creating a child category) */}
-        {newCategory.categoryType === "child" && (
+        {/* Parent Category Dropdown (only if not L1) */}
+        {newCategory.depth > 0 && (
           <div className="mb-4">
             <InputField
               type="select"
-              label="Parent Category"
+              label={`Select Parent ${getDepthLabel(newCategory.depth - 1)}`}
               name="parentCategory"
-              value={newCategory.parentCategory}
-              options={selctCategory}
-              onChange={handleParentCategoryChange}
+              value={newCategory.parentCategory || ""}
+              options={availableParents.map((cat) => ({
+                value: cat._id,
+                label: cat.name,
+              }))}
+              onChange={(e) =>
+                handleInputChange("parentCategory", e.target.value)
+              }
+              placeholder={`Select parent ${
+                newCategory.depth === 1 ? "category" : "sub-category"
+              }`}
+              required
             />
+            {availableParents.length === 0 && (
+              <p className="text-yellow-500 text-sm mt-1">
+                No parent categories available. Please create a{" "}
+                {getDepthLabel(newCategory.depth - 1)} first.
+              </p>
+            )}
           </div>
         )}
 
@@ -239,7 +314,7 @@ const CreateCategoryForm = () => {
             multiple={false}
             fileInputRef={fileInputRef}
             handleImageRemove={removeImage}
-            selectedImages={[newCategory?.image]}
+            selectedImages={newCategory.image ? [newCategory.image] : []}
             {...field}
             onChange={(e) =>
               handleInputChange(
@@ -254,7 +329,9 @@ const CreateCategoryForm = () => {
         <button
           type="submit"
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
-          disabled={loading}
+          disabled={
+            loading || (newCategory.depth > 0 && availableParents.length === 0)
+          }
         >
           {loading ? (
             <>
@@ -264,7 +341,7 @@ const CreateCategoryForm = () => {
           ) : (
             <>
               <PlusCircle className="mr-2 h-5 w-5" />
-              Create Category
+              Create {getDepthLabel(newCategory.depth)}
             </>
           )}
         </button>

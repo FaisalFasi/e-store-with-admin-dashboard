@@ -14,6 +14,7 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      lowercase: true,
       match: [
         /^[a-z0-9-]+$/,
         "Slug must contain only lowercase letters, numbers, and hyphens",
@@ -34,7 +35,13 @@ const categorySchema = new mongoose.Schema(
       ref: "Category",
       default: null,
     },
-    depth: { type: Number, default: 0, min: 0, max: 3 }, // 0=L1, 1=L2, 2=L3, 3=L4
+    depth: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 3,
+      enum: [0, 1, 2, 3], // Only allow depths 0-3 (L1-L4)
+    }, // 0=L1, 1=L2, 2=L3, 3=L4
     status: {
       type: String,
       enum: ["active", "inactive"],
@@ -63,6 +70,7 @@ categorySchema.index({ parentCategory: 1 });
 categorySchema.index({ status: 1 });
 categorySchema.index({ sortOrder: 1 });
 categorySchema.index({ depth: 1 });
+
 categorySchema.index({ createdAt: -1 });
 categorySchema.index({ updatedAt: -1 });
 
