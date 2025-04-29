@@ -87,12 +87,13 @@ const CreateProductForm = () => {
         handleInputChange("tags", e.target.value);
       },
     },
+    // Category selection - L1 (Main category)
     {
       name: "category.l1",
       label: "Category",
       type: "select",
-      value: newProduct?.category?.l1,
-      options: categories.map((category) => ({
+      value: newProduct?.category?.l1 || "",
+      options: categoryData.l1.map((category) => ({
         value: category._id,
         label: category.name,
       })),
@@ -100,51 +101,57 @@ const CreateProductForm = () => {
       placeholder: "Select product category",
       required: true,
     },
-    ...(categoryData.l2?.length > 0
+    // L2 (Sub-category) - Only show if L2 categories exist
+    ...(categoryData.l2.length > 0
       ? [
           {
             name: "category.l2",
             label: "Sub-category",
             type: "select",
-            value: newProduct?.category?.l2,
-            options: categoryData?.l2?.map((subCategory) => ({
-              value: subCategory._id,
-              label: subCategory.name,
+            value: newProduct?.category?.l2 || "",
+            options: categoryData.l2.map((category) => ({
+              value: category._id,
+              label: category.name,
             })),
             onChange: handleChildCategoryChange,
-            required: false,
+            placeholder: "Select sub-category",
+            required: true,
           },
         ]
       : []),
-    ...(categoryData.l3?.length > 0
+    // L3 (Grand Sub-category) - Only show if L3 categories exist
+    ...(categoryData.l3.length > 0
       ? [
           {
             name: "category.l3",
             label: "Grand Sub-category",
             type: "select",
-            value: newProduct?.category?.l3,
-            options: categoryData.l3.map((grandChildCategory) => ({
-              value: grandChildCategory._id,
-              label: grandChildCategory.name,
+            value: newProduct?.category?.l3 || "",
+            options: categoryData.l3.map((category) => ({
+              value: category._id,
+              label: category.name,
             })),
             onChange: handleGrandChildCategoryChange,
-            required: false,
+            placeholder: "Select grand sub-category",
+            required: true,
           },
         ]
       : []),
-    ...(categoryData.l4?.length > 0
+    // L4 (Great Grand Sub-category) - Only show if L4 categories exist
+    ...(categoryData.l4.length > 0
       ? [
           {
             name: "category.l4",
             label: "Great Grand Sub-category",
             type: "select",
-            value: newProduct?.category?.l4,
-            options: categoryData.l4.map((greatGrandChildCategory) => ({
-              value: greatGrandChildCategory._id,
-              label: greatGrandChildCategory.name,
+            value: newProduct?.category?.l4 || "",
+            options: categoryData.l4.map((category) => ({
+              value: category._id,
+              label: category.name,
             })),
             onChange: handleGreatGrandChildCategoryChange,
-            required: false,
+            placeholder: "Select great grand sub-category",
+            required: true,
           },
         ]
       : []),

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { validateImages } from "../utils/imageValidation/imageValidation.js";
 import { useCategoryStore } from "../stores/useCategoryStore.js";
 import { initialProductState } from "../helpers/productHelopers/productHelper.js";
+import { set } from "lodash";
 
 export const useProductForm = () => {
   const { categories } = useCategoryStore();
@@ -22,7 +23,158 @@ export const useProductForm = () => {
     },
   });
 
-  // Handle input changes for both top-level and nested fields
+  // Initialize categories when component loads
+  useEffect(() => {
+    if (categories.length > 0) {
+      // Filter level 1 categories (depth = 0, no parent)
+      const l1Categories = categories.filter(
+        (cat) => cat.depth === 0 && cat.status === "active"
+      );
+
+      setCategoryData((prev) => ({
+        ...prev,
+        l1: l1Categories,
+      }));
+
+      // Set default L1 category if none is selected
+      if (!newProduct.category.l1 && l1Categories.length > 0) {
+        const defaultL1 = l1Categories[0]._id;
+        handleCategoryChange({ target: { value: defaultL1 } });
+      }
+    }
+  }, [categories]);
+
+  // Generic category change handler
+  // Handle main category (L1) change
+  const handleCategoryChange = (e) => {
+    const selectedCategoryId = e.target.value;
+
+    // Find L2 categories that have this L1 as parent
+    const l2Categories = categories.filter(
+      (cat) =>
+        cat.depth === 1 &&
+        cat.parentCategory === selectedCategoryId &&
+        cat.status === "active"
+    );
+
+    // Update category data state
+    setCategoryData((prev) => ({
+      ...prev,
+      l2: l2Categories,
+      l3: [], // Reset deeper levels
+      l4: [],
+    }));
+
+    // Update product state
+    setNewProduct((prev) => ({
+      ...prev,
+      category: {
+        l1: selectedCategoryId,
+        l2: l2Categories.length > 0 ? l2Categories[0]._id : "",
+        l3: "",
+        l4: "",
+      },
+    }));
+
+    // If L2 categories exist, trigger L2 change with the first one
+    if (l2Categories.length > 0) {
+      setTimeout(() => {
+        handleChildCategoryChange({ target: { value: l2Categories[0]._id } });
+      }, 0);
+    }
+  };
+
+  // Handle L2 category change
+  const handleChildCategoryChange = (e) => {
+    const selectedL2Id = e.target.value;
+
+    // Find L3 categories that have this L2 as parent
+    const l3Categories = categories.filter(
+      (cat) =>
+        cat.depth === 2 &&
+        cat.parentCategory === selectedL2Id &&
+        cat.status === "active"
+    );
+
+    // Update category data state
+    setCategoryData((prev) => ({
+      ...prev,
+      l3: l3Categories,
+      l4: [], // Reset L4
+    }));
+
+    // Update product state
+    setNewProduct((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        l2: selectedL2Id,
+        l3: l3Categories.length > 0 ? l3Categories[0]._id : "",
+        l4: "",
+      },
+    }));
+
+    // If L3 categories exist, trigger L3 change with the first one
+    if (l3Categories.length > 0) {
+      setTimeout(() => {
+        handleGrandChildCategoryChange({
+          target: { value: l3Categories[0]._id },
+        });
+      }, 0);
+    }
+  };
+
+  // Handle L3 category change
+  const handleGrandChildCategoryChange = (e) => {
+    const selectedL3Id = e.target.value;
+
+    // Find L4 categories that have this L3 as parent
+    const l4Categories = categories.filter(
+      (cat) =>
+        cat.depth === 3 &&
+        cat.parentCategory === selectedL3Id &&
+        cat.status === "active"
+    );
+
+    // Update category data state
+    setCategoryData((prev) => ({
+      ...prev,
+      l4: l4Categories,
+    }));
+
+    // Update product state
+    setNewProduct((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        l3: selectedL3Id,
+        l4: l4Categories.length > 0 ? l4Categories[0]._id : "",
+      },
+    }));
+
+    // If L4 categories exist, trigger L4 change with the first one
+    if (l4Categories.length > 0) {
+      setTimeout(() => {
+        handleGreatGrandChildCategoryChange({
+          target: { value: l4Categories[0]._id },
+        });
+      }, 0);
+    }
+  };
+
+  // Handle L4 category change
+  const handleGreatGrandChildCategoryChange = (e) => {
+    const selectedL4Id = e.target.value;
+
+    // Update product state
+    setNewProduct((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        l4: selectedL4Id,
+      },
+    }));
+  };
   const handleInputChange = (field, value) => {
     if (field.includes(".")) {
       // Handle nested fields (e.g., 'pricing.basePrice')
@@ -42,125 +194,6 @@ export const useProductForm = () => {
           field === "tags" ? (Array.isArray(value) ? value : [value]) : value,
       }));
     }
-  };
-
-  useEffect(() => {
-    if (categories.length > 0) {
-      // Get all root categories (depth 0)
-      const rootCategories = categories.filter((cat) => cat.depth === 0);
-      const firstRootCategory = rootCategories[0];
-
-      // Get all immediate subcategories for L1
-      const l2Categories = firstRootCategory?.subCategories || [];
-
-      // Get all nested subcategories for L3 and L4
-      const l3Categories = l2Categories.flatMap((l2) => l2.subCategories || []);
-      const l4Categories = l3Categories.flatMap((l3) => l3.subCategories || []);
-
-      setCategoryData({
-        l1: rootCategories, // All root categories
-        l2: l2Categories, // All direct subcategories of first root
-        l3: l3Categories, // All grandchild categories
-        l4: l4Categories, // All great-grandchild categories
-      });
-
-      setNewProduct((prev) => ({
-        ...prev,
-        category: {
-          l1: firstRootCategory._id,
-          l2: l2Categories[0]?._id || "",
-          l3: l3Categories[0]?._id || "",
-          l4: l4Categories[0]?._id || "",
-        },
-      }));
-    }
-  }, [categories]);
-
-  // Updated category change handler
-  const handleCategoryChange = (e) => {
-    const selectedCategoryId = e.target.value;
-    const selectedL1 = categories.find((cat) => cat._id === selectedCategoryId);
-
-    const l2Categories = selectedL1?.subCategories || [];
-    const l3Categories = l2Categories.flatMap((l2) => l2.subCategories || []);
-    const l4Categories = l3Categories.flatMap((l3) => l3.subCategories || []);
-
-    setCategoryData((prev) => ({
-      ...prev,
-      l2: l2Categories,
-      l3: l3Categories,
-      l4: l4Categories,
-    }));
-
-    setNewProduct((prev) => ({
-      ...prev,
-      category: {
-        l1: selectedCategoryId,
-        l2: l2Categories[0]?._id || "",
-        l3: l3Categories[0]?._id || "",
-        l4: l4Categories[0]?._id || "",
-      },
-    }));
-  };
-
-  // Updated child category handler
-  const handleChildCategoryChange = (e) => {
-    const l2Id = e.target.value;
-    const selectedL2 = categoryData.l2.find((cat) => cat._id === l2Id);
-
-    const l3Categories = selectedL2?.subCategories || [];
-    const l4Categories = l3Categories.flatMap((l3) => l3.subCategories || []);
-
-    setCategoryData((prev) => ({
-      ...prev,
-      l3: l3Categories,
-      l4: l4Categories,
-    }));
-
-    setNewProduct((prev) => ({
-      ...prev,
-      category: {
-        ...prev.category,
-        l2: l2Id,
-        l3: l3Categories[0]?._id || "",
-        l4: l4Categories[0]?._id || "",
-      },
-    }));
-  };
-
-  // Updated grandchild category handler
-  const handleGrandChildCategoryChange = (e) => {
-    const l3Id = e.target.value;
-    const selectedL3 = categoryData.l3.find((cat) => cat._id === l3Id);
-
-    const l4Categories = selectedL3?.subCategories || [];
-
-    setCategoryData((prev) => ({
-      ...prev,
-      l4: l4Categories,
-    }));
-
-    setNewProduct((prev) => ({
-      ...prev,
-      category: {
-        ...prev.category,
-        l3: l3Id,
-        l4: l4Categories[0]?._id || "",
-      },
-    }));
-  };
-
-  // Keep the existing handleGreatGrandChildCategoryChange
-  const handleGreatGrandChildCategoryChange = (e) => {
-    const l4Id = e.target.value;
-
-    setNewProduct((prev) => ({
-      ...prev,
-      category: {
-        ...prev.category,
-        l4: l4Id,
-      },
-    }));
   };
 
   // Variation handlers
