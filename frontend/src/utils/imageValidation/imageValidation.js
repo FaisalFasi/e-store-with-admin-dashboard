@@ -9,7 +9,13 @@ import toast from "react-hot-toast";
  */
 
 export const handleImageValidation = (files) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/jpg",
+    "image/avif",
+  ];
   const maxFiles = 5;
 
   // If no files selected, just return the existing images

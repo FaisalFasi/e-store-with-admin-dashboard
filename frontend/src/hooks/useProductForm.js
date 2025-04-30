@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { validateImages } from "../utils/imageValidation/imageValidation.js";
 import { useCategoryStore } from "../stores/useCategoryStore.js";
 import { initialProductState } from "../helpers/productHelopers/productHelper.js";
-import { set } from "lodash";
 
 export const useProductForm = () => {
   const { categories } = useCategoryStore();

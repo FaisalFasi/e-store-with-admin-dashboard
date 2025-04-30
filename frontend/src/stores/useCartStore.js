@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import axiosBaseURL from "../lib/axios";
 import { toast } from "react-hot-toast";
-import { keyframes } from "framer-motion";
 import { persist } from "zustand/middleware";
 
 export const useCartStore = create(
@@ -112,10 +111,11 @@ export const useCartStore = create(
 
         try {
           const response = await axiosBaseURL.get("/cart");
-          console.log("Response from getCartItems:", response);
-          const { cartItems } = response?.data || {}; // Destructure cartItems
 
-          console.log("Cart items:", cartItems);
+          if (!response?.data) {
+            throw new Error("Invalid response from server");
+          }
+          const { cartItems } = response?.data || {}; // Destructure cartItems
 
           set({
             cart: cartItems || [], // Fallback to an empty array if cartItems is undefined
@@ -300,8 +300,6 @@ export const useCartStore = create(
 
       calculate_Total_AmountInCart: () => {
         const { cart, coupon } = get();
-        console.log("Calculating total amount in cart...");
-        console.log("Cart:", cart);
         // If cart is empty, reset totals
         if (!Array.isArray(cart)) {
           console.warn("Invalid cart data");
@@ -343,11 +341,6 @@ export const useCartStore = create(
           const discount = subTotal * (coupon.discountPercentage / 100);
           total = Math.max(0, subTotal - discount); // Ensure total isn't negative
         }
-        console.log("Coupon:", coupon);
-        console.log("SubTotal:", subTotal);
-        console.log("Total:", total);
-        console.log("Discount:", coupon?.discountPercentage);
-        console.log("Savings:", subTotal - total);
 
         // Update state
         set({ subTotal, total });
@@ -355,13 +348,10 @@ export const useCartStore = create(
 
       // enter shipping address
       saveShippingAddress: async (address) => {
-        console.log("Shipping address:", address);
         try {
           const response = await axiosBaseURL.post("/address", {
             ...address,
           });
-
-          console.log("Response:", response);
 
           if (response.status === 201 || response.status === 200) {
             // localStorage.removeItem("address"); // Clear localStorage on successful save

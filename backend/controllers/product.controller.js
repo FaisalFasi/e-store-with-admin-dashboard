@@ -50,6 +50,7 @@ export const createProduct = async (req, res) => {
     let parsedCategory;
     try {
       parsedCategory = JSON.parse(category);
+      console.log("Parsed category:", parsedCategory);
       if (!parsedCategory?.l1) {
         return handleError(
           res,
@@ -82,7 +83,7 @@ export const createProduct = async (req, res) => {
     if (!valid) {
       return handleError(res, message, "createProduct", 400);
     }
-    console.log("parsedprice", parsedPrice);
+
     // 3. DATA PREPARATION ============================================
     // Base product data
     const productData = {
@@ -296,7 +297,6 @@ export const getAllProducts = async (req, res) => {
           model: "ProductVariation",
         },
       });
-
     res.json({ success: true, products });
   } catch (error) {
     handleError(res, error, "getAllProducts", 500);
@@ -325,7 +325,6 @@ export const getProductById = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
-    console.log("product", product);
 
     res.json({ success: true, product });
   } catch (error) {
@@ -365,11 +364,9 @@ export const getFeaturedProducts = async (req, res) => {
 
       // Save to Redis
       await redis.set(cacheKey, JSON.stringify(featuredProducts), "EX", 3600);
-      console.log("Fetched from DB and cached");
     } else {
       // Parse and manually populate variations
       featuredProducts = JSON.parse(featuredProducts);
-      console.log("Fetched from Redis");
 
       for (let product of featuredProducts) {
         if (product.variations && product.variations.length) {

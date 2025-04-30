@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import axiosBaseURL from "../lib/axios";
 import { isCacheValidForFetchingProducts } from "../helpers/cacheHelper";
 import { persist } from "zustand/middleware";
+import { parse } from "postcss";
 
 export const useProductStore = create(
   persist(
@@ -25,7 +26,6 @@ export const useProductStore = create(
 
       createProduct: async (formData) => {
         const formDataObject = Object.fromEntries(formData.entries());
-        console.log("Form data in createProduct:", formDataObject);
 
         try {
           set({ loading: true });
@@ -87,9 +87,8 @@ export const useProductStore = create(
       fetchProductById: async (productId) => {
         set({ loading: true, error: null });
         try {
-          console.log("Fetching product by ID:", productId);
           const response = await axiosBaseURL.get(`/products/${productId}`);
-          console.log("Product details response:", response.data.product);
+
           set({
             product: response?.data?.product,
             loading: false,
@@ -168,13 +167,10 @@ export const useProductStore = create(
         // if (!forceRefetch && get().featuredProducts.length > 0) {
         //   return;
         // }
-        console.log("Fetching featured products");
 
         set({ loading: true, error: null });
         try {
           const response = await axiosBaseURL.get("/products/featured");
-
-          console.log("Featured products response:", response.data);
 
           if (!response.data?.products) {
             set({ featuredProducts: [], loading: false });

@@ -175,28 +175,48 @@ export const useUserStore = create((set, get) => ({
 }));
 
 // implement interceptor to check if the user is authenticated
-// axios interceptor for token refresh
-let refreshingPromise = null;
 
-// incercept the response and check if the token is expired and refresh the token
+// Improved token refresh mechanism with timeout and better error handling
+let refreshingPromise = null;
+let refreshTimeout = null;
+
+// Intercept the response and check if the token is expired and refresh the token
 // if the token is expired and the refresh token is also expired then logout the user
 axiosBaseURL.interceptors.response.use(
   (response) => response,
-
   async (error) => {
     const originalRequest = error.config;
 
+    // Check if error is due to an expired token and we're not already trying to refresh
     if (
-      error.response.status === 401 &&
+      error.response?.status === 401 &&
       !originalRequest._retry &&
       !originalRequest.url.includes("/auth/refresh-token")
     ) {
       originalRequest._retry = true;
 
       try {
+        // Clear any existing refresh timeout
+        if (refreshTimeout) {
+          clearTimeout(refreshTimeout);
+        }
+
+        // Create a refresh token attempt or use existing one
         if (!refreshingPromise) {
           refreshingPromise = useUserStore.getState().refreshToken();
+
+          // Set a timeout to clear the refreshingPromise in case it hangs
+          refreshTimeout = setTimeout(() => {
+            if (refreshingPromise) {
+              console.warn("Token refresh timed out");
+              refreshingPromise = null;
+              useUserStore.getState().logout();
+            }
+          }, 10000); // 10 second timeout
+
           await refreshingPromise;
+          clearTimeout(refreshTimeout);
+          refreshTimeout = null;
           refreshingPromise = null;
         } else {
           await refreshingPromise; // Wait for existing refresh
@@ -208,12 +228,63 @@ axiosBaseURL.interceptors.response.use(
 
         return axiosBaseURL(originalRequest);
       } catch (refreshError) {
-        // console.error("Error refreshing token:", refreshError);
+        // Clear state
         refreshingPromise = null;
+        if (refreshTimeout) {
+          clearTimeout(refreshTimeout);
+          refreshTimeout = null;
+        }
+
+        // Force logout
         useUserStore.getState().logout();
         return Promise.reject(refreshError);
       }
     }
+
+    // For network errors (no response), add a custom message
+    if (!error.response) {
+      error.customMessage = "Network error. Please check your connection.";
+    }
+
     return Promise.reject(error);
   }
 );
+// incercept the response and check if the token is expired and refresh the token
+// if the token is expired and the refresh token is also expired then logout the user
+// axiosBaseURL.interceptors.response.use(
+//   (response) => response,
+
+//   async (error) => {
+//     const originalRequest = error.config;
+
+//     if (
+//       error.response.status === 401 &&
+//       !originalRequest._retry &&
+//       !originalRequest.url.includes("/auth/refresh-token")
+//     ) {
+//       originalRequest._retry = true;
+
+//       try {
+//         if (!refreshingPromise) {
+//           refreshingPromise = useUserStore.getState().refreshToken();
+//           await refreshingPromise;
+//           refreshingPromise = null;
+//         } else {
+//           await refreshingPromise; // Wait for existing refresh
+//         }
+
+//         // Retry the original request with updated headers
+//         originalRequest.headers.Authorization =
+//           axiosBaseURL.defaults.headers.Authorization;
+
+//         return axiosBaseURL(originalRequest);
+//       } catch (refreshError) {
+//         // console.error("Error refreshing token:", refreshError);
+//         refreshingPromise = null;
+//         useUserStore.getState().logout();
+//         return Promise.reject(refreshError);
+//       }
+//     }
+//     return Promise.reject(error);
+//   }
+// );

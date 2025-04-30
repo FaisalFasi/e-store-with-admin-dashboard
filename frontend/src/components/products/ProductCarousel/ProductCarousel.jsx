@@ -68,7 +68,6 @@ const ProductCarousel = ({
       0
     );
   };
-  console.log("Products ---:", products);
   return (
     <div className="py-12">
       <div className="container mx-auto px-4">

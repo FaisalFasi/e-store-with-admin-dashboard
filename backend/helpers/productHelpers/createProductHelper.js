@@ -60,7 +60,6 @@ export const processSizes = async (sizes, vIndex) => {
     sizes.map(async (size, sIndex) => {
       const amount = parseFloat(size?.price?.amount) || 0;
       const currency = size?.price?.currency || "USD";
-      console.log("Price amount:", amount);
 
       return {
         size: String(size.size).toUpperCase().trim(),
@@ -88,7 +87,6 @@ export const createProductVariations = async (
   if (!variations || !Array.isArray(variations)) {
     throw new Error("Variations must be an array");
   }
-  console.log("Variation   created:", JSON.stringify(variations));
 
   try {
     const variationDocs = await ProductVariation.insertMany(

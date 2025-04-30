@@ -19,5 +19,5 @@ export const handleError = (res, error, context, status = 500) => {
       fullError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
     };
   }
-  return res.status(status).json(response);
+  return res?.status(status).json(response);
 };

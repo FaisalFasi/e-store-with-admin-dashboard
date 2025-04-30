@@ -29,9 +29,10 @@ const CreateProductForm = () => {
     removeSizeFromColor,
     handleSizeImageChange,
     removeSizeImage,
+    initialProductState,
+    setNewProduct,
   } = useProductForm();
 
-  // Memoize input fields to prevent unnecessary re-renders
   const inputFields = useMemo(
     () => [
       {
@@ -214,8 +215,36 @@ const CreateProductForm = () => {
 
     try {
       // Create FormData only when validation passes
-      const formData = createFormData(newProduct);
-      await createProduct(formData);
+      const formData = await createFormData(newProduct);
+      console.log("FormData:", formData);
+
+      try {
+        const data = await createProduct(formData);
+        // Check if the product was created successfully and reset the form
+        if (data) {
+          setNewProduct({
+            ...initialProductState, // Reset to initial state
+            variations: [
+              {
+                color: "",
+                colorName: "",
+                colorImages: [],
+                sizes: [
+                  {
+                    size: "",
+                    price: { amount: 0, currency: "USD" },
+                    quantity: 0,
+                  },
+                ],
+              },
+            ],
+            // variations: [{ ...initialProductState.variations[0] }], // Keep the first variation
+          });
+          toast.success("Product created successfully!");
+        }
+      } catch (error) {
+        toast.error(error.message);
+      }
     } catch (error) {
       toast.error(error.message);
     }

@@ -40,7 +40,6 @@ const categorySchema = new mongoose.Schema(
       default: 0,
       min: 0,
       max: 3,
-      enum: [0, 1, 2, 3], // Only allow depths 0-3 (L1-L4)
     }, // 0=L1, 1=L2, 2=L3, 3=L4
     status: {
       type: String,
@@ -52,7 +51,14 @@ const categorySchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
-
+    metaTitle: {
+      type: String,
+      default: "",
+    },
+    metaDescription: {
+      type: String,
+      default: "",
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // assuming you have a User model
@@ -70,6 +76,7 @@ categorySchema.index({ parentCategory: 1 });
 categorySchema.index({ status: 1 });
 categorySchema.index({ sortOrder: 1 });
 categorySchema.index({ depth: 1 });
+categorySchema.index({ slug: 1 });
 
 categorySchema.index({ createdAt: -1 });
 categorySchema.index({ updatedAt: -1 });

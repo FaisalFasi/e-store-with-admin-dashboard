@@ -2,7 +2,7 @@ import path from "path";
 // image validation helper
 export const imageValidationHelper = (file) => {
   // Allowed image file types
-  const fileTypes = /jpeg|webp|jpg|png|gif/;
+  const fileTypes = /jpeg|webp|jpg|png|gif|avif/;
 
   // Check if the file is an array (multiple files) or a single file
   const files = Array.isArray(file) ? file : [file];
