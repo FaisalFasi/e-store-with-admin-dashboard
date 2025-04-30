@@ -125,15 +125,15 @@ export const useCartStore = create(
           get().calculate_Total_AmountInCart(); // Use consistent naming
         } catch (error) {
           console.error("Error in getCartItems:", error); // Log the error for debugging
+          if (error.response?.status !== 401) {
+            toast.error("Failed to load cart items. Please try again later.");
+          }
           set({
             cart: [],
             total: 0,
             subTotal: 0,
             loading: false,
           });
-
-          // Provide a more detailed error message
-          toast.error("Failed to load cart items. Please try again later.");
         }
       },
 

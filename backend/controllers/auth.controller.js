@@ -159,6 +159,8 @@ export const logout = async (req, res) => {
 // this controller is used to refresh the access token
 export const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+
+  console.log("refreshToken:", refreshToken);
   try {
     if (!refreshToken) {
       return res

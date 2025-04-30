@@ -145,31 +145,30 @@ export const useUserStore = create((set, get) => ({
   refreshToken: async () => {
     if (get().checkingAuth) return;
 
-    set({ checkingAuth: true, loading: true });
+    set({ checkingAuth: true });
 
     try {
-      const response = await axiosBaseURL.post("/auth/refresh-token");
-      console.log("response:", response);
+      const response = await axiosBaseURL.post(
+        "/auth/refresh-token",
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
       const { accessToken } = response?.data || {};
 
-      console.log("accessToken:", accessToken);
       if (accessToken) {
-        // Update token in Axios headers
         axiosBaseURL.defaults.headers.Authorization = `Bearer ${accessToken}`;
+        set({ checkingAuth: false });
+        return accessToken;
       }
-
-      set({ checkingAuth: false, loading: false });
-      // here response doesn't matter because we are just refreshing the token and not setting the user data
-      return response?.data;
     } catch (error) {
-      console.error("Error refreshing token:", error);
-      set({ checkingAuth: false, loading: false });
-
-      toast.error(
-        error.response?.data?.message ||
-          "An error occurred while refreshing the token."
-      );
-      throw error; // Allow the interceptor to handle logout
+      console.log("Silent token refresh failure", error);
+      // No toast here - just clean up and logout
+      set({ checkingAuth: false, user: null });
+      localStorage.removeItem("user");
+      throw error; // Still throw for the interceptor
     }
   },
 }));
@@ -181,7 +180,7 @@ let refreshingPromise = null;
 let refreshTimeout = null;
 
 // Intercept the response and check if the token is expired and refresh the token
-// if the token is expired and the refresh token is also expired then logout the user
+// if the access token is expired and the refresh token is also expired then logout the user
 axiosBaseURL.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -191,7 +190,7 @@ axiosBaseURL.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh-token")
+      !originalRequest.url.includes("/auth/")
     ) {
       originalRequest._retry = true;
 
@@ -249,42 +248,3 @@ axiosBaseURL.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-// incercept the response and check if the token is expired and refresh the token
-// if the token is expired and the refresh token is also expired then logout the user
-// axiosBaseURL.interceptors.response.use(
-//   (response) => response,
-
-//   async (error) => {
-//     const originalRequest = error.config;
-
-//     if (
-//       error.response.status === 401 &&
-//       !originalRequest._retry &&
-//       !originalRequest.url.includes("/auth/refresh-token")
-//     ) {
-//       originalRequest._retry = true;
-
-//       try {
-//         if (!refreshingPromise) {
-//           refreshingPromise = useUserStore.getState().refreshToken();
-//           await refreshingPromise;
-//           refreshingPromise = null;
-//         } else {
-//           await refreshingPromise; // Wait for existing refresh
-//         }
-
-//         // Retry the original request with updated headers
-//         originalRequest.headers.Authorization =
-//           axiosBaseURL.defaults.headers.Authorization;
-
-//         return axiosBaseURL(originalRequest);
-//       } catch (refreshError) {
-//         // console.error("Error refreshing token:", refreshError);
-//         refreshingPromise = null;
-//         useUserStore.getState().logout();
-//         return Promise.reject(refreshError);
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
