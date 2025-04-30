@@ -5,7 +5,6 @@ import ZoomImage from "@/components/shared/ZoomImage/ZoomImage";
 import { useSingleProduct } from "../../hooks/useSingleProduct";
 import ReviewCommentSection from "../../components/reviews/ReviewCommentSection/ReviewCommentSection";
 import { getUserData } from "../../utils/getUserData.js";
-import FeaturedProducts from "@/components/products/FeaturedProducts/FeaturedProducts";
 import ProductCarousel from "@/components/products/ProductCarousel/ProductCarousel";
 import { usePrice } from "@/utils/currency/currency";
 

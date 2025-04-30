@@ -334,7 +334,6 @@ export const getProductById = async (req, res) => {
 };
 
 // Enhanced getFeaturedProducts
-
 export const getFeaturedProducts = async (req, res) => {
   try {
     const cacheKey = "featured_products";
@@ -391,6 +390,29 @@ export const getFeaturedProducts = async (req, res) => {
     handleError(res, error, "getFeaturedProducts");
   }
 };
+// Enhanced toggleFeaturedProduct
+export const toggleFeaturedProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product)
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+
+    product.isFeatured = !product.isFeatured;
+    await product.save();
+
+    // Update cache
+    const featuredProducts = await Product.find({ isFeatured: true })
+      .populate("defaultVariation", "price imageUrls")
+      .lean();
+    await redis.set("featured_products", JSON.stringify(featuredProducts));
+
+    res.json({ success: true, product });
+  } catch (error) {
+    handleError(res, error, "toggleFeaturedProduct");
+  }
+};
 
 export const getRecommendedProducts = async (req, res) => {
   __getRecommendedProducts(req, res);
@@ -418,30 +440,6 @@ export const getProductByCategory = async (req, res) => {
     res.json({ success: true, products });
   } catch (error) {
     handleError(res, error, "getProductByCategory");
-  }
-};
-
-// Enhanced toggleFeaturedProduct
-export const toggleFeaturedProduct = async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product)
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
-
-    product.isFeatured = !product.isFeatured;
-    await product.save();
-
-    // Update cache
-    const featuredProducts = await Product.find({ isFeatured: true })
-      .populate("defaultVariation", "price imageUrls")
-      .lean();
-    await redis.set("featured_products", JSON.stringify(featuredProducts));
-
-    res.json({ success: true, product });
-  } catch (error) {
-    handleError(res, error, "toggleFeaturedProduct");
   }
 };
 
@@ -495,6 +493,9 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
+    // Store whether the product was featured (for cache invalidation)
+    const wasFeatured = product.isFeatured;
+
     // Delete associated images from Cloudinary
     const deletePromises = [];
 
@@ -540,6 +541,28 @@ export const deleteProduct = async (req, res) => {
         product.category.l2 ||
         product.category.l1
     );
+
+    // ✅ Only remove from Redis if the product was featured
+    if (wasFeatured) {
+      const cacheKey = "featured_products";
+      const cachedData = await redis.get(cacheKey);
+
+      if (cachedData) {
+        const featuredProducts = JSON.parse(cachedData);
+        const updatedProducts = featuredProducts.filter(
+          (p) => p._id !== product._id.toString()
+        );
+
+        if (updatedProducts.length < featuredProducts.length) {
+          await redis.set(
+            cacheKey,
+            JSON.stringify(updatedProducts),
+            "EX",
+            3600
+          );
+        }
+      }
+    }
 
     res.json({
       success: true,

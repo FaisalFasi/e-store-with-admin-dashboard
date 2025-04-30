@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Category from "./category.model.js";
+import redis from "../db/redis.js";
 
 const productSchema = new mongoose.Schema(
   {
@@ -109,17 +110,6 @@ productSchema.virtual("reviews", {
   localField: "_id",
   foreignField: "product",
 });
-
-// 🔥 **Indexes (Max Query Performance)**
-productSchema.index({ "category.l1": 1, status: 1 }); // Fast filtering by top-level category
-productSchema.index({ "category.l2": 1, status: 1 }); // Fast filtering by 2nd level
-productSchema.index({ "category.l3": 1, status: 1 }); // Fast filtering by 3rd level
-productSchema.index({ "category.l4": 1, status: 1 }); // Fast filtering by 4th level
-productSchema.index({ name: 1, status: 1 }); // Fast filtering by name
-// images order index
-productSchema.index({ "images.order": 1 }); // Fast sorting by image order
-productSchema.index({ name: "text", description: "text" });
-
 // ✅ **Validation (Ensures Correct Nesting)**
 productSchema.pre("save", async function (next) {
   if (this.category.l2) {
@@ -151,6 +141,46 @@ productSchema.pre("save", async function (next) {
   }
   next();
 });
+
+// Middleware to handle cache invalidation on product deletion
+// Middleware to handle cache invalidation on product deletion
+productSchema.post(["remove", "findOneAndDelete"], async function (doc) {
+  if (doc.isFeatured) {
+    // Only proceed if the product was featured
+    try {
+      const cacheKey = "featured_products";
+      const cachedData = await redis.get(cacheKey);
+
+      if (cachedData) {
+        const featuredProducts = JSON.parse(cachedData);
+        const updatedProducts = featuredProducts.filter(
+          (p) => p._id !== doc._id.toString()
+        );
+
+        if (updatedProducts.length < featuredProducts.length) {
+          await redis.set(
+            cacheKey,
+            JSON.stringify(updatedProducts),
+            "EX",
+            3600
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error updating Redis cache on product deletion:", error);
+    }
+  }
+});
+
+// 🔥 **Indexes (Max Query Performance)**
+productSchema.index({ "category.l1": 1, status: 1 }); // Fast filtering by top-level category
+productSchema.index({ "category.l2": 1, status: 1 }); // Fast filtering by 2nd level
+productSchema.index({ "category.l3": 1, status: 1 }); // Fast filtering by 3rd level
+productSchema.index({ "category.l4": 1, status: 1 }); // Fast filtering by 4th level
+productSchema.index({ name: 1, status: 1 }); // Fast filtering by name
+// images order index
+productSchema.index({ "images.order": 1 }); // Fast sorting by image order
+productSchema.index({ name: "text", description: "text" });
 
 const Product = mongoose.model("Product", productSchema);
 export default Product;

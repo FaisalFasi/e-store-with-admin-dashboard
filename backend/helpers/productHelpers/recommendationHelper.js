@@ -119,7 +119,7 @@ async function getCategoryBasedRecommendations(
       : "category.l1";
     query[categoryField] = categoryId;
 
-    return await Product.find(query)
+    const foundProduct = await Product.find(query)
       .limit(limit)
       .populate("category.l1 category.l2 category.l3 category.l4", "name slug")
       .populate({
@@ -133,6 +133,8 @@ async function getCategoryBasedRecommendations(
       .select("name slug basePrice variations stockStatus images")
       .sort({ popularity: -1, createdAt: -1 }) // Sort by popularity then recency
       .lean();
+    console.log("Category-based recommendations:", foundProduct);
+    return foundProduct;
   } catch (error) {
     console.error("Error in getCategoryBasedRecommendations:", error);
     return [];
@@ -158,8 +160,21 @@ async function getRandomProducts(excludeProductId, limit = 10) {
     })
       .skip(randomSkip)
       .limit(limit)
-      .populate("category.l1 category.l2 category.l3 category.l4", "name slug")
-      .select("name slug basePrice variations stockStatus images")
+      .populate([
+        {
+          path: "category.l1 category.l2 category.l3 category.l4",
+          select: "name slug",
+        },
+        {
+          path: "variations",
+          model: "ProductVariation",
+        },
+        {
+          path: "defaultVariation",
+          model: "ProductVariation",
+          select: "price imageUrls",
+        },
+      ])
       .lean();
   } catch (error) {
     console.error("Error in getRandomProducts:", error);
