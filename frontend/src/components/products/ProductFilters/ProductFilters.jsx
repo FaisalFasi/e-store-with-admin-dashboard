@@ -154,6 +154,7 @@ const ProductFilters = () => {
   const toggleFilters = () => {
     setIsOpen(!isOpen);
   };
+  
 
   // Check if any filters are active
   const hasActiveFilters = () => {
