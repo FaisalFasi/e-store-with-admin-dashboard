@@ -154,7 +154,6 @@ const ProductFilters = () => {
   const toggleFilters = () => {
     setIsOpen(!isOpen);
   };
-  
 
   // Check if any filters are active
   const hasActiveFilters = () => {
@@ -165,7 +164,7 @@ const ProductFilters = () => {
       sortOption !== "none"
     );
   };
-
+  console.log("activeFilters:", activeFilters);
   return (
     <div className="relative mb-6">
       {/* Mobile filter button */}
