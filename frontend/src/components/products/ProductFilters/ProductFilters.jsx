@@ -28,11 +28,6 @@ const ProductFilters = () => {
 
   // Initialize price range based on product store data
   useEffect(() => {
-    // console.log("Initializing price range...");
-    // console.log("minPrice:", minPrice);
-    // console.log("maxPrice:", maxPrice);
-    // console.log("activeFilters:", activeFilters);
-    // console.log("selectedCurrency:", selectedCurrency);
     if (minPrice !== undefined && maxPrice !== undefined) {
       // Use base currency values (USD cents) for internal state
       const baseMinPrice =
