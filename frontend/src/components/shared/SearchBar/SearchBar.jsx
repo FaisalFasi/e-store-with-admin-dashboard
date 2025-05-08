@@ -1,16 +1,16 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProductStore } from "../../../stores/useProductStore";
-import { useEffect } from "react";
 
 const SearchBar = ({ className, mobile = false }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
-  const { searchProducts, resetFilters } = useProductStore(); // Access resetFilters here to avoid conditional hook call
+  const { searchProducts, resetFilters } = useProductStore();
+  const searchRef = useRef(null);
 
   useEffect(() => {
     // This effect will run whenever searchTerm changes
@@ -27,13 +27,28 @@ const SearchBar = ({ className, mobile = false }) => {
     }
   }, [searchTerm, searchProducts, resetFilters, navigate]); // Dependencies for the effect
 
+  // Add click outside listener to close mobile search
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target) &&
+        isExpanded
+      ) {
+        setIsExpanded(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isExpanded]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      // searchProducts(searchTerm) // Moved to useEffect
       navigate("/");
-      // Don't clear the search term after searching
-      // setSearchTerm("")
       if (mobile) setIsExpanded(false);
     }
   };
@@ -46,20 +61,6 @@ const SearchBar = ({ className, mobile = false }) => {
   const handleSearchInput = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-
-    // Real-time search with debounce (only search if term has 3+ characters)
-    // if (value.length >= 3) { // Moved to useEffect
-    //   searchProducts(value);
-    //   if (!window.location.pathname.includes("/")) {
-    //     navigate("/");
-    //   }
-    // } else if (value.length === 0) {
-    //   // Reset search when clearing the input
-    //   searchProducts("");
-    //   // Make sure we reset the search results
-    //   const { resetFilters } = useProductStore();
-    //   resetFilters();
-    // }
   };
 
   // For mobile: toggle search bar visibility
@@ -70,7 +71,7 @@ const SearchBar = ({ className, mobile = false }) => {
         () =>
           document
             .getElementById(mobile ? "mobile-search" : "desktop-search")
-            .focus(),
+            ?.focus(),
         100
       );
     }
@@ -90,9 +91,9 @@ const SearchBar = ({ className, mobile = false }) => {
             </button>
           ) : (
             <form
+              ref={searchRef}
               onSubmit={handleSearch}
-              className="absolute right-0 top-0 z-50 flex items-center bg-gray-800 rounded-md overflow-hidden"
-              style={{ width: "calc(100vw - 2rem)" }}
+              className="fixed left-0 right-0 top-0 z-50 flex items-center bg-gray-800 rounded-md overflow-hidden mx-4 mt-16"
             >
               <input
                 id="mobile-search"

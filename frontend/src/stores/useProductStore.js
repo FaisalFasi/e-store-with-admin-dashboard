@@ -25,12 +25,12 @@ export const useProductStore = create(
       filteredProducts: [],
       searchTerm: "",
       minPrice: 0,
-      maxPrice: 1000,
+      maxPrice: 10000,
       activeFilters: {
         minPrice: null,
         maxPrice: null,
         categories: [],
-        sortBy: "featured",
+        sortBy: "none",
       },
 
       // Actions
@@ -90,7 +90,8 @@ export const useProductStore = create(
             // Calculate min and max price from all products
             if (response.data.products.length > 0) {
               const prices = response.data.products.map(
-                (product) => product.price
+                (product) =>
+                  product.variations[0]?.colors[0]?.sizes[0]?.price?.amount || 0
               );
               const minPrice = Math.floor(Math.min(...prices));
               const maxPrice = Math.ceil(Math.max(...prices));
@@ -400,9 +401,17 @@ export const useProductStore = create(
       // Apply filters
       applyFilters: (filters) => {
         const { products, searchTerm } = get();
-        set({ activeFilters: filters });
+        console.log("Applying filters:", filters);
+        // Ensure price values are numbers
+        const safeFilters = {
+          ...filters,
+          minPrice: filters.minPrice !== null ? Number(filters.minPrice) : null,
+          maxPrice: filters.maxPrice !== null ? Number(filters.maxPrice) : null,
+        };
 
-        const filtered = filterProducts(products, searchTerm, filters);
+        set({ activeFilters: safeFilters });
+
+        const filtered = filterProducts(products, searchTerm, safeFilters);
 
         set({
           filteredProducts: filtered,
@@ -427,7 +436,7 @@ export const useProductStore = create(
             minPrice: null,
             maxPrice: null,
             categories: [],
-            sortBy: "featured",
+            sortBy: "none",
           },
           filteredProducts: products,
           currentPage: 1,
@@ -565,12 +574,26 @@ const filterProducts = (products, searchTerm, filters) => {
   }
 
   // Apply price filter - ensure we're using base currency values
-  if (filters.minPrice !== null) {
-    filtered = filtered.filter((product) => product.price >= filters.minPrice);
+  if (filters.minPrice !== null && filters.minPrice !== undefined) {
+    const minPrice = Number(filters.minPrice);
+    filtered = filtered.filter((product) => {
+      // product.variations[0]?.colors[0]?.sizes[0]?.price?.amount || 0;
+
+      const productPrice = Number(
+        product.variations[0]?.colors[0]?.sizes[0]?.price?.amount || 0
+      );
+      return !isNaN(productPrice) && productPrice >= minPrice;
+    });
   }
 
-  if (filters.maxPrice !== null) {
-    filtered = filtered.filter((product) => product.price <= filters.maxPrice);
+  if (filters.maxPrice !== null && filters.maxPrice !== undefined) {
+    const maxPrice = Number(filters.maxPrice);
+    filtered = filtered.filter((product) => {
+      const productPrice = Number(
+        product.variations[0]?.colors[0]?.sizes[0]?.price?.amount || 0
+      );
+      return !isNaN(productPrice) && productPrice <= maxPrice;
+    });
   }
 
   // Apply category filter
@@ -583,11 +606,23 @@ const filterProducts = (products, searchTerm, filters) => {
   // Apply sorting
   if (filters.sortBy) {
     switch (filters.sortBy) {
+      case "none":
+        // No sorting
+        filtered = filtered;
+        break;
       case "price-low-high":
-        filtered.sort((a, b) => a.price - b.price);
+        filtered.sort(
+          (a, b) =>
+            Number(a.variations[0]?.colors[0]?.sizes[0]?.price?.amount) -
+            Number(b.variations[0]?.colors[0]?.sizes[0]?.price?.amount)
+        );
         break;
       case "price-high-low":
-        filtered.sort((a, b) => b.price - a.price);
+        filtered.sort(
+          (a, b) =>
+            Number(b.variations[0]?.colors[0]?.sizes[0]?.price?.amount || 0) -
+            Number(a.variations[0]?.colors[0]?.sizes[0]?.price?.amount || 0)
+        );
         break;
       case "newest":
         filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
