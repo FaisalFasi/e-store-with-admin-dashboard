@@ -168,8 +168,8 @@ const SingleProductPage = () => {
                     <button
                       key={index}
                       onClick={() => handleSizeChange(size)}
-                      className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-400 ${
-                        size === selectedSize ? "bg-emerald-400 text-white" : ""
+                      className={`px-4 py-2 border rounded-md text-sm text-gray-300 border-gray-600 focus:bg-emerald-600   ${
+                        size === selectedSize ? "bg-emerald-600 text-white" : ""
                       }`}
                       disabled={
                         product.variations.find((v) =>
@@ -233,7 +233,7 @@ const SingleProductPage = () => {
                     Add to Cart
                   </Button>
                   <Button
-                    isBG={true}
+                    isBG={false}
                     className="self-start bg-gray-700"
                     onClick={handleAddToWishlist}
                   >
