@@ -160,7 +160,7 @@ const ProductFilters = () => {
     );
   };
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-6  ">
       {/* Mobile filter button */}
       <div className="md:hidden flex justify-between items-center mb-4">
         <button
@@ -193,7 +193,7 @@ const ProductFilters = () => {
         ${isOpen ? "absolute z-30 left-0 right-0" : ""}
       `}
       >
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Price Range */}
           <div className="space-y-3">
             <h3 className="font-semibold text-emerald-400">Price Range</h3>
@@ -222,7 +222,7 @@ const ProductFilters = () => {
           </div>
 
           {/* Categories */}
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             <h3 className="font-semibold text-emerald-400">Categories</h3>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {categories && categories.length > 0 ? (
@@ -244,7 +244,7 @@ const ProductFilters = () => {
                 <p className="text-gray-400 text-sm">No categories available</p>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Sort By */}
           <div className="space-y-3">
