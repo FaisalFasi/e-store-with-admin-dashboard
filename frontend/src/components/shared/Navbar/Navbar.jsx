@@ -9,6 +9,7 @@ import {
   Mails,
   Menu,
   X,
+  HomeIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../../stores/useCartStore";
@@ -55,13 +56,13 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4 flex-1 justify-center max-w-md mx-auto">
-            <SearchBar className="w-full" />
+            <SearchBar />
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex md:hidden items-center gap-3">
+          <div className=" flex md:hidden justify-center items-center gap-2">
             <div className="relative">
-              <SearchBar mobile={true} className="mr-2" />
+              <SearchBar mobile={true} />
             </div>
             <button
               onClick={toggleMobileMenu}
@@ -73,10 +74,10 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Actions */}
-          <nav className="hidden md:flex items-center gap-2 lg:gap-4">
+          <nav className="hidden md:flex px-4 items-center gap-2">
             <CurrencySelector />
-            <Button to={"/"} className="hidden lg:block">
-              Home
+            <Button to={"/"} isBG={false} className="hidden lg:block">
+              <HomeIcon size={24} />
             </Button>
 
             {user && (
@@ -99,8 +100,12 @@ const Navbar = () => {
                 )}
               </Link>
             )}
-            <Button onClick={handleSubscribePopup} className="p-2 md:p-2">
-              <Mails size={20} />
+            <Button
+              isBG={false}
+              onClick={handleSubscribePopup}
+              className="p-2 md:p-2"
+            >
+              <Mails size={24} />
             </Button>
             {isAdmin && (
               <Link
@@ -124,22 +129,19 @@ const Navbar = () => {
               </button>
             ) : (
               <>
-                <Link
+                <Button
                   to="/signup"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white py-1 px-2 lg:py-2 lg:px-4 text-sm lg:text-base
-                      rounded-md flex items-center transition duration-300 ease-in-out"
+                  isBG
+                  icon={<UserPlus className="mr-1 lg:mr-2" size={18} />}
                 >
-                  <UserPlus className="mr-1 lg:mr-2" size={18} />
-                  <span className="text-xs lg:text-base">Sign Up</span>
-                </Link>
-                <Link
+                  <span className="text-sm lg:text-base">Sign Up</span>
+                </Button>
+                <Button
                   to="/login"
-                  className="bg-gray-700 hover:bg-gray-600 text-white py-1 px-2 lg:py-2 lg:px-4 text-sm lg:text-base
-                      rounded-md flex items-center transition duration-300 ease-in-out"
+                  icon={<LogIn className="mr-1 lg:mr-2" size={18} />}
                 >
-                  <LogIn className="mr-1 lg:mr-2" size={18} />
-                  <span className="text-xs lg:text-base">Login</span>
-                </Link>
+                  <span className="text-sm lg:text-base">Login</span>
+                </Button>
               </>
             )}
           </nav>
@@ -176,8 +178,9 @@ const Navbar = () => {
                   handleSubscribePopup();
                   setMobileMenuOpen(false);
                 }}
+                className="flex "
+                icon={<Mails size={20} className="mr-2" />}
               >
-                <Mails size={20} className="mr-2" />
                 Newsletter
               </Button>
 

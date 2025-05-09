@@ -62,7 +62,7 @@ const HomePage = () => {
     activeFilters.categories.length > 0 ||
     activeFilters.minPrice !== null ||
     activeFilters.maxPrice !== null ||
-    activeFilters.sortBy !== "featured";
+    activeFilters.sortBy !== "none";
 
   useEffect(() => {
     if (user?.role === "admin") getAllCategories();

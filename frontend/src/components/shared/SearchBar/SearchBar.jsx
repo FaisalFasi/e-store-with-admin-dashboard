@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProductStore } from "../../../stores/useProductStore";
+import Button from "../Button/Button";
 
 const SearchBar = ({ className, mobile = false }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,13 +79,13 @@ const SearchBar = ({ className, mobile = false }) => {
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className} md:w-full md:pl-10`}>
       {mobile ? (
         <>
           {!isExpanded ? (
             <button
               onClick={toggleSearch}
-              className="text-gray-300 hover:text-emerald-400 transition duration-300"
+              className="h-[16px] text-gray-300 hover:text-emerald-400 transition duration-300"
               aria-label="Open search"
             >
               <Search size={20} />
@@ -137,22 +138,22 @@ const SearchBar = ({ className, mobile = false }) => {
             className="w-full bg-gray-800 text-white px-3 py-2 outline-none"
           />
           {searchTerm && (
-            <button
+            <Button
               type="button"
               onClick={clearSearch}
-              className="text-gray-400 hover:text-white p-2"
+              className="bg-none"
               aria-label="Clear search"
             >
               <X size={16} />
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="submit"
-            className="bg-emerald-600 hover:bg-emerald-500 text-white p-2"
+            className=" h-full bg-emerald-600 hover:bg-emerald-500 text-white p-2"
             aria-label="Search"
-          >
-            <Search size={16} />
-          </button>
+            isBG={true}
+            icon={<Search size={16} />}
+          ></Button>
         </form>
       )}
     </div>

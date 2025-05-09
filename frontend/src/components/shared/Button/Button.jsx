@@ -8,14 +8,15 @@ const Button = ({
   children,
   className = "",
   icon,
+
   disabled,
 }) => {
   const baseClasses =
-    "text-sm md:text-base lg:text-lg px-2 py-2 md:px-4 font-bold rounded-md flex items-center justify-center gap-2 transition duration-300 ease-in-out";
+    "text-sm md:text-base lg:text-lg px-2 py-2 md:px-4 font-bold rounded-md flex items-center justify-center transition duration-300 ease-in-out";
 
   const bgClasses = isBG
-    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-    : "text-gray-300  hover:text-emerald-400";
+    ? "bg-emerald-600 hover:bg-emerald-700 text-gray-300"
+    : "bg-gray-700 text-gray-300  hover:bg-gray-600";
 
   const combinedClasses = `${baseClasses} ${bgClasses} ${className}`;
 
