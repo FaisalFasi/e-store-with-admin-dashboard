@@ -305,16 +305,10 @@ const ProductFilters = () => {
 
           {/* Apply/Reset Buttons */}
           <div className="space-y-3 flex flex-col justify-end">
-            <Button
-              onClick={handleApplyFilters}
-              className="w-full bg-emerald-600 hover:bg-emerald-500"
-            >
+            <Button onClick={handleApplyFilters} isBG={true}>
               Apply Filters
             </Button>
-            <Button
-              onClick={handleResetFilters}
-              className="w-full bg-gray-700 hover:bg-gray-600"
-            >
+            <Button onClick={handleResetFilters} isBG={false}>
               Reset Filters
             </Button>
           </div>

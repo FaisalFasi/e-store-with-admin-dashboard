@@ -141,7 +141,7 @@ const HomePage = () => {
         )}
 
         {/* Featured Products Carousel */}
-        {!isLoading && featuredProducts.length > 0 && !hasActiveFilters && (
+        {!isLoading && featuredProducts.length > 0 && (
           <div className="mt-16">
             <ProductCarousel
               products={featuredProducts}

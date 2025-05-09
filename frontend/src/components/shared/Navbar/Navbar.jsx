@@ -49,7 +49,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link
             to="/"
-            className="text-xl md:text-2xl font-bold text-emerald-400 items-center space-x-2 flex"
+            className="text-xl md:text-2xl font-bold text-emerald-500 items-center space-x-2 flex hover:text-emerald-400 transition duration-300"
           >
             E-Store
           </Link>
@@ -76,9 +76,9 @@ const Navbar = () => {
           {/* Desktop Actions */}
           <nav className="hidden md:flex px-4 items-center gap-2">
             <CurrencySelector />
-            <Button to={"/"} isBG={false} className="hidden lg:block">
+            {/* <Button to={"/"} isBG={false} className="hidden lg:block">
               <HomeIcon size={24} />
-            </Button>
+            </Button> */}
 
             {user && (
               <Link
@@ -138,6 +138,7 @@ const Navbar = () => {
                 </Button>
                 <Button
                   to="/login"
+                  isBG={false}
                   icon={<LogIn className="mr-1 lg:mr-2" size={18} />}
                 >
                   <span className="text-sm lg:text-base">Login</span>
@@ -151,9 +152,9 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-800 animate-fadeIn">
             <div className="flex flex-col gap-4">
-              <Button to={"/"} onClick={() => setMobileMenuOpen(false)}>
+              {/* <Button to={"/"} onClick={() => setMobileMenuOpen(false)}>
                 Home
-              </Button>
+              </Button> */}
 
               <CurrencySelector />
 
@@ -178,7 +179,8 @@ const Navbar = () => {
                   handleSubscribePopup();
                   setMobileMenuOpen(false);
                 }}
-                className="flex "
+                isBG={false}
+                className="flex"
                 icon={<Mails size={20} className="mr-2" />}
               >
                 Newsletter
@@ -210,24 +212,22 @@ const Navbar = () => {
                 </button>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <Link
+                  <Button
                     to="/signup"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4
-                        rounded-md flex items-center justify-center transition duration-300 ease-in-out"
                     onClick={() => setMobileMenuOpen(false)}
+                    isBG={true}
+                    icon={<UserPlus className="mr-2" size={18} />}
                   >
-                    <UserPlus className="mr-2" size={18} />
                     Sign Up
-                  </Link>
-                  <Link
+                  </Button>
+                  <Button
                     to="/login"
-                    className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4
-                        rounded-md flex items-center justify-center transition duration-300 ease-in-out"
+                    isBG={false}
                     onClick={() => setMobileMenuOpen(false)}
+                    icon={<LogIn className="mr-2" size={18} />}
                   >
-                    <LogIn className="mr-2" size={18} />
                     Login
-                  </Link>
+                  </Button>
                 </div>
               )}
             </div>

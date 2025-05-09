@@ -12,7 +12,7 @@ export function CurrencySelector() {
         type="select"
         name="selected currency"
         id="selected currency"
-        className="bg-gray-600 text-center rounded-full mb-0 border-none "
+        className="bg-gray-800 text-gray-300 text-center rounded-full mb-0 border-none hover:bg-gray-700"
         disabled={isLoading}
         value={selectedCurrency.code}
         onChange={(e) => selectCurrency(e.target.value)}
