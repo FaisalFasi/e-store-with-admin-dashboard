@@ -8,7 +8,7 @@ import ProgressBar from "../../components/cart/ProgressBar/ProgressBar";
 import { motion } from "framer-motion";
 import CartItem from "../../components/cart/CartItem/CartItem";
 import { ShoppingCart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { getUserData } from "../../utils/getUserData";
 
 const CartPage = () => {
@@ -19,10 +19,11 @@ const CartPage = () => {
   useEffect(() => {
     getCartItems();
   }, []);
+  console.log("CartPage---", cart);
 
-  if (!user) {
-    return <Navigate to="/" />;
-  }
+  // if (!user) {
+  //   return <Navigate to="/" />;
+  // }
   return (
     <div className="relative z-10 container mx-auto px-4">
       {cart.length > 0 && (

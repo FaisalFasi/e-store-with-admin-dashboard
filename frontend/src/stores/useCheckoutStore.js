@@ -11,6 +11,7 @@ const getInitialAddressState = () => {
     if (!savedAddress || savedAddress === "undefined") {
       return {
         fullName: "",
+        emailAddress: "",
         street: "",
         city: "",
         state: "",
@@ -25,6 +26,7 @@ const getInitialAddressState = () => {
     // Return default state in case of any parsing error
     return {
       fullName: "",
+      emailAddress: "",
       street: "",
       city: "",
       state: "",
@@ -64,9 +66,6 @@ export const useCheckoutStore = create((set, get) => ({
   // write a function to handle the payment
   handlePayment: async (cart, coupon, selectedCurrency) => {
     const { currentStep, openAddressModal, resetToAddress } = get();
-
-    console.log("currency currency:", selectedCurrency);
-    console.log("cart cart:", cart);
 
     if (currentStep === "address") {
       const stripe = await stripePromise;
