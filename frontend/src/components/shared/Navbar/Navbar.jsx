@@ -9,7 +9,6 @@ import {
   Mails,
   Menu,
   X,
-  HomeIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../../stores/useCartStore";
@@ -214,7 +213,7 @@ const Navbar = () => {
                   Log Out
                 </button>
               ) : (
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Button
                     to="/signup"
                     onClick={() => setMobileMenuOpen(false)}
