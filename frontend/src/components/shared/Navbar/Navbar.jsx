@@ -9,6 +9,11 @@ import {
   Mails,
   Menu,
   X,
+
+  HomeIcon,
+  LockKeyhole,
+  UserPlus2,
+
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../../../stores/useCartStore";
@@ -75,11 +80,9 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Actions */}
-          <nav className="hidden md:flex px-4 items-center gap-2">
+          <nav className="hidden md:flex px-4 items-center justify-center gap-2">
             <CurrencySelector />
-            {/* <Button to={"/"} isBG={false} className="hidden lg:block">
-              <HomeIcon size={24} />
-            </Button> */}
+
 
             {/* {user && ( */}
             <Button
@@ -101,49 +104,49 @@ const Navbar = () => {
                 </span>
               )}
             </Button>
-            {/* )} */}
             <Button
               isBG={false}
               onClick={handleSubscribePopup}
               className="p-2 md:p-2"
             >
-              <Mails size={24} />
+              <Mails size={20} />
             </Button>
             {isAdmin && (
-              <Link
-                className="bg-emerald-700 hover:bg-emerald-600 text-white px-2 py-1 rounded-md font-medium
-                 transition duration-300 ease-in-out flex items-center"
+              <Button
+                isBG={true}
                 to={"/admin-dashboard"}
+                icon={<LockKeyhole size={20} />}
               >
-                <Lock className="inline-block mr-1" size={18} />
                 <span className="hidden lg:inline">Dashboard</span>
-              </Link>
+              </Button>
             )}
 
             {user ? (
-              <button
-                className="bg-gray-700 hover:bg-gray-600 text-white py-1 px-2 lg:py-2 lg:px-4 
-                rounded-md flex items-center transition duration-300 ease-in-out"
+              <Button
+                isBG={false}
+                className="flex gap-2"
                 onClick={logout}
+                icon={<LogOut size={20} />}
               >
-                <LogOut size={18} />
-                <span className="hidden lg:inline ml-2">Log Out</span>
-              </button>
+                <span className="hidden lg:inline ">Log Out</span>
+              </Button>
             ) : (
               <>
                 <Button
                   to="/signup"
-                  isBG
-                  icon={<UserPlus className="mr-1 lg:mr-2" size={18} />}
+                  isBG={true}
+                  className="w-fit"
+                  icon={<UserPlus className="w-fit" size={20} />}
                 >
-                  <span className="text-sm lg:text-base">Sign Up</span>
+                  <span className="hidden lg:block text-sm lg:text-base">
+                    Sign Up
+                  </span>
                 </Button>
-                <Button
-                  to="/login"
-                  isBG={false}
-                  icon={<LogIn className="mr-1 lg:mr-2" size={18} />}
-                >
-                  <span className="text-sm lg:text-base">Login</span>
+
+                <Button to="/login" isBG={false} icon={<LogIn size={18} />}>
+                  <span className="hidden lg:block text-sm lg:text-base">
+                    Login
+                  </span>
                 </Button>
               </>
             )}
@@ -154,26 +157,23 @@ const Navbar = () => {
         {mobileMenuOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-800 animate-fadeIn">
             <div className="flex flex-col gap-4">
-              {/* <Button to={"/"} onClick={() => setMobileMenuOpen(false)}>
-                Home
-              </Button> */}
-
               <CurrencySelector />
 
               {user && (
-                <Link
+                <Button
                   to={"/cart"}
-                  className="flex items-center gap-2 text-gray-300 hover:text-emerald-400 transition duration-300"
+                  className="flex gap-2"
+                  isBG={false}
                   onClick={() => setMobileMenuOpen(false)}
+                  icon={<ShoppingCart size={20} />}
                 >
-                  <ShoppingCart size={20} />
                   <span>Cart</span>
                   {cart.length > 0 && (
                     <span className="bg-emerald-500 text-white rounded-full px-2 py-0.5 text-xs">
                       {cart.length}
                     </span>
                   )}
-                </Link>
+                </Button>
               )}
 
               <Button
@@ -182,7 +182,7 @@ const Navbar = () => {
                   setMobileMenuOpen(false);
                 }}
                 isBG={false}
-                className="flex"
+                className="flex p-2"
                 icon={<Mails size={20} className="mr-2" />}
               >
                 Newsletter

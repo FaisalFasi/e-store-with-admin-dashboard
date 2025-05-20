@@ -31,7 +31,7 @@ const Button = ({
         className={`${combinedClasses} ${className}`}
         disabled={disabled}
       >
-        {icon && <span className="flex-shrink-0">{icon}</span>}
+        {icon && <span className="flex-shrink-0 pr-1">{icon}</span>}
         <span>{children}</span>
       </Link>
     );
