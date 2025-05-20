@@ -50,6 +50,7 @@ export const getCartProducts = async (req, res) => {
         };
       })
       .filter(Boolean); // Remove null values
+    console.log("Cart products: ", cartProducts);
 
     res.status(200).json({ cartItems: cartProducts });
   } catch (err) {
@@ -66,15 +67,12 @@ export const addToCart = async (req, res) => {
     const user = req.user;
 
     console.log("productId in addToCart: ", productId);
-    console.log("variationId in addToCart: ", variationId);
-    console.log("quantity in addToCart: ", quantity);
 
     if (!productId || !variationId) {
       return res
         .status(400)
         .json({ message: "Product ID and variation ID are required." });
     }
-    console.log("User:", user);
 
     const productVariation = await ProductVariation.findOne({
       _id: variationId,
@@ -90,14 +88,10 @@ export const addToCart = async (req, res) => {
       (item) =>
         item.productId.toString() === productId &&
         item.variationId.toString() === variationId
-    );
-    console.log("Existing item in addToCart:", existingItem);
-    console.log("Product variation in addToCart:", productVariation.quantity);
-    // check total quantity to be added to cart and available stock
+    ); // check total quantity to be added to cart and available stock
     const totalQuantity = existingItem
       ? existingItem?.quantity + quantity
       : quantity;
-    console.log("Total quantity in addToCart:", totalQuantity);
 
     // Check if the requested quantity is greater than the available stock
     if (totalQuantity > productVariation.quantity) {
@@ -106,7 +100,6 @@ export const addToCart = async (req, res) => {
         message: `You can only add up to ${productVariation.quantity} of this variation to your cart.`,
       });
     }
-    console.log("Existing item in addToCart:", existingItem);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {

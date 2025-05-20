@@ -96,10 +96,10 @@ const ProductCard = React.memo(({ product }) => {
   );
 
   const handleAddToCart = useCallback(() => {
-    if (!user) {
-      toast.error("Please login to add products to cart");
-      return;
-    }
+    // if (!user) {
+    //   toast.error("Please login to add products to cart");
+    //   return;
+    // }
 
     if (!selectedColor || !selectedSize) {
       toast.error("Please select both color and size");

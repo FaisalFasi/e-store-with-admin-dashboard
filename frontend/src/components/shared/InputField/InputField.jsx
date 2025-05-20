@@ -150,7 +150,7 @@ const InputField = ({
   };
 
   return (
-    <div className={`mb-4 ${className}`}>
+    <div className={` ${className}`}>
       {renderLabel()}
       {renderInput()}
     </div>
