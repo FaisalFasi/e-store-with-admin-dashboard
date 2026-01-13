@@ -104,29 +104,42 @@ export const login = async (req, res) => {
         .json({ message: "Please provide email and password" });
     }
 
-    const user = await User.findOne({ email });
+    // Normalize email (lowercase and trim)
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
 
-    if (user && (await user.comparePassword(password))) {
+    console.log("User found:", !!user);
+    if (user) {
+      console.log("User email:", user.email);
+      console.log("User ID:", user._id);
+    }
+
+    if (!user) {
+      console.log("User not found for email:", normalizedEmail);
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // Compare password
+    const isPasswordValid = await user.comparePassword(password);
+    console.log("Password comparison result:", isPasswordValid);
+
+    if (isPasswordValid) {
       const { accessToken, refreshToken } = generateToken(user._id);
 
       await storeRefreshTokenIn_redis_db(user._id, refreshToken);
       setCookies(res, accessToken, refreshToken);
 
       res.json({ user });
-      // res.send({
-      //   _id: user._id,
-      //   name: user.name,
-      //   email: user.email,
-      //   role: user.role,
-      // });
     } else {
+      console.log("Password mismatch for user:", normalizedEmail);
       res.status(400).json({ message: "Invalid email or password" });
     }
   } catch (error) {
     console.log("Error in login controller:", error);
+    console.log("Error stack:", error.stack);
     res
       .status(500)
-      .json({ message: "Internal Server Error while login", error });
+      .json({ message: "Internal Server Error while login", error: error.message });
   }
 };
 

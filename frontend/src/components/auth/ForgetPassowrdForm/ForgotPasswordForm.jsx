@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useUserStore } from "../../../stores/useUserStore";
 
 const ForgotPasswordForm = ({ setForgotPassword }) => {
-  const { requestResetPassword } = useUserStore();
+  const { requestResetPassword, loading } = useUserStore();
 
   // Handle form submission
   const handleSubmit = async (e) => {
